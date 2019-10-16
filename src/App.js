@@ -57,6 +57,17 @@ function App() {
               <Label>How much do you love this?</Label>
               <TextInput />
             </Field>
+            <Field name='hasPet'>
+              <Label>Do you have one as a pet?</Label>
+              <Radio value='yes'>Yes</Radio>
+              <Radio value='no'>No</Radio>
+            </Field>
+            <Conditional when='animals[0].hasPet' is='yes' flat>
+              <Field name='pet'>
+                <Label>What's the name of your pet?</Label>
+                <TextInput />
+              </Field>
+            </Conditional>
           </Multiple>
         </Conditional>
 

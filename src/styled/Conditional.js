@@ -6,11 +6,11 @@ import Expanding from './Expanding';
 const Conditional = ({flat, ...props}) => {
   return (
     <Expanding 
+      className={flat ? 'conditional--flat' : 'conditional'}
       render={({show, hide}) => (
       <BaseConditional 
           onCollapsing={hide}
           onExpanding={show}
-          className={flat ? 'conditional--flat' : 'conditional'}
           {...props} />
     )} />
   );

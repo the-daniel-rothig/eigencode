@@ -39,7 +39,7 @@ input[type='checkbox'] {
 }
 
 
-:not(.rah-static)>:first-child {
+:first-child {
   margin-top:0;
 }
 

@@ -5,7 +5,7 @@ import Button from './Button';
 
 const SingleItem = ({children, remove}) => {
   return (
-    <Expanding bounce={!!remove} render={({hide}) => (
+    <Expanding className='multiple__item' bounce={!!remove} render={({hide}) => (
       <>
         {children}
         {(remove) && (
@@ -19,9 +19,11 @@ const SingleItem = ({children, remove}) => {
 
 const Multiple = (props) => {
   return (
-    <BaseMultiple 
-      {...props}
-      renderItem={SingleItem} />
+    <div className='multiple'>
+      <BaseMultiple 
+        {...props}
+        renderItem={SingleItem} />
+    </div>
   )
 }
 

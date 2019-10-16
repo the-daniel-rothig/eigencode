@@ -7,7 +7,7 @@ import useInputRegistry from '../hooks/useInputRegistry';
 
 const invokeCallback = cb => {cb();}
 
-const Conditional = ({when, is, preserveValues, className = '', onExpanding = invokeCallback, onCollapsing = invokeCallback, children}) => {
+const Conditional = ({when, is, preserveValues, onExpanding = invokeCallback, onCollapsing = invokeCallback, children}) => {
   const saneWhen = Array.isArray(when) ? when : [when]
   const saneIs = 
       typeof is === 'function' ? is 
@@ -52,7 +52,7 @@ const Conditional = ({when, is, preserveValues, className = '', onExpanding = in
   return (    
       effectiveVisibility ? (
         <InputConfigProvider mapRegister={mapRegister} mapDeregister={mapDeregister}>
-          <div className={className}>{children}</div>
+          {children}
         </InputConfigProvider>
       ) : null
   )

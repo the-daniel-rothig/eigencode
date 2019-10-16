@@ -2,7 +2,7 @@ import React, { useRef, useLayoutEffect} from 'react';
 import AnimateHeight from 'react-animate-height';
 import useExpiringState from '../hooks/useExpiringState';
 
-const Expanding = ({render, bounce = true}) => {
+const Expanding = ({render, className, bounce = true}) => {
   const divRef = useRef();
   const [state, setState, isStale] = useExpiringState({collapsed: !!bounce});
 
@@ -37,7 +37,8 @@ const Expanding = ({render, bounce = true}) => {
         }
       }}
     >
-      <div ref={divRef}>
+      <div />
+      <div ref={divRef} className={className}>
         {render({show, hide})}
       </div>
     </AnimateHeight> 
