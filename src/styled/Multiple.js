@@ -1,6 +1,7 @@
 import React, {useLayoutEffect} from 'react'
 import BaseMultiple from './../form/Multiple';
 import Expanding from './Expanding';
+import Button from './Button';
 
 const SingleItem = ({children, remove}) => {
   return (
@@ -8,7 +9,7 @@ const SingleItem = ({children, remove}) => {
       <>
         {children}
         {(remove) && (
-          <button onClick={(e) => {e.preventDefault(); hide(remove);}}>Remove</button>
+          <Button onClick={(e) => {e.preventDefault(); hide(remove);}}>Remove</Button>
         )}
       </>
     )} />

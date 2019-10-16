@@ -8,13 +8,17 @@ pre {
   background-color: #ccc;
 }
 
-.field, .conditional--flat:first-child {
+.field, .conditional--flat {
   margin:1rem 0 0 0;
   padding: 0;
   border: none;
 }
 
-.conditional:first-child {
+.button {
+  margin:1rem 0 0 0;
+}
+
+.conditional {
   margin: 0.2rem 0 0 0.2rem;
   padding: 0.4rem 0 0.3rem 1rem;
   border-left: solid 3px #bbb;
@@ -35,7 +39,7 @@ input[type='checkbox'] {
 }
 
 
-:first-child {
+:not(.rah-static)>:first-child {
   margin-top:0;
 }
 

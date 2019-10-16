@@ -4,13 +4,14 @@ import { FieldProvider } from './Field';
 import FieldContext from './FieldContext';
 import { combineObjectPaths } from './../util/objectTraversal';
 import makeUid from '../util/makeUid';
+import Button from './../styled/Button';
 
 const SingleItem = ({remove, children}) => {
   return (
     <>    
       {children}
       {(remove) && (
-        <button onClick={remove}>Remove</button>
+        <Button onClick={remove}>Remove</Button>
       )}
     </>
   )
@@ -63,7 +64,7 @@ const Multiple = ({children, className, name, min=1, max, renderItem = SingleIte
         </FieldProvider>
       ))}
       {(!max || arr.length < max) &&(
-        <button onClick={add}>Add another</button>
+        <Button onClick={add}>Add another</Button>
       )}
     </FieldProvider>
   )
