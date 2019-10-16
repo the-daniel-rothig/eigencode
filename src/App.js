@@ -53,7 +53,10 @@ function App() {
               <Label>Enter an animal name</Label>
               <TextInput />
             </Field>
-            <Field name='love'>
+            <Conditional when={['$firstName', 'animal']} is={(firstName, animal) => firstName === animal}>
+              Hey, that's you!
+            </Conditional>
+            <Field name='love' validator={string().required()}>
               <Label>How much do you love this?</Label>
               <TextInput />
             </Field>

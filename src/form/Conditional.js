@@ -21,7 +21,7 @@ const Conditional = ({when, is, preserveValues, onExpanding = invokeCallback, on
   const { getValue, deleteValue } = useFilteredContext(FormContext, 1)
   const [inputs, register, deregister] = useInputRegistry();
 
-  const vals = saneWhen.map(x => getValue(saneOuterName + x));
+  const vals = saneWhen.map(x => getValue(x.startsWith("$") ? x.substring(1) : saneOuterName + x));
   const shouldShow = saneIs(...vals);
 
   const [targetVisibility, setTargetVisibility] = useState(shouldShow);

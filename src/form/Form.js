@@ -62,12 +62,10 @@ const Debug = () => {
 
   const validationSchema = toSchema(shape);
 
-  console.log('schema', validationSchema)
-
   let message = 'ok';
 
   try {
-    validationSchema.validateSync(values);
+    validationSchema.validateSync(values, {context: values});
   } catch(e) {
     message = e.message
   }
