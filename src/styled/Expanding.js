@@ -29,6 +29,7 @@ const Expanding = ({render, className, bounce = true}) => {
 
   return (
     <AnimateHeight 
+      className='expanding'
       duration={200}
       height={state.collapsed ? 0 : 'auto'}
       onAnimationEnd={() => {
@@ -37,7 +38,7 @@ const Expanding = ({render, className, bounce = true}) => {
         }
       }}
     >
-      <div />
+      <div className='expanding-layout-reset'/>
       <div ref={divRef} className={className}>
         {render({show, hide})}
       </div>

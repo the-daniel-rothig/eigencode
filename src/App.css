@@ -43,6 +43,10 @@ input[type='checkbox'] {
   margin-top:0;
 }
 
+.expanding:first-child>div>.expanding-layout-reset ~ * {
+  margin-top:0;
+}
+
 .reveal {
   padding: 0.3rem 0.3rem 0.3rem 0.6em;
   margin-left: 0.3rem;
