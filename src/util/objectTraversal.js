@@ -28,7 +28,9 @@ export const combineObjectPaths = (outerName, name) => {
 }
 
 export const deepSet = (object, name, value) => {
-  
+  if (value === undefined) {
+    throw new Error('use deepDelete instead')
+  }
   const levels = parse(name);
   
   let parent = object;
@@ -49,20 +51,21 @@ export const deepSet = (object, name, value) => {
   } else {
     parent[levels[levels.length-1]] = value
   }
+  
+  return object
 }
 
 export const deepDelete = (object, name) => {
-  
   const levels = parse(name);
   
   let parent = object;
   for (var i = 0; i < levels.length - 1; i++) {
     const val = parent[levels[i]];
     if (val === null || val === undefined) {
-      return;
+      return object;
     }
     if (typeof val !== 'object') {
-      throw new Error(`${name}: tried to set property on ${levels[i]}, which is a non-object type`);
+      throw new Error(`${name}: tried to delete property from ${levels[i]}, which is a non-object type`);
     }
     parent = parent[levels[i]]
   }
@@ -73,6 +76,8 @@ export const deepDelete = (object, name) => {
   } else {
     delete parent[levels[levels.length-1]]
   }
+
+  return object
 }
 
 export const deepGet = (object, name) => {

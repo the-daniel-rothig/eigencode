@@ -2,13 +2,15 @@ import React, { useRef, useLayoutEffect} from 'react';
 import AnimateHeight from 'react-animate-height';
 import useExpiringState from '../hooks/useExpiringState';
 
-const Expanding = ({render}) => {
+const Expanding = ({render, bounce = true}) => {
   const divRef = useRef();
-  const [state, setState, isStale] = useExpiringState({renderDiv: true});
+  const [state, setState, isStale] = useExpiringState({collapsed: !!bounce});
 
   useLayoutEffect(() => {
-    if (!divRef.current || divRef.current.clientHeight === 0) {
+    if (!divRef.current || divRef.current.innerHTML.length === 0) {
       setState({collapsed: true})
+    } else {
+      setState({})
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -25,22 +27,20 @@ const Expanding = ({render}) => {
     }
   }
 
-  const WrapperTag = state.renderDiv ? ({chidren}) => <div ref={divRef}>{chidren}</div> : React.Fragment;
-  
   return (
-    <WrapperTag>
-      <AnimateHeight 
-        duration={200}
-        height={state.collapsed ? 0 : 'auto'}
-        onAnimationEnd={() => {
-          if (!isStale() && state.cb) {
-            state.cb();
-          }
-        }}
-      >
+    <AnimateHeight 
+      duration={200}
+      height={state.collapsed ? 0 : 'auto'}
+      onAnimationEnd={() => {
+        if (!isStale() && state.cb) {
+          state.cb();
+        }
+      }}
+    >
+      <div ref={divRef}>
         {render({show, hide})}
-      </AnimateHeight> 
-    </WrapperTag>
+      </div>
+    </AnimateHeight> 
   );
 }
 

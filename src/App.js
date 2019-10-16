@@ -9,7 +9,7 @@ import Conditional from './styled/Conditional';
 import { string } from 'yup';
 
 import './yup/extensions';
-import Multiple from './form/Multiple';
+import Multiple from './styled/Multiple';
 
 function App() {
   return (

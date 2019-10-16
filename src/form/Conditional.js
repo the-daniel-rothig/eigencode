@@ -3,6 +3,7 @@ import FormContext from './FormContext';
 import useFilteredContext from '../hooks/useFilteredContext';
 import { mixed } from 'yup';
 import InputConfigProvider from './InputConfigProvider';
+import useInputRegistry from '../hooks/useInputRegistry';
 
 const invokeCallback = cb => {cb();}
 
@@ -14,6 +15,7 @@ const Conditional = ({when, is, preserveValues, className = '', onExpanding = in
     :                            (...vals) => vals[0] === is;
 
   const { values, deleteValue } = useFilteredContext(FormContext, 1)
+  const [inputs, register, deregister] = useInputRegistry();
 
   const vals = saneWhen.map(x => values[x]);
   const shouldShow = saneIs(...vals);
@@ -23,7 +25,10 @@ const Conditional = ({when, is, preserveValues, className = '', onExpanding = in
 
   if (!shouldShow && effectiveVisibility && targetVisibility) {
     setTargetVisibility(false);
-    onCollapsing(() => setEffectiveVisibility(false))
+    onCollapsing(() => {
+      inputs.forEach(i => deleteValue(i.name));
+      setEffectiveVisibility(false)
+    })
   }
 
   if (shouldShow && !effectiveVisibility && !targetVisibility) {
@@ -31,13 +36,16 @@ const Conditional = ({when, is, preserveValues, className = '', onExpanding = in
     onExpanding(() => setEffectiveVisibility(true))
   }
 
-  const mapRegister = item => item.validator ? ({
-    ...item,
-    validator: mixed().when(when, {is: is, then: item.validator})
-  }) : item;
+  const mapRegister = item => {
+    register(item);
+    return item.validator ? ({
+      ...item,
+      validator: mixed().when(when, {is: is, then: item.validator})
+    }) : item
+  };
 
   const mapDeregister = preserveValues ? undefined : item => {
-    deleteValue(item.name);
+    deregister(item);
     return item;
   }
 

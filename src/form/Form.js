@@ -1,4 +1,4 @@
-import React, { useReducer, useContext } from 'react'
+import React, { useState, useContext } from 'react'
 import FormContext from './FormContext';
 import makeUid from '../util/makeUid';
 import useInputRegistry from '../hooks/useInputRegistry';
@@ -10,24 +10,18 @@ import InputConfigurationContext from './InputConfigurationContext';
 const FormProvider = ({id, children}) => {
   const uid = id || makeUid()
   const [inputs, register, deregister] = useInputRegistry();
-  const [values, dispatch] = useReducer((v, a) => {
-      if (a.delete) {
-        deepDelete(v, a.name)
-      } else {
-        deepSet(v, a.name, a.value);
-      }
-      return {...v};
-  }, {})
   
+  // todo: make work with primitive form objects
+  const [values, setState] = useState({})
   const getValue = name => deepGet(values, name);
-  const deleteValue = name => dispatch({name, delete: true})
-  const setValue = (name, value) => dispatch({name, value})
+  const deleteValue = name => setState({...deepDelete(values, name)})
+  const setValue = (name, value) => setState({...deepSet(values, name, value)})
   
   return (
     <InputConfigurationContext.Provider value={{inputs, register, deregister}}>
       <FormContext.Provider value={{uid, values, setValue, getValue, deleteValue}}>
-          {children}
-          <Debug />
+        {children}
+        <Debug />
       </FormContext.Provider>
     </InputConfigurationContext.Provider>
   );

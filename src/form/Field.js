@@ -4,8 +4,8 @@ import InputConfigProvider from './InputConfigProvider';
 import InputConfigurationContext from './InputConfigurationContext';
 import { combineObjectPaths } from '../util/objectTraversal';
 
-const Inner = ({children, className}) => {
-  const { localInputs, register, deregister } = useContext(InputConfigurationContext);
+const Inner = ({children}) => {
+  const { register, deregister } = useContext(InputConfigurationContext);
   const { name } = useContext(FieldContext);
   
   useEffect(() => {
@@ -15,21 +15,17 @@ const Inner = ({children, className}) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [name])
 
-  const Tag = localInputs.length > 1 ? 'fieldset' 
-    : className ? 'div' : React.Fragment;
-  const props = Tag !== React.Fragment ? {className} : {}
-    
-  return <Tag {...props}>{children}</Tag>
+  return <>{children}</>
 }
 
-const Field = ({name, children, className, validator}) => {
+export const FieldProvider = ({name, children, validator}) => {
   const outer = useContext(FieldContext);
   const fullyQualifiedName = combineObjectPaths(outer && outer.name, name);
 
   return (
     <InputConfigProvider mapRegister={item => ({...item, validator: validator})} >
       <FieldContext.Provider value={{name: fullyQualifiedName}}>
-        <Inner className={className}>
+        <Inner>
           {children}
         </Inner>
       </FieldContext.Provider>
@@ -37,6 +33,25 @@ const Field = ({name, children, className, validator}) => {
   )
 }
 
+const FieldTag = ({className, tag, children}) => {
+  const { localInputs } = useContext(InputConfigurationContext);
+  
+  const Tag = !!tag ? tag 
+    : localInputs.length > 1 ? 'fieldset' 
+    : className ? 'div' : React.Fragment;
+    
+  const props = Tag !== React.Fragment ? {className} : {}
+
+  return (
+      <Tag {...props}>{children}</Tag>
+  );
+}
+
+const Field = ({className, tag, children, ...rest}) => (
+  <FieldProvider {...rest}>
+    <FieldTag tag={tag} className={className}>{children}</FieldTag>
+  </FieldProvider>
+)
 
 
 export default Field;
