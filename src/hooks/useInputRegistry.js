@@ -9,7 +9,7 @@ export default () => {
   // }
 
   const register = item => dispatch(s => [...s, item]);
-  const deregister = item => dispatch(s => s.filter(x => x!==item));
+  const deregister = item => dispatch(s => s.filter(x => x.name!==item.name));
 
   return [
     state,
