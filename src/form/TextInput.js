@@ -9,6 +9,9 @@ const TextInput = () => {
   // const { register, deregister } = useContext(InputConfigurationContext);
 
   const id = `${form.uid}-${name}`;
+  useEffect(() => {
+    form.setValue(name, form.getValue(name) || '')
+  },[])
 
   // useEffect(() => {
   //   const ref = {name};

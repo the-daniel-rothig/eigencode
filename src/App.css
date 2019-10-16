@@ -8,7 +8,7 @@ pre {
   background-color: #ccc;
 }
 
-.field, .conditional--flat {
+.field, .conditional--flat, .conditional .conditional {
   margin:1rem 0 0 0;
   padding: 0;
   border: none;
@@ -22,6 +22,13 @@ pre {
   margin: 0.2rem 0 0 0.2rem;
   padding: 0.4rem 0 0.3rem 1rem;
   border-left: solid 3px #bbb;
+}
+.multiple__item { 
+  margin-top: 0.7rem;
+  border: solid 1px #999;
+  padding: 1em;
+  width: 50%;
+  min-width: 300px;
 }
 
 label {

@@ -23,7 +23,7 @@ export const FieldProvider = ({name, children, validator}) => {
   const fullyQualifiedName = combineObjectPaths(outer && outer.name, name);
 
   return (
-    <InputConfigProvider mapRegister={item => ({...item, validator: validator})} >
+    <InputConfigProvider mapRegister={item => ({...item, validator: validator || item.validator})} >
       <FieldContext.Provider value={{name: fullyQualifiedName}}>
         <Inner>
           {children}

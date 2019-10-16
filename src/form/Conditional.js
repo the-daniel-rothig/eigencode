@@ -1,14 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import FormContext from './FormContext';
 import useFilteredContext from '../hooks/useFilteredContext';
 import { mixed } from 'yup';
 import InputConfigProvider from './InputConfigProvider';
 import useInputRegistry from '../hooks/useInputRegistry';
+import FieldContext from './FieldContext';
 
 const invokeCallback = cb => {cb();}
 
 const Conditional = ({when, is, preserveValues, onExpanding = invokeCallback, onCollapsing = invokeCallback, children}) => {
+  const fieldContext = useContext(FieldContext);
+  const saneOuterName = fieldContext ? fieldContext.name + "." : "";
   const saneWhen = Array.isArray(when) ? when : [when]
+  
   const saneIs = 
       typeof is === 'function' ? is 
     : Array.isArray(is)        ? (...vals) => is.filter((expected, i) => expected !== vals[i]).length > 0
@@ -17,7 +21,7 @@ const Conditional = ({when, is, preserveValues, onExpanding = invokeCallback, on
   const { getValue, deleteValue } = useFilteredContext(FormContext, 1)
   const [inputs, register, deregister] = useInputRegistry();
 
-  const vals = saneWhen.map(x => getValue(x));
+  const vals = saneWhen.map(x => getValue(saneOuterName + x));
   const shouldShow = saneIs(...vals);
 
   const [targetVisibility, setTargetVisibility] = useState(shouldShow);
@@ -38,10 +42,16 @@ const Conditional = ({when, is, preserveValues, onExpanding = invokeCallback, on
 
   const mapRegister = item => {
     register(item);
-    return item.validator ? ({
+    const localName = item.name.substring(saneOuterName.length);
+    console.log(!!item.validator, item.name, localName)
+    if (/[.[]/.test(localName) || !item.validator) {
+      return item;
+    }
+
+    return {
       ...item,
       validator: mixed().when(when, {is: is, then: item.validator})
-    }) : item
+    };
   };
 
   const mapDeregister = preserveValues ? undefined : item => {

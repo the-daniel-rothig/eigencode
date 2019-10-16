@@ -5,7 +5,7 @@ import useInputRegistry from '../hooks/useInputRegistry';
 import { deepSet, deepGet, deepDelete } from './../util/objectTraversal';
 import InputConfigurationContext from './InputConfigurationContext';
 
-//import { object } from 'yup';
+import { object, array } from 'yup';
 
 const FormProvider = ({id, children}) => {
   const uid = id || makeUid()
@@ -28,22 +28,53 @@ const FormProvider = ({id, children}) => {
 }
 
 const Debug = () => {
-  //const { inputs } = useContext(InputConfigurationContext);
+  const { inputs } = useContext(InputConfigurationContext);
   const { values } = useContext(FormContext);
 
-  // const shape = {};
-  // inputs.filter(i => i.validator).forEach(i => deepSet(shape, i.name, i.validator));
+  const shape = {};
+  inputs.filter(i => i.validator).map(i => ({
+    validator: i.validator,
+    path: i.name.replace(/\[[0-9]+\]/g, "[]").split(".").filter(Boolean)
+  })).forEach(({validator, path}) => {
+    let target = shape;
+    path.slice(0, -1).forEach(p => {
+      target[p] = target[p] || {};
+      target = target[p];
+    })
+    target[path[path.length -1]] = validator;
+  })
 
-  // const validationSchema = object().shape(shape);
+  const toSchema = obj => {
+    if (obj.__isYupSchema__) {
+      return obj;
+    }
+    const s = {}
+    Object.keys(obj).forEach(key => {
+      if (key.endsWith("[]")) {
+        s[key.slice(0, -2)] = array().of(toSchema(obj[key]));
+      } else {
+        s[key] = toSchema(obj[key])
+      }
+    })
 
-  // try {
-  //   validationSchema.validateSync(values);
-  // } catch(e) {
-  //   return (<pre>
-  //   {e.message}</pre>)
-  // }
+    return object().shape(s)
+  }
 
-  return (<pre>
+  const validationSchema = toSchema(shape);
+
+  console.log('schema', validationSchema)
+
+  let message = 'ok';
+
+  try {
+    validationSchema.validateSync(values);
+  } catch(e) {
+    message = e.message
+  }
+
+  return (<pre>{message}
+
+
     {JSON.stringify(values, null, '  ')}</pre>)
 }
 

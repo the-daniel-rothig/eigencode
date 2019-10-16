@@ -49,7 +49,7 @@ function App() {
         </Field>
         <Conditional when='likesAnimals' is='yes'>
           <Multiple name='animals'>
-            <Field name='animal'>
+            <Field name='animal' validator={string().required()}>
               <Label>Enter an animal name</Label>
               <TextInput />
             </Field>
@@ -62,8 +62,8 @@ function App() {
               <Radio value='yes'>Yes</Radio>
               <Radio value='no'>No</Radio>
             </Field>
-            <Conditional when='animals[0].hasPet' is='yes' flat>
-              <Field name='pet'>
+            <Conditional when='hasPet' is='yes'>
+              <Field name='pet' validator={string().required()}>
                 <Label>What's the name of your pet?</Label>
                 <TextInput />
               </Field>
