@@ -8,6 +8,11 @@ import FieldContext from './FieldContext';
 
 const invokeCallback = cb => {cb();}
 
+const nullFormContext = {
+  getValue: () => undefined,
+  deleteValue: () => {}
+}
+
 const Conditional = ({when, is, preserveValues, onExpanding = invokeCallback, onCollapsing = invokeCallback, children}) => {
   const fieldContext = useContext(FieldContext);
   const saneOuterName = fieldContext ? fieldContext.name + "." : "";
@@ -18,7 +23,7 @@ const Conditional = ({when, is, preserveValues, onExpanding = invokeCallback, on
     : Array.isArray(is)        ? (...vals) => is.filter((expected, i) => expected !== vals[i]).length > 0
     :                            (...vals) => vals[0] === is;
 
-  const { getValue, deleteValue } = useFilteredContext(FormContext, 1)
+  const { getValue, deleteValue } = useFilteredContext(FormContext, 1) || nullFormContext
   const [inputs, register, deregister] = useInputRegistry();
 
   const vals = saneWhen.map(x => getValue(x.startsWith("$") ? x.substring(1) : saneOuterName + x));

@@ -18,7 +18,7 @@ const Inner = ({children}) => {
   return <>{children}</>
 }
 
-export const FieldProvider = ({name, children, validator}) => {
+export const FieldProvider = ({name = "", children, validator}) => {
   if (name.startsWith("$")) {
     throw new Error(`Field name ${name} is not allowed: name must not start with "$"`)
   }

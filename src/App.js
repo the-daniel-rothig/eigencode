@@ -10,10 +10,9 @@ import { string } from 'yup';
 
 import './yup/extensions';
 import Multiple from './styled/Multiple';
+import getValidationSchema from './util/getValidationSchema';
 
-function App() {
-  return (
-    <div className="App">
+const ExampleForm = () => (
       <Form>
         <Field name='firstName' validator={string().required()}>
           <Label>First name</Label>
@@ -53,7 +52,7 @@ function App() {
               <Label>Enter an animal name</Label>
               <TextInput />
             </Field>
-            <Conditional when={['$firstName', 'animal']} is={(firstName, animal) => firstName === animal}>
+            <Conditional when={['$firstName', 'animal']} is={(firstName, animal) => !!firstName && firstName === animal}>
               Hey, that's you!
             </Conditional>
             <Field name='love' validator={string().required()}>
@@ -75,6 +74,16 @@ function App() {
         </Conditional>
 
       </Form>
+)
+
+function App() {
+  // const valSchema = getValidationSchema(
+  //   <ExampleForm />
+  // );
+  // debugger;
+  return (
+    <div className="App">
+      <ExampleForm />
     </div>
   );
 }

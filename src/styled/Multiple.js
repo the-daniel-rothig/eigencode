@@ -16,7 +16,6 @@ const SingleItem = ({children, remove}) => {
   )
 }
 
-
 const Multiple = (props) => {
   return (
     <div className='multiple'>
