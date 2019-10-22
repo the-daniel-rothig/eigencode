@@ -1,5 +1,5 @@
 import React from 'react';
-import {string} from 'yup';
+import {string,mixed} from 'yup';
 import getValidationSchema2 from './getValidationSchema2';
 import Field from '../form/Field';
 import Form from '../form/Form';
@@ -8,6 +8,8 @@ import Conditional from '../form/Conditional';
 import Multiple from '../form/Multiple';
 import Select from '../form/Select';
 import Radio from '../form/Radio';
+import EmailInput from '../form/EmailInput';
+import NumberInput from '../form/NumberInput';
 
 const myValidator = string().matches(/foo/)
 const expectPasses = (schema, val) => expect(schema.isValidSync(val, {context: val})).toBe(true);
@@ -159,11 +161,11 @@ it('doesnt require a Multiple instance even if min is set', () => {
 })
 
 it('works with nested fields', () => {
-  const req = string().required();
+  const req = mixed().required();
 
   const one = getValidationSchema2(<Field name="a"><Field name="b" validator={req} /></Field>)
   expectPasses(one, {a: {b: "foo"}})
-  expectFails(one, {})
+  expectFails(one, {a: {}})
 
   const two = getValidationSchema2(<Field><Field name="b" validator={req} /></Field>)
   expectPasses(two, {b: "foo"})
@@ -175,15 +177,15 @@ it('works with nested fields', () => {
 
   const four = getValidationSchema2(<Field><Field validator={req} /></Field>)
   expectPasses(four, "foo")
-  expectFails(four, "")
+  expectFails(four, null)
 
   const five = getValidationSchema2(<Field validator={req} name="a"><Field name="b" /></Field>)
   expectPasses(five, {a: {b: "foo"}})
   expectFails(five, {})
 
   const six = getValidationSchema2(<Field validator={req}><Field name="b" /></Field>)
-  expectPasses(six, "foo")
-  expectFails(six, "")
+expectPasses(six, {})
+  expectFails(six, null)
 
   const seven = getValidationSchema2(<Field validator={req} name="a"><Field /></Field>)
   expectPasses(seven, {a: "foo"})
@@ -191,7 +193,7 @@ it('works with nested fields', () => {
 
   const eight = getValidationSchema2(<Field validator={req}><Field /></Field>)
   expectPasses(eight, "foo")
-  expectFails(eight, "")
+  expectFails(eight, null)
 })
 
 it('uses Select values to filter allowed values', () => {
@@ -217,4 +219,52 @@ it('uses Radio values to filter allowed values', () => {
   expectPasses(schema, 'one')
   expectPasses(schema, 'two')
   expectFails(schema, 'three')
+})
+
+it('restricts fields to email if there is an EmailInput', () => {
+  const schema = getValidationSchema2(
+    <Field>
+      <EmailInput />
+    </Field>
+  )
+
+  expectPasses(schema, "daniel@example.com")
+  expectFails(schema, "danielexamplecom")
+})
+
+it('restricts fields to number if there is a NumberInput', () => {
+  const schema = getValidationSchema2(
+    <Field>
+      <NumberInput />
+    </Field>
+  )
+
+  expectPasses(schema, "42")
+  expectFails(schema, "foo")
+})
+
+it('doesnt tolerate unknown fields: root', () => {
+  const schema = getValidationSchema2(
+    <>
+      <Field name="one" validator={myValidator}/>
+      <Field name="two" />
+    </>
+  )
+
+  expectPasses(schema, {})
+  expectPasses(schema, {one: 'foo', two: 'bar'})
+  expectFails(schema, {one: 'foo', two: 'bar', three: 'baz'})
+})
+
+it('doesnt tolerate unknown fields: nested', () => {
+  const schema = getValidationSchema2(
+    <Field name="root">
+      <Field name="one" validator={myValidator}/>
+      <Field name="two" />
+    </Field>
+  )
+
+  expectPasses(schema, {root: {}})
+  expectPasses(schema, {root: {one: 'foo', two: 'bar'}})
+  expectFails(schema, {root: {one: 'foo', two: 'bar', three: 'baz'}})
 })

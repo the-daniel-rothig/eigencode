@@ -16,12 +16,15 @@ const Select = ({options}) => {
 
   const value = getValue(name) || '';
 
+  const saneOptions = options.map(opt => ({
+    value: typeof opt.value === "string" ? opt.value : typeof opt.label === "string" ? opt.label : opt.toString(),
+    label: typeof opt.label === "string" ? opt.label : opt.toString()
+  }))
+
   return (
     <select value={value} name={name} id={id} onChange={e => setValue(name, e.target.value)}>
-      {options.map(opt => (
-        <option value={typeof opt.value === "string" ? opt.value : typeof opt.label === "string" ? opt.label : opt}>
-          {typeof opt.label === "string" ? opt.label : opt}
-        </option>
+      {saneOptions.map(opt => (
+        <option key={opt.value} value={opt.value}>{opt.label}</option>
       ))}
     </select>
   )

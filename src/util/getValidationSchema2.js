@@ -1,5 +1,5 @@
 import React from 'react';
-import { object, array as yupArray, mixed } from 'yup';
+import { object, array as yupArray, mixed, string, number } from 'yup';
 import Form from './../form/Form';
 import Field from './../form/Field';
 import Multiple from './../form/Multiple';
@@ -8,6 +8,8 @@ import ReactDOMServer from 'react-dom/server';
 import { traverseWidthFirst, traverseDepthFirst } from './reactTraversal';
 import Select from '../form/Select';
 import Radio from '../form/Radio';
+import EmailInput from '../form/EmailInput';
+import NumberInput from '../form/NumberInput';
 
 
 /// [{"": string().required()}]
@@ -58,6 +60,10 @@ export default root => {
       if (element !== formRoot && element.type === Form) {
         // nested forms are ignored
         return {};
+      } else if (element.type === EmailInput) {
+        return { schema: string().email() }
+      } else if (element.type === NumberInput) {
+        return { schema: number() }
       } else if (element.type === Select) {
         const allowedValues = (element.props.options || []).map(opt => 
           typeof opt.value === "string" ? opt.value : typeof opt.label === "string" ? opt.label : opt);
@@ -67,8 +73,8 @@ export default root => {
         const allowedValues = [(element.props.value || element.props.children || "").toString()]
         return {allowedValues};
       } else if (element.type === Field) {
-        let combinedSchema =  schema && namedSchemas ? object().shape(namedSchemas).concat(schema) :
-                              namedSchemas ? object().shape(namedSchemas) :
+        let combinedSchema =  schema && namedSchemas ? object().shape(namedSchemas).noUnknown().strict().concat(schema) :
+                              namedSchemas ? object().shape(namedSchemas).noUnknown().strict() :
                               schema;
 
         let newSchema = element.props.validator && combinedSchema ? element.props.validator.concat(combinedSchema) :
@@ -78,7 +84,7 @@ export default root => {
                                       allowedValues ? mixed().oneOf(allowedValues) :
                                       newSchema;
         if (element.props.name) {
-          return {namedSchemas: {[element.props.name]: newSchemaWithWhitelist}}
+          return {namedSchemas: {[element.props.name]: newSchemaWithWhitelist || mixed()}}
         } else {
           return {schema: newSchemaWithWhitelist}
         }
@@ -87,8 +93,8 @@ export default root => {
           return {}
         }
         let newSchema = yupArray();
-        let combined =  schema && namedSchemas ? schema.concat(object(namedSchemas)) :
-                        namedSchemas ? object(namedSchemas) :
+        let combined =  schema && namedSchemas ? schema.concat(object().shape(namedSchemas).noUnknown().strict()) :
+                        namedSchemas ? object().shape(namedSchemas).noUnknown().strict() :
                         schema;
         if (combined) {
           newSchema = newSchema.of(combined)
@@ -140,8 +146,8 @@ export default root => {
   );
 
   const { allowedValues, namedSchemas, schema } = reduced;
-  const combined =  namedSchemas && schema ? schema.concat(object(namedSchemas)) :
-                    namedSchemas ? object(namedSchemas) :
+  const combined =  namedSchemas && schema ? schema.concat(object().shape(namedSchemas).noUnknown().strict()) :
+                    namedSchemas ? object().shape(namedSchemas).noUnknown().strict() :
                     schema;
 
   const combined1 = combined && allowedValues ? combined.oneOf(allowedValues) :
