@@ -67,10 +67,11 @@ it('works with lazy types', async () => {
   const res = await traverseDepthFirst(
     <React.Suspense>
       <Lazy greeting="Hello">everybody</Lazy>
+      <div> woo hoo</div>
     </React.Suspense>,
     ({array}) => array.join("")
   );
-  expect(res).toBe("Hello everybody");
+  expect(res).toBe("Hello everybody woo hoo");
 })
 
 it('works with portal types', () => {

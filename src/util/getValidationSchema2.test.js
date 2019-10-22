@@ -6,6 +6,8 @@ import Form from '../form/Form';
 import TextInput from '../form/TextInput';
 import Conditional from '../form/Conditional';
 import Multiple from '../form/Multiple';
+import Select from '../form/Select';
+import Radio from '../form/Radio';
 
 const myValidator = string().matches(/foo/)
 const expectPasses = (schema, val) => expect(schema.isValidSync(val, {context: val})).toBe(true);
@@ -190,4 +192,29 @@ it('works with nested fields', () => {
   const eight = getValidationSchema2(<Field validator={req}><Field /></Field>)
   expectPasses(eight, "foo")
   expectFails(eight, "")
+})
+
+it('uses Select values to filter allowed values', () => {
+  const schema = getValidationSchema2(
+    <Field>
+      <Select options={['one', 'two']} />
+    </Field>
+  )
+
+  expectPasses(schema, 'one')
+  expectPasses(schema, 'two')
+  expectFails(schema, 'three')
+})
+
+it('uses Radio values to filter allowed values', () => {
+  const schema = getValidationSchema2(
+    <Field>
+      <Radio value='one'>One</Radio>
+      <Radio value='two'>Two</Radio>
+    </Field>
+  )
+
+  expectPasses(schema, 'one')
+  expectPasses(schema, 'two')
+  expectFails(schema, 'three')
 })
