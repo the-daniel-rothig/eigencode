@@ -48,7 +48,6 @@ const Conditional = ({when, is, preserveValues, onExpanding = invokeCallback, on
   const mapRegister = item => {
     register(item);
     const localName = item.name.substring(saneOuterName.length);
-    console.log(!!item.validator, item.name, localName)
     if (/[.[]/.test(localName) || !item.validator) {
       return item;
     }

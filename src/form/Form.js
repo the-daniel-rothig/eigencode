@@ -7,12 +7,12 @@ import InputConfigurationContext from './InputConfigurationContext';
 
 import { object, array } from 'yup';
 
-const FormProvider = ({id, children}) => {
+const FormProvider = ({id, children, initialValues = {}}) => {
   const uid = id || makeUid()
   const [inputs, register, deregister] = useInputRegistry();
   
   // todo: make work with primitive form objects
-  const [values, setState] = useState({})
+  const [values, setState] = useState(initialValues)
   const getValue = name => deepGet(values, name);
   const deleteValue = name => setState({...deepDelete(values, name)})
   const setValue = (name, value) => setState({...deepSet(values, name, value)})
@@ -76,11 +76,11 @@ const Debug = () => {
     {JSON.stringify(values, null, '  ')}</pre>)
 }
 
-const Form = ({id, children}) => {
+const Form = ({id, children, initialValues}) => {
 
   return (
     <form id={id}>
-      <FormProvider>
+      <FormProvider initialValues={initialValues}>
         {children}
       </FormProvider>
     </form>

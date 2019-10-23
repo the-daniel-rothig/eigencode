@@ -19,8 +19,9 @@ const SingleItem = ({remove, children}) => {
 
 const Multiple = ({children, className, name, min=1, max, renderItem = SingleItem}) => {
   const outer = useContext(FormContext);
+  const setValue = outer ? outer.setValue : () => {}
 
-  const arr = outer.getValue(name) || [];
+  const arr = outer ? outer.getValue(name) : [] || [];
   const [uids, setUids]= useState(arr.map(() => makeUid()))
   
   const fieldContext = useContext(FieldContext);
@@ -28,7 +29,7 @@ const Multiple = ({children, className, name, min=1, max, renderItem = SingleIte
 
   useEffect(() => {
     if (min && arr.length < min) {
-      outer.setValue(
+      setValue(
         fullyQualifiedName,
         [...(new Array(min))].map((v, i) => arr[i] || null)
       )
@@ -40,14 +41,14 @@ const Multiple = ({children, className, name, min=1, max, renderItem = SingleIte
   const add = (e) => {
     e.preventDefault()
     uids.push(makeUid())
-    outer.setValue(fullyQualifiedName, [...arr, null]);
+    setValue(fullyQualifiedName, [...arr, null]);
   }
 
   const removeAt = idx => e => {
     //e.preventDefault()
     console.log('remove idx = '+idx)
     uids.splice(idx, 1);
-    outer.deleteValue(`${fullyQualifiedName}[${idx}]`);
+    deleteValue(`${fullyQualifiedName}[${idx}]`);
   }
 
   const RenderItem = renderItem;

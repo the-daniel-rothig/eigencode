@@ -87,7 +87,7 @@ function processChild({child, contextStack, traverse}) {
 
   const mapToResult = (children, mappingContextStack) => {
     const array = React.Children.toArray(children);
-    const res = array.map(innerChild => saneTraverse(innerChild, mappingContextStack));
+    const res = array.map((innerChild, i) => saneTraverse(innerChild, mappingContextStack, i));
     return res;
   }
 
@@ -137,8 +137,8 @@ function processChild({child, contextStack, traverse}) {
   }
 }
 
-const makeTraverseFunction = reduce => {
-  const traverse = (element, contextStack) => {
+const makeTraverseFunction = (reduce, root) => {
+  const traverse = (element, contextStack, siblingIndex) => {
     if (!element) { 
       return null;
     }
@@ -147,9 +147,9 @@ const makeTraverseFunction = reduce => {
     }
     const array = processChild({child: element, traverse, contextStack})
     if (array.filter(x => x && typeof x.then === "function").length > 0) {
-      return Promise.all(array).then(arr => reduce({array: arr, element}))
+      return Promise.all(array).then(arr => reduce({array: arr, element, root, siblingIndex}))
     } else {
-      return reduce({array, element})
+      return reduce({array, element, root, siblingIndex})
     }
   }
 
@@ -160,8 +160,8 @@ export const traverseDepthFirst = (
   child, 
   reduceChildrenArray 
 ) => {
-  const saneReduceChildrenArray = reduceChildrenArray || (({array, element}) => array);
-  const traverse = makeTraverseFunction(saneReduceChildrenArray);
+  const saneReduceChildrenArray = reduceChildrenArray || (({array}) => array);
+  const traverse = makeTraverseFunction(saneReduceChildrenArray, child);
   return traverse(child, []);
 }
 
