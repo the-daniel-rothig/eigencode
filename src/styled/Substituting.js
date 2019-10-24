@@ -6,6 +6,10 @@ const shouldConstruct = (Component) => {
   return Component && Component.prototype && Component.prototype.isReactComponent;
 }
 
+const REACT___shouldSetTextContent = (type, props) => {
+  return type === 'textarea' || type === 'option' || type === 'noscript' || typeof props.children === 'string' || typeof props.children === 'number' || typeof props.dangerouslySetInnerHTML === 'object' && props.dangerouslySetInnerHTML !== null && props.dangerouslySetInnerHTML.__html != null;
+}
+
 const getSymbol = element => {
   const elementString = 
     (element && element.type && element.type.$$typeof && element.type.$$typeof.toString()) || 
@@ -120,10 +124,24 @@ const makeElementMapper = mapElement => (childElement, memo, siblingIndex, sibli
         doMapElement(mapElement, null, mappedMemo)
         return mapped;
       }
+      if(REACT___shouldSetTextContent(mapped.type, mapped.props)) {
+        // react will not actually evaluate children of some nodes (as an optimisation),
+        // so call mapElement directly here. 
+        const [child] = doMapElement(mapElement, mapped.props.children, mappedMemo);
+        return React.cloneElement(mapped, {children: child});
+      }
       
       return React.cloneElement(mapped, {children: (
         <Substituting mapElement={mapElement} memo={mappedMemo}>{mapped.props.children}</Substituting>
       )})
+    }
+
+    if (getSymbol(mapped) === "context") {
+      const LegacyContextAdapter = () => {
+        const context = React.useContext(mapped.type._context);
+        return <Substituting mapElement={mapElement} memo={mappedMemo}>{mapped.props.children(context)}</Substituting>
+      }
+      return <LegacyContextAdapter />
     }
 
     if (getSymbol(mapped) === "portal") {

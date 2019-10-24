@@ -234,7 +234,7 @@ const makeTraverseFunction = (reduce, root) => {
 
 export const traverseDepthFirst = (
   child, 
-  reduceChildrenArray 
+  reduceChildrenArray
 ) => {
   const saneReduceChildrenArray = reduceChildrenArray || (({array}) => array);
   const traverse = makeTraverseFunction(saneReduceChildrenArray, child);
@@ -245,10 +245,13 @@ export const traverseWidthFirst = (
   element,
   handleElement
 ) => {
+  const logOnce = makeLogOnce();
   const queue = [{
     child: element,
-    contextStack: []
+    contextStack: [],
+    logOnce
   }];
+
 
   while (queue.length > 0) {
     // todo: give a nicer interface with the element type pre-processed
@@ -264,7 +267,8 @@ export const traverseWidthFirst = (
       newFrames.forEach(newFrame => {
         queue.push({
           child: newFrame[0],
-          contextStack: newFrame[1]
+          contextStack: newFrame[1],
+          logOnce
         })
       });
     }

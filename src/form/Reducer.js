@@ -39,9 +39,14 @@ const Reducer = ({children, reduce, onFinish}) => {
     [onFinish]
   );
 
+  // we want to flush when Reducer has mounted, but in the next render cycle
+  // so wrap the debounce flush in a SECOND debounce, but with a shorter timeout
+  const flushDebounce = React.useCallback(
+    debounce(() => debouncedOnFinish.flush(), 0, {leading: false})
+  )
+
   React.useEffect(() => {
-    debouncedOnFinish.flush()
-    return () => debouncedOnFinish.flush()
+    flushDebounce();
   })
 
   const map = mapElement(reduce, debouncedOnFinish);

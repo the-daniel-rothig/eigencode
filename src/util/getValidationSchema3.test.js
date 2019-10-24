@@ -287,50 +287,69 @@ it('uses Radio values to filter allowed values', (done) => {
   }
 })
 
-it('restricts fields to email if there is an EmailInput', () => {
-  const schema = getValidationSchema2(
+it('restricts fields to email if there is an EmailInput', (done) => {
+  render(
+    <GetValidationSchema onFinish={assert}>
     <Field>
       <EmailInput />
     </Field>
+    </GetValidationSchema>
   )
 
-  expectPasses(schema, "daniel@example.com")
-  expectFails(schema, "danielexamplecom")
+  function assert(schema) {  
+    expectPasses(schema, "daniel@example.com")
+    expectFails(schema, "danielexamplecom")
+    done()
+  }
 })
 
-it('restricts fields to number if there is a NumberInput', () => {
-  const schema = getValidationSchema2(
-    <Field>
-      <NumberInput />
-    </Field>
+it('restricts fields to number if there is a NumberInput', (done) => {
+  render(
+    <GetValidationSchema onFinish={assert}>
+      <Field>
+        <NumberInput />
+      </Field>
+    </GetValidationSchema>
   )
 
-  expectPasses(schema, "42")
-  expectFails(schema, "foo")
+  function assert(schema) {  
+    expectPasses(schema, "42")
+    expectFails(schema, "foo")
+    done()
+  }
 })
 
-it('doesnt tolerate unknown fields: root', () => {
-  const schema = getValidationSchema2(
-    <>
+it('doesnt tolerate unknown fields: root', (done) => {
+  render(
+    <GetValidationSchema onFinish={assert}>
       <Field name="one" validator={myValidator}/>
       <Field name="two" />
-    </>
+    </GetValidationSchema>
   )
 
-  expectPasses(schema, {})
-  expectPasses(schema, {one: 'foo', two: 'bar'})
-  expectFails(schema, {one: 'foo', two: 'bar', three: 'baz'})
+  function assert(schema) {
+    expectPasses(schema, {})
+    expectPasses(schema, {one: 'foo', two: 'bar'})
+    expectFails(schema, {one: 'foo', two: 'bar', three: 'baz'})
+    done()
+  }
 })
 
-it('doesnt tolerate unknown fields: nested', () => {
-  const schema = getValidationSchema2(
-    <Field name="root">
-      <Field name="one" validator={myValidator}/>
-      <Field name="two" />
-    </Field>
+
+it('doesnt tolerate unknown fields: nested', (done) => {
+  render(
+    <GetValidationSchema onFinish={assert}>
+      <Field name="root">
+        <Field name="one" validator={myValidator}/>
+        <Field name="two" />
+      </Field>
+    </GetValidationSchema>
   )
 
-  expectPasses(schema, {root: {}})
-  expectPasses(schema, {root: {one: 'foo', two: 'bar'}})
-  expectFails(schema, {root: {one: 'foo', two: 'bar', three: 'baz'}})
+  function assert(schema) {
+    expectPasses(schema, {root: {}})
+    expectPasses(schema, {root: {one: 'foo', two: 'bar'}})
+    expectFails(schema, {root: {one: 'foo', two: 'bar', three: 'baz'}})
+    done()
+  }
 })
