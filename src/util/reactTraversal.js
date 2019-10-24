@@ -6,10 +6,20 @@ import Multiple from '../form/Multiple';
 
 // cooking with gas!
 const { ReactCurrentDispatcher } = React.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
-const originalDispatcher = ReactCurrentDispatcher.current;
 
-const notImplemented = (name) => () => {
-  //console.warn(`WARNING: use of ${name} has not been implemented for traversal and its effects will be ignored.`)
+const makeLogOnce = () => {
+  const messages = [];
+  const res = (message, level = 'warn') => {
+    if (!messages.includes(message)) {
+      messages.push(message);
+      console[level](message);
+    }  
+  }
+  return res;
+}
+
+const notImplemented = (name) => {
+  return `WARNING: use of ${name} is not supported for static traversal, and its effects will be ignored.`
 }
 
 const notSupported = (name) => {
@@ -41,29 +51,74 @@ const getContext = (contextStack, ctx) => {
 
 const passThrough = x => x
 
-const makeFakeDispatcher = (contextStack) => ({
-  readContext: ctx => getContext(contextStack, ctx),
-  useCallback: passThrough,
-  useContext: ctx => getContext(contextStack, ctx),
-  useEffect: notImplemented('useEffect'),
-  useImperativeHandle: notImplemented('useImperativeHandle'),
-  useLayoutEffect: notImplemented('useLayoutEffect'),
-  useMemo: passThrough,
-  useReducer: x => [x, () => {}],
-  useRef: passThrough,
-  useState: x => [x, () => {}],
-  useDebugValue: notImplemented('useDebugValue'),
-  useResponder: notImplemented('useResponder'),
-});
+const makeFakeDispatcher = (contextStack, logOnce) => {
+  const rebuild = { rebuild: false };
+  const _rebuild = (r) => {
+    if (r !== undefined) {
+      rebuild.current = !!r;
+    }
+
+    return rebuild.current;
+  }
+
+  const stateStack = [];
+  const stateIndex = { current: -1 };
+  const _rewind = () => {
+    stateIndex.current = -1;
+    _rebuild(false);
+  }
+
+  const registerState = (x, getNextState) => {
+    stateIndex.current = stateIndex.current+1;
+    const idx = stateIndex.current;
+    if (stateStack.length - 1  < idx) {
+      stateStack.push(x);
+    }
+    const val = stateStack[idx];
+    const setVal = (...args) => {
+      const y = getNextState(stateStack[idx], ...args)
+      if (stateStack[idx] === y) {
+        return;
+      }
+      stateStack[idx] = y;
+      _rebuild(true);
+    }
+    return [val, setVal];
+  }
+
+  return {
+    readContext: ctx => getContext(contextStack, ctx),
+    useCallback: passThrough,
+    useContext: ctx => getContext(contextStack, ctx),
+    useEffect: () => logOnce(notImplemented('useEffect')),
+    useImperativeHandle: () => logOnce(notImplemented('useImperativeHandle')),
+    useLayoutEffect: () => logOnce(notImplemented('useLayoutEffect')),
+    useMemo: passThrough,
+    useReducer: (reducer, initialState) => registerState(initialState, reducer),
+    useRef: (initial) => {
+      const ref = {current: initial};
+      return ref;
+    },
+    useState: x => registerState(x, (oldState, newState) => newState),
+    useDebugValue: () => logOnce(notImplemented('useDebugValue')),
+    useResponder: () => logOnce(notImplemented('useResponder')),
+    useDeferredValue: () => logOnce(notImplemented('useDeferredValue')),
+    useTransition: () => logOnce(notImplemented('useTransition')),
+    _rebuild,
+    _rewind
+  };
+}
 
 // SYNC ONLY!
-const usingFakeDispatcher = (contextStack, cb) => {
-  ReactCurrentDispatcher.current = makeFakeDispatcher(contextStack);
+const usingFakeDispatcher = (contextStack, logOnce, cb) => {
+  const fake = makeFakeDispatcher(contextStack, logOnce)
+  const original = ReactCurrentDispatcher.current;
+  ReactCurrentDispatcher.current = fake;
   try {
-    return cb();
+    return cb(fake);
   }
   finally {
-    ReactCurrentDispatcher.current = originalDispatcher;
+    ReactCurrentDispatcher.current = original;
   }
 }
 
@@ -80,7 +135,7 @@ const opaqueTypes = {
   ]
 }
 
-function processChild({child, contextStack, traverse}) {
+function processChild({child, contextStack, traverse, logOnce}) {
   const saneTraverse = traverse || ((...args) => {
     return args
   });
@@ -128,16 +183,37 @@ function processChild({child, contextStack, traverse}) {
   if (shouldConstruct(child.type)) {
     if (!!child.type.contextTypes) notSupported(`contextTypes properties on classes like ${child.type.name}`)
     if (!!child.type.childContextTypes) notSupported(`childContextTypes properties on classes like ${child.type.name}`)
+
+    const { inst, isUpdateRequired, doUpdate } = makeClassInstance(child, getContext(contextStack, child.type.contextType));
+    if (inst.shouldComponentUpdate) {
+      logOnce(notImplemented('shouldComponentUpdate'))
+    }
+    let traversed = undefined;
+    do {
+      doUpdate();
+      const inner = inst.render();
+      traversed = saneTraverse(inner, contextStack)
+    } while (isUpdateRequired())
     
-    const inst = makeClassInstance(child, getContext(contextStack, child.type.contextType));
-    return [saneTraverse(inst, contextStack)];
+    return [traversed];
   } else {
-    let inner = usingFakeDispatcher(contextStack, () => child.type(child.props));
-    return [saneTraverse(inner, contextStack)];
+    let res = usingFakeDispatcher(contextStack, logOnce, (dispatcher) => {
+      let traversed = undefined;
+      do {
+        dispatcher._rewind();
+        const inner = child.type(child.props)
+        traversed = saneTraverse(inner, contextStack)
+      } while(dispatcher._rebuild())
+
+      return [traversed];
+    });
+    return res;
+    //return [saneTraverse(inner, contextStack)];
   }
 }
 
 const makeTraverseFunction = (reduce, root) => {
+  const logOnce = makeLogOnce()
   const traverse = (element, contextStack, siblingIndex) => {
     if (!element) { 
       return null;
@@ -145,7 +221,7 @@ const makeTraverseFunction = (reduce, root) => {
     if (typeof element === "string" || typeof element === "number") {
       return element;
     }
-    const array = processChild({child: element, traverse, contextStack})
+    const array = processChild({child: element, traverse, contextStack, logOnce})
     if (array.filter(x => x && typeof x.then === "function").length > 0) {
       return Promise.all(array).then(arr => reduce({array: arr, element, root, siblingIndex}))
     } else {

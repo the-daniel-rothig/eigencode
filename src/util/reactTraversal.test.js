@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useReducer } from 'react';
 import ReactDOM from 'react-dom';
 import { traverseDepthFirst, traverseWidthFirst } from './reactTraversal';
 
@@ -156,4 +156,215 @@ it('can be used to find an element, stopping the search then', () => {
   );
 
   expect(summary).toBe('success')
+})
+
+it('flushes initial state changes', () => {
+  const Comp = () => {
+    const [state, setState] = useState('before');
+    if (state !== 'after') {
+      setState('after');
+    }
+
+    return <div>{state}</div>
+  }
+
+  expectTextContent(<Comp />).toBe('after');
+})
+
+it('flushes nested state changes', () => {
+  const Inner = ({setState}) => {
+    setState('after');
+    return null;
+  }
+  const Outer = () => {
+    const [state, setState] = useState('before');
+    return (
+      <div>
+        <div>
+          <Inner setState={setState} />
+          <div>{state}</div>
+        </div>
+      </div>
+    )
+  }
+
+  expectTextContent(<Outer />).toBe('after');
+})
+
+it('flushes initial state changes: reducers', () => {
+  const Comp = () => {
+    const [state, dispatcher] = useReducer((s, action) => action, 'before');
+    if (state !== 'after') {
+      dispatcher('after');
+    }
+
+    return <div>{state}</div>
+  }
+
+  expectTextContent(<Comp />).toBe('after');
+})
+
+
+it('flushes nested state changes: reducers', () => {
+  const Inner = ({setState}) => {
+    setState('after');
+    return null;
+  }
+  const Outer = () => {
+    const [state, setState] = useReducer((s, action) => action, 'before');
+    return (
+      <div>
+        <div>
+          <Inner setState={setState} />
+          <div>{state}</div>
+        </div>
+      </div>
+    )
+  }
+
+  expectTextContent(<Outer />).toBe('after');
+})
+
+it('warns against ignored hooks... but only once', () => {
+  global.console.warn = jest.fn();
+  const Comp = () => {
+    React.useEffect();
+    React.useImperativeHandle();
+    React.useLayoutEffect();
+    React.useDebugValue();
+    return <div>done</div>
+  }
+
+  expectTextContent(<><Comp /><Comp /><Comp /></>).toBe('done done done');
+  expect(global.console.warn).toHaveBeenCalledWith('WARNING: use of useEffect is not supported for static traversal, and its effects will be ignored.')
+  expect(global.console.warn).toHaveBeenCalledWith('WARNING: use of useImperativeHandle is not supported for static traversal, and its effects will be ignored.')
+  expect(global.console.warn).toHaveBeenCalledWith('WARNING: use of useLayoutEffect is not supported for static traversal, and its effects will be ignored.')
+  expect(global.console.warn).toHaveBeenCalledWith('WARNING: use of useDebugValue is not supported for static traversal, and its effects will be ignored.')
+  
+  expect(global.console.warn).toHaveBeenCalledTimes(4);
+
+})
+
+it('flushes initial state changes on class types', () => {
+  class Comp extends React.Component {
+    constructor() {
+      super()
+      this.state = {val: 'before'}
+    }
+
+    update() {
+      this.setState({val: 'after'})
+    }
+
+    render() {
+      if (this.state.val !== 'after') {
+        this.update();
+    }
+      return <div>{this.state.val}</div>
+    }
+  }
+
+  expectTextContent(<Comp />).toBe('after')
+})
+
+it('flushes nested state changes on class types', () => {
+  const Inner = ({update}) => {
+    update();
+    return <span>inner</span>;
+  }
+  
+  class Comp extends React.Component {
+    constructor() {
+      super()
+      this.state = {val: 'before'}
+    }
+
+    update() {
+      if (this.state.val !== 'after') {
+        this.setState({val: 'after'})
+      }
+    }
+
+    render() {
+      return <div><Inner update={() => this.update()} />{this.state.val}</div>
+    }
+  }
+
+  expectTextContent(<Comp />).toBe('inner after')
+})
+
+it('actions forceUpdate() calls', () => {
+  class Comp extends React.Component {
+    constructor() {
+      super()
+      this.state = {val: 'before'}
+    }
+
+    update() {
+      if (this.state.val !== 'after') {
+        this.state = {val: 'after'}
+        this.forceUpdate();
+      }
+    }
+
+    render() {
+      const inner = <div>{this.state.val}</div>
+      this.update();
+      return inner;
+    }
+  }
+
+  expectTextContent(<Comp />).toBe('after')
+})
+
+it('calls lifecycle functions', () => {
+  const call = jest.fn()
+  const dontCall = jest.fn();
+
+  class Comp extends React.Component {
+    constructor() {
+      super()
+    }
+
+    componentWillMount() {
+      call();
+    }
+
+    UNSAFE_componentWillMount() {
+      call();
+    }
+
+    componentDidMount() {
+      dontCall();
+    }
+
+    render() {
+      return <div>done</div>
+    }
+  }
+
+  expectTextContent(<Comp />).toBe('done');
+  expect(call).toHaveBeenCalledTimes(2);
+  expect(dontCall).not.toHaveBeenCalled();
+})
+
+it('warns against shouldComponentUpdate being ignored... but only once', () => {
+  global.console.warn = jest.fn();
+  class Comp extends React.Component {
+    constructor() {
+      super()
+    }
+
+    shouldComponentUpdate() {
+      return true;
+    }
+
+    render() {
+      return <div>done</div>
+    }
+  }
+
+  expectTextContent(<><Comp /><Comp /><Comp /></>).toBe('done done done');
+  expect(global.console.warn).toHaveBeenCalledTimes(1)
+  expect(global.console.warn).toHaveBeenCalledWith('WARNING: use of shouldComponentUpdate is not supported for static traversal, and its effects will be ignored.')
 })
