@@ -25,6 +25,14 @@ it('doesnt explode', () => {
 })
 
 it('lets me extract text', () => {
+  const expectedValue = 
+`One two. Three
+FourFive .
+Six
+Seven
+Eight
+.`;
+
   render(
     <Reducer reduce={extractText} onFinish={assertResult}>
       <div>
@@ -44,7 +52,26 @@ it('lets me extract text', () => {
     </Reducer>
   )
 
+
   function assertResult(res) {
-    expect(res.value).toBe("One two. Three FourFive . Six Seven Eight .")
+    expect(res.value).toBe(expectedValue)
+  }
+})
+
+it('resolves with empty tags', (done) => {
+  render(
+    <Reducer reduce={extractText} onFinish={assertResult}>
+      <div>
+        <span>Hello</span>
+        <br />
+        <span>World.</span>
+      </div>
+    </Reducer>
+  )
+  function assertResult(res) {
+    expect(res.value).toBe(
+`Hello
+World.`);
+    done();
   }
 })

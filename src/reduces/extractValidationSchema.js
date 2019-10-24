@@ -38,6 +38,9 @@ const combineObjects = arrayOfObjectsAndUndefineds => {
 export default ({array, element, root}) => {
   const {schema, namedSchemas, allowedValues} = combineObjects(array);
 
+  if (element === null || element === undefined) {
+    return {};
+  }
   if (element !== root && element.type === Form) {
     // nested forms are ignored
     return {};

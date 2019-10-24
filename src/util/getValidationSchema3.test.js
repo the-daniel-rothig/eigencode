@@ -16,35 +16,35 @@ const myValidator = string().matches(/foo/)
 const expectPasses = (schema, val) => expect(schema.isValidSync(val, {context: val})).toBe(true);
 const expectFails = (schema, val) => expect(schema.isValidSync(val, {context: val})).toBe(false);
 
-// it('works on a simple field', (done) => {
-//   render(
-//     <GetValidationSchema onFinish={assert}>
-//       <Field validator={myValidator} />
-//     </GetValidationSchema>
-//   )
+it('works on a simple field', (done) => {
+  render(
+    <GetValidationSchema onFinish={assert}>
+      <Field validator={myValidator} />
+    </GetValidationSchema>
+  )
 
-//   function assert(schema) {
-//     expectPasses(schema, "foo");
-//     expectFails(schema, "bar");
-//     done()
-//   }
-// })
+  function assert(schema) {
+    expectPasses(schema, "foo");
+    expectFails(schema, "bar");
+    done()
+  }
+})
 
-// it('works with two named fields', (done) => {
-//   render(
-//     <GetValidationSchema onFinish={assert}>
-//       <Field name='one' validator={myValidator} />
-//       <Field name='two' validator={myValidator} />
-//     </GetValidationSchema>
-//   )
+it('works with two named fields', (done) => {
+  render(
+    <GetValidationSchema onFinish={assert}>
+      <Field name='one' validator={myValidator} />
+      <Field name='two' validator={myValidator} />
+    </GetValidationSchema>
+  )
 
-//   function assert(schema) {
-//     expectPasses(schema, {one: 'foo', two: 'foo'})
-//     expectFails(schema, {one: 'foo', two: 'bar'});
-//     done()
-//   }
+  function assert(schema) {
+    expectPasses(schema, {one: 'foo', two: 'foo'})
+    expectFails(schema, {one: 'foo', two: 'bar'});
+    done()
+  }
 
-// })
+})
 
 const setup1 = (initialValues, onFinish) => render( 
   <Form initialValues={initialValues}>
@@ -75,7 +75,7 @@ it('works with named Field in Conditional', async () => {
     }
   ))
 })
-/*
+
 it('works with Multiple', (done) => {
   render(
     <GetValidationSchema onFinish={assert}>
@@ -149,112 +149,142 @@ it('works with named Field in Conditional in Multiple', () => {
   expectFails(schema,  {solo: 'foobar', multi: [{a: 'bar', b: 'bar', c: 'foo'}]})
   expectPasses(schema, {solo: 'foobar', multi: [{a: 'foo', b: 'foo', c: 'foo'}]})
 })
-/*
-it('works with unnamed Field in unnamed Multiple', () => {
-  const schema = getValidationSchema2(
-    <Multiple>
-      <Field validator={myValidator} />
-    </Multiple>
+*/
+it('works with unnamed Field in unnamed Multiple', (done) => {
+  render(
+    <GetValidationSchema onFinish={assert}>
+      <Multiple>
+        <Field validator={myValidator} />
+      </Multiple>
+    </GetValidationSchema>
   )
 
-  expectPasses(schema, ['foo'])
-  expectPasses(schema, ['foo', 'foo'])
-  expectFails(schema, ['foo', 'bar'])
+  function assert(schema) {
+    expectPasses(schema, ['foo'])
+    expectPasses(schema, ['foo', 'foo'])
+    expectFails(schema, ['foo', 'bar'])
+    done()
+  }
 })
 
-it('respects min setting of Multiple', () => {
-  const schema = getValidationSchema2(
-    <Multiple min={2}>
-      <Field validator={myValidator} />
-    </Multiple>
+it('respects min setting of Multiple', (done) => {
+  render(
+    <GetValidationSchema onFinish={assert}>
+      <Multiple min={2}>
+        <Field validator={myValidator} />
+      </Multiple>
+    </GetValidationSchema>
   )
 
-  expectFails(schema, [])
-  expectFails(schema, ["foo"])
-  expectPasses(schema, ["foo", "foo"])
-  expectFails(schema, ["foo", "bar"])
-  expectPasses(schema, ['foo', 'foo'])
+  function assert(schema) {
+    expectFails(schema, [])
+    expectFails(schema, ["foo"])
+    expectPasses(schema, ["foo", "foo"])
+    expectFails(schema, ["foo", "bar"])
+    expectPasses(schema, ['foo', 'foo'])
+    done()
+  }
 })
 
-it('respects max setting of Multiple', () => {
-  const schema = getValidationSchema2(
-    <Multiple max={2}>
-      <Field validator={myValidator} />
-    </Multiple>
+it('respects max setting of Multiple', (done) => {
+  render(
+    <GetValidationSchema onFinish={assert}>
+      <Multiple max={2}>
+        <Field validator={myValidator} />
+      </Multiple>
+    </GetValidationSchema>
   )
 
-  expectPasses(schema, ["foo"])
-  expectPasses(schema, ["foo", "foo"])
-  expectFails(schema, ["foo", "foo", "foo"])
+  function assert(schema) {
+    expectPasses(schema, ["foo"])
+    expectPasses(schema, ["foo", "foo"])
+    expectFails(schema, ["foo", "foo", "foo"])
+    done()
+  }
 })
 
-it('doesnt require a Multiple instance even if min is set', () => {
-  const schema = getValidationSchema2(
-    <Multiple name="multi" min={2} />
+it('doesnt require a Multiple instance even if min is set', (done) => {
+  render(
+    <GetValidationSchema onFinish={assert}>
+      <Multiple name="multi" min={2} />
+    </GetValidationSchema>
   )
 
-  expectPasses(schema, {})
+  function assert(schema) {
+    expectPasses(schema, {})
+    done()
+  }
 })
 
-it('works with nested fields', () => {
-  const req = mixed().required();
+// it('works with nested fields', () => {
+//   const req = mixed().required();
 
-  const one = getValidationSchema2(<Field name="a"><Field name="b" validator={req} /></Field>)
-  expectPasses(one, {a: {b: "foo"}})
-  expectFails(one, {a: {}})
+//   const one = getValidationSchema2(<Field name="a"><Field name="b" validator={req} /></Field>)
+//   expectPasses(one, {a: {b: "foo"}})
+//   expectFails(one, {a: {}})
 
-  const two = getValidationSchema2(<Field><Field name="b" validator={req} /></Field>)
-  expectPasses(two, {b: "foo"})
-  expectFails(two, {})
+//   const two = getValidationSchema2(<Field><Field name="b" validator={req} /></Field>)
+//   expectPasses(two, {b: "foo"})
+//   expectFails(two, {})
 
-  const three = getValidationSchema2(<Field name="a"><Field validator={req} /></Field>)
-  expectPasses(three, {a: "foo"})
-  expectFails(three, {})
+//   const three = getValidationSchema2(<Field name="a"><Field validator={req} /></Field>)
+//   expectPasses(three, {a: "foo"})
+//   expectFails(three, {})
 
-  const four = getValidationSchema2(<Field><Field validator={req} /></Field>)
-  expectPasses(four, "foo")
-  expectFails(four, null)
+//   const four = getValidationSchema2(<Field><Field validator={req} /></Field>)
+//   expectPasses(four, "foo")
+//   expectFails(four, null)
 
-  const five = getValidationSchema2(<Field validator={req} name="a"><Field name="b" /></Field>)
-  expectPasses(five, {a: {b: "foo"}})
-  expectFails(five, {})
+//   const five = getValidationSchema2(<Field validator={req} name="a"><Field name="b" /></Field>)
+//   expectPasses(five, {a: {b: "foo"}})
+//   expectFails(five, {})
 
-  const six = getValidationSchema2(<Field validator={req}><Field name="b" /></Field>)
-expectPasses(six, {})
-  expectFails(six, null)
+//   const six = getValidationSchema2(<Field validator={req}><Field name="b" /></Field>)
+// expectPasses(six, {})
+//   expectFails(six, null)
 
-  const seven = getValidationSchema2(<Field validator={req} name="a"><Field /></Field>)
-  expectPasses(seven, {a: "foo"})
-  expectFails(seven, {})
+//   const seven = getValidationSchema2(<Field validator={req} name="a"><Field /></Field>)
+//   expectPasses(seven, {a: "foo"})
+//   expectFails(seven, {})
 
-  const eight = getValidationSchema2(<Field validator={req}><Field /></Field>)
-  expectPasses(eight, "foo")
-  expectFails(eight, null)
-})
+//   const eight = getValidationSchema2(<Field validator={req}><Field /></Field>)
+//   expectPasses(eight, "foo")
+//   expectFails(eight, null)
+// })
 
-it('uses Select values to filter allowed values', () => {
-  const schema = getValidationSchema2(
-    <Field>
-      <Select options={['one', 'two']} />
-    </Field>
+it('uses Select values to filter allowed values', (done) => {
+  render(
+    <GetValidationSchema onFinish={assert}>
+      <Field>
+        <Select options={['one', 'two']} />
+      </Field>
+    </GetValidationSchema>
   )
 
-  expectPasses(schema, 'one')
-  expectPasses(schema, 'two')
-  expectFails(schema, 'three')
+  function assert(schema) {  
+    expectPasses(schema, 'one')
+    expectPasses(schema, 'two')
+    expectFails(schema, 'three')
+    done()
+  }
 })
 
-it('uses Radio values to filter allowed values', () => {
-  const schema = getValidationSchema2(
-    <Field>
-      <Radio value='one'>One</Radio>
-      <Radio value='two'>Two</Radio>
-    </Field>
+it('uses Radio values to filter allowed values', (done) => {
+  render(
+    <GetValidationSchema onFinish={assert}>
+      <Field>
+        <Radio value='one'>One</Radio>
+        <Radio value='two'>Two</Radio>
+      </Field>
+    </GetValidationSchema>
   )
 
-  expectPasses(schema, 'one')
-  expectPasses(schema, 'two')
-  expectFails(schema, 'three')
+  function assert(schema) {  
+    expectPasses(schema, 'one')
+    expectPasses(schema, 'two')
+    expectFails(schema, 'three')
+    done()
+  }
 })
 
 it('restricts fields to email if there is an EmailInput', () => {
@@ -303,4 +333,4 @@ it('doesnt tolerate unknown fields: nested', () => {
   expectPasses(schema, {root: {}})
   expectPasses(schema, {root: {one: 'foo', two: 'bar'}})
   expectFails(schema, {root: {one: 'foo', two: 'bar', three: 'baz'}})
-})*/
+})

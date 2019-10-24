@@ -134,7 +134,7 @@ it('works with dynamic updates', () =>{
   expect(getByText('myElement').outerHTML).toBe("<span>myElement</span>")
 })
 
-it('works with dynamic updates: clases', () =>{
+it('works with dynamic updates: classes', () =>{
   class CompClass extends React.Component {
     constructor(...args) {
       super(...args)

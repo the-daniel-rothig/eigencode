@@ -1,4 +1,10 @@
 export default ({array, element}) => {
+  if (!element || !element.type) {
+    return {
+      value: element || "",
+      wantsSpacing: false
+    }
+  }
   const wantsSpacing = typeof element.type === "string" &&
      !["span", "em", "strong", "b", "small", "u", "a", "abbr", "acronym", "big", "q", "s", "sub", "sup", "time"].includes(element.type);
 
@@ -28,7 +34,7 @@ export default ({array, element}) => {
       !/^\s/.test(saneArray[i+1].value); // and the sibling has no space at the start
 
     if (shouldAddSpace) {
-      res.push(" ")
+      res.push("\n")
     }
   }
 

@@ -107,7 +107,7 @@ it('works with Context.Consumer', () => {
     </Ctx.Provider>
   ).toBe("Hello")
 })
-it('stops propagation at the bootom', () => {
+it('stops propagation at the bottom', () => {
   traverseDepthFirst(<div />, ({element}) => expect(element).toBeTruthy())
 })
 it('can traverse width first', () => {
