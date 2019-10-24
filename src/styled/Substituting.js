@@ -20,8 +20,6 @@ const getSymbol = element => {
   return match ? match[1] : null;
 }
 
-const isElement = el => el.$$typeof && el.$$typeof.toString() === "Symbol(react.element)";
-
 const doMapElement = (mapElement, element, memo, siblingIndex, siblingCount) => {
   const result = mapElement({
     element: element,
@@ -46,54 +44,8 @@ const doMapElement = (mapElement, element, memo, siblingIndex, siblingCount) => 
   } : res, newMemo];
 }
 
-const mapProp = (prop, mapElement, memo) => {
-  if (isElement(prop)) {
-    //todo: write a test for this
-    return {prop: doMapElement(mapElement, prop), shouldClone: true};
-  }
-  if (React.Children.toArray(prop).filter(isElement).length > 0) {
-    return {
-      prop: React.Children.map(c => <Substituting mapElement={mapElement} memo={memo}>{c}</Substituting>),
-      shouldClone: true
-    }
-  }
-  if (typeof prop !== "function") {
-    return {prop}
-  }
-
-
-  const mappedFunc = (...args) => {
-    const res = prop(...args);
-    const resAsArray = React.Children.toArray(res);
-    if (isElement(res) || resAsArray.filter(isElement).length > 0) {
-      return <Substituting mapElement={mapElement} memo={memo}>{res}</Substituting>
-    } else {
-      return res;
-    }
-  }
-
-  return {prop: mappedFunc, shouldClone: true}
-}
-
-const mapProps = (props, mapElement, memo) => {
-  let shouldCloneAny = false;
-  const mappedProps = {};
-  Object.keys(props).forEach(key => {
-    const {prop, shouldClone} = mapProp(props[key], mapElement, memo);
-    shouldCloneAny = shouldCloneAny || shouldClone;
-    mappedProps[key] = prop;
-  });
-
-  return {props: mappedProps, shouldClone: shouldCloneAny}
-}
-
-const mapElementCollection = (children, mapElement, memo) => {
-  return React.Children.map(children, (c, i) => (
-    <Substituting mapElement={mapElement} memo={memo} siblingIndex={i}>{c}</Substituting>
-  ))
-}
-
-const makeElementMapper = mapElement => (childElement, memo, siblingIndex, siblingCount) => {
+const makeElementMapper = mapElement => {
+  const elementMapper = (childElement, memo, siblingIndex, siblingCount) => {
     if (childElement && childElement.type === Substituting) {
       const combined = (args) => {
         let one = childElement.props.mapElement(args), newMemo = memo;
@@ -103,12 +55,12 @@ const makeElementMapper = mapElement => (childElement, memo, siblingIndex, sibli
         }
         return doMapElement(mapElement, one, newMemo, siblingIndex, siblingCount);
       }
-      return <Substituting mapElement={combined} memo={memo}>{childElement.props.children}</Substituting>;
+      return <Recursor elementMapper={makeElementMapper(combined)} memo={memo}>{childElement.props.children}</Recursor>;
     }
     if (typeof childElement === "function") {
       return (...args) => {
         const res = mapped.props.children(...args)
-        return <Substituting mapElement={mapElement} memo={memo}>{res}</Substituting>
+        return <Recursor elementMapper={elementMapper} memo={memo}>{res}</Recursor>
       }
     }
     const [mapped, mappedMemo] = doMapElement(mapElement, childElement, memo, siblingIndex, siblingCount)
@@ -132,23 +84,23 @@ const makeElementMapper = mapElement => (childElement, memo, siblingIndex, sibli
       }
       
       return React.cloneElement(mapped, {children: (
-        <Substituting mapElement={mapElement} memo={mappedMemo}>{mapped.props.children}</Substituting>
+        <Recursor elementMapper={elementMapper} memo={mappedMemo}>{mapped.props.children}</Recursor>
       )})
     }
 
     if (getSymbol(mapped) === "context") {
       const LegacyContextAdapter = () => {
         const context = React.useContext(mapped.type._context);
-        return <Substituting mapElement={mapElement} memo={mappedMemo}>{mapped.props.children(context)}</Substituting>
+        return <Recursor elementMapper={elementMapper} memo={mappedMemo}>{mapped.props.children(context)}</Recursor>
       }
       return <LegacyContextAdapter />
     }
 
     if (getSymbol(mapped) === "portal") {
       const element = ReactDOM.createPortal(
-        <Substituting mapElement={mapElement} memo={mappedMemo}>
+        <Recursor elementMapper={elementMapper} memo={mappedMemo}>
           {mapped.children}
-        </Substituting>, 
+        </Recursor>, 
         mapped.containerInfo, 
         mapped.key);
       return {
@@ -163,7 +115,7 @@ const makeElementMapper = mapElement => (childElement, memo, siblingIndex, sibli
         () => mapped.type._ctor()
           .then(module => ({
             default: (...args) => {
-            return <Substituting mapElement={mapElement} memo={mappedMemo}>{module.default(...args)}</Substituting>
+            return <Recursor elementMapper={elementMapper} memo={mappedMemo}>{module.default(...args)}</Recursor>
             }
           }))
       );
@@ -183,7 +135,7 @@ const makeElementMapper = mapElement => (childElement, memo, siblingIndex, sibli
 
         render() {
           const res = super.render();
-          return <Substituting mapElement={mapElement} memo={mappedMemo}>{res}</Substituting>
+          return <Recursor elementMapper={elementMapper} memo={mappedMemo}>{res}</Recursor>
         }
       }
       return <Derived {...mapped.props} />;
@@ -191,27 +143,19 @@ const makeElementMapper = mapElement => (childElement, memo, siblingIndex, sibli
 
     if (typeof mapped.type === "function") {
       const mappedElement = (
-        <Substituting mapElement={mapElement} memo={mappedMemo}>
+        <Recursor elementMapper={elementMapper} memo={mappedMemo}>
           {mapped.type(mapped.props)}
-        </Substituting>
+        </Recursor>
       );
       return mappedElement;
     }
 
     throw "This shouldn't happen"
-
-    // const { props, shouldClone } = mapProps(mapped.props, mapElement, mappedMemo);
-
-    // return shouldClone
-    //   ? React.cloneElement(mapped, props)
-    //   : mapped;
   };
+  return elementMapper;
+};
 
-const Substituting = ({children, mapElement, memo}) => {
-  if (!mapElement) {
-    throw 'Substituting has no mapElement function specified'
-  }
-  const elementMapper = makeElementMapper(mapElement);
+const Recursor = ({children, elementMapper, memo}) => {
   const siblingCount = React.Children.count(children);
   if (siblingCount === 0) {
     // special case to flush mapElement side effects
@@ -219,6 +163,14 @@ const Substituting = ({children, mapElement, memo}) => {
   } 
   const newChildren = React.Children.map(children, (c, i) => elementMapper(c, memo, i, siblingCount));
   return newChildren; 
+} 
+
+const Substituting = ({children, mapElement}) => {
+  if (!mapElement) {
+    throw 'Substituting has no mapElement function specified'
+  }
+  const elementMapper = makeElementMapper(mapElement);
+  return <Recursor elementMapper={elementMapper}>{children}</Recursor>
 } 
 
 Substituting.propTypes = {
