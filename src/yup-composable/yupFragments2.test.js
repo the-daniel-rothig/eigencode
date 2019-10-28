@@ -1,5 +1,5 @@
 import * as yup from 'yup';
-import yupFragment, * as yupFragments from "./yupFragments2"
+import YupFragment, * as yupFragments from "./yupFragments2"
 
 const { array, object, string, mixed } = yup;
 const { mergeYupFragments, notRequired, required, label } = yupFragments;
@@ -17,7 +17,7 @@ describe('yupFragments module', () => {
     "isValid", 
     "isValidSync", 
     "getDefault", 
-    "default", //exported as defaultValue
+    //"default", //exported as defaultValue
     "describe", 
     "validateAt", 
     "validateSyncAt",
@@ -40,7 +40,7 @@ describe('yupFragments module', () => {
   })
 
   it('exports the right convenience methods', () => {
-    let builderMethodsNotExportedByFragments = []
+    const builderMethodsNotExportedByFragments = []
 
     yupExtensionMethods.forEach(key => {
       if (typeof yupFragments[key] !== "function") {
@@ -48,11 +48,12 @@ describe('yupFragments module', () => {
       }
     })
 
-    expect(builderMethodsNotExportedByFragments).toStrictEqual(knownNonBuilderMethods)
+    expect(new Set(builderMethodsNotExportedByFragments)).toStrictEqual(new Set(knownNonBuilderMethods))
   })
 
   it('exposes the right methods on yupFragment', () => {
-    let builderMethodsNotOnYupFragment = []
+    const yupFragment = new YupFragment()
+    const builderMethodsNotOnYupFragment = []
 
     yupExtensionMethods.forEach(key => {
       if (typeof yupFragment[key] !== "function") {
@@ -60,7 +61,7 @@ describe('yupFragments module', () => {
       }
     })
 
-    expect(builderMethodsNotOnYupFragment).toStrictEqual(knownNonBuilderMethods)
+    expect(new Set(builderMethodsNotOnYupFragment)).toStrictEqual(new Set(knownNonBuilderMethods))
   })
 })
 
@@ -147,6 +148,14 @@ describe('mergeYupFragments', () => {
     expect(requiredMerged.applyToSchema().isValidSync(undefined)).toBe(false);
     expect(notRequiredMerged.applyToSchema().isValidSync(undefined)).toBe(true);
   })
+
+  it('exports default as defaultValue', () => {
+    expect(yupFragments.defaultValue('foo').applyToSchema().validateSync(undefined)).toBe('foo');
+  })
+
+  it('has default property', () => {
+    expect(label('my value').default('foo').applyToSchema().validateSync(undefined)).toBe('foo');
+  })
 })
 
 describe('exploratory yup tests', () => {
@@ -206,7 +215,7 @@ describe('exploratory yup tests', () => {
     const schema = object({
       a: object({
         b: mixed()
-      }).required(),
+      }).required().default(undefined),
     })
 
     expect(schema.isValidSync({a: {b: 'foo'}})).toBe(true)

@@ -1,5 +1,6 @@
-import { mergeYupFragments, toSchema, when, min, max, oneOf } from '../yup-composable/yupFragments2';
+import YupFragment, { mergeYupFragments, toSchema, when, min, max, oneOf, required } from '../yup-composable/yupFragments2';
 import * as yup from 'yup';
+import '../yup-composable/additionalMethods'
 import Field from '../form/Field';
 import Multiple from '../form/Multiple';
 import Conditional from '../form/Conditional';
@@ -8,6 +9,7 @@ import NumberInput from '../form/NumberInput';
 import EmailInput from '../form/EmailInput';
 import Select from '../form/Select';
 import Radio from '../form/Radio';
+import TextInput from '../form/TextInput';
 
 
 const dottify = str => typeof str === "string" && str[0] === "$" ? str : `.${str}`
@@ -19,6 +21,8 @@ export default ({element, array}) => {
 
   if (element === null || element === undefined) {
     return {};
+  } else if (element.type === TextInput) {
+    return yup.string();
   } else if (element.type === EmailInput) {
     return yup.string().email();
   } else if (element.type === NumberInput) {
@@ -31,9 +35,12 @@ export default ({element, array}) => {
     const allowedValues = [(element.props.value || element.props.children || "").toString()]
     return oneOf(allowedValues);
   } else if (type === Field) {
-    const fragmentWithThis = mergeYupFragments([props.validator, combined])
+    const fragmentWithThis = mergeYupFragments([
+      !props.optional && new YupFragment('requiredStrict'),
+      props.validator, 
+      combined])
     return name
-      ? yup.object({[name]: toSchema(fragmentWithThis) || yup.mixed()}).noUnknown().strict()
+      ? yup.object({[name]: toSchema(fragmentWithThis) || yup.mixed()}).noUnknown().strict().default(undefined) // bug https://github.com/jquense/yup/issues/678
       : fragmentWithThis;
   } else if (type === Conditional && props.when && props.is) {
     const whenWithDots = Array.isArray(props.when) 
@@ -45,6 +52,7 @@ export default ({element, array}) => {
     });
   } else if (type === Multiple) {
     let multiSchemaFragments = [
+      !props.optional && new YupFragment('requiredStrict'),
       props.min !== 0 && min(props.min || 1),
       props.max && max(props.max),
       props.validator,
@@ -54,7 +62,7 @@ export default ({element, array}) => {
     const multiSchema = toSchema(mergeYupFragments(multiSchemaFragments));
 
     return name
-      ? yup.object({[name]: multiSchema}).noUnknown().strict()
+      ? yup.object({[name]: multiSchema}).noUnknown().strict().default(undefined) // bug https://github.com/jquense/yup/issues/678
       : multiSchema;
   } else {
     return combined;

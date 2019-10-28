@@ -1,4 +1,4 @@
-import { string, addMethod } from 'yup'
+import { string, mixed, addMethod } from 'yup'
 import { localeValues } from './setDefaultLocale';
 
 addMethod(string, 'mustNotContain', function(stringOrRegex, message) {
@@ -20,3 +20,16 @@ addMethod(string, 'mustNotContain', function(stringOrRegex, message) {
     }
   })
 })
+
+const notJustWhitespaceTestRegex = /[^\s]+/m;
+
+addMethod(mixed, 'requiredStrict', function(message) {
+  return this.test({
+    name: 'requiredStrict',
+    message: message || localeValues.mixed.requiredStrict || localeValues.mixed.required,
+    exclusive: true,
+    test: function(value) {
+      return value !== null && value !== undefined && (Array.isArray(value) || notJustWhitespaceTestRegex.test(`${value}`))
+    }
+  });
+});

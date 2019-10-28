@@ -16,19 +16,6 @@ const getValidationSchema4 = elem => {
   return toSchema(res);
 }
 
-it('converts the field name to camel case', () => {
-  const schema = getValidationSchema4(<Field name="your pre-existing work expe$%rience" />)
-  expect(Object.keys(schema.fields)[0]).toBe('preExistingWorkExperience')
-})
-
-it('tolerates but warns of lack of article', () => {
-  const schema = getValidationSchema4(<Field name="last year's worries" />)
-  expect(Object.keys(schema.fields)[0]).toBe('lastYearsWorries')
-})
-
-
-// ------------------------------------
-
 const myValidator = yup.string().matches(/foo/)
 const expectPasses = (schema, val) => expect(schema.isValidSync(val, {context: val})).toBe(true);
 const expectFails = (schema, val) => expect(schema.isValidSync(val, {context: val})).toBe(false);
@@ -173,47 +160,47 @@ it('respects max setting of Multiple', () => {
   expectFails(schema, ["foo", "foo", "foo"])
 })
 
-it('doesnt require a Multiple instance even if min is set', () => {
+it('doesnt require an optional Multiple instance even if min is set', () => {
   const schema = getValidationSchema4(
-    <Multiple name="multi" min={2} />
+    <Multiple name="multi" optional min={2} />
   )
 
   expectPasses(schema, {})
 })
 
 it('works with nested fields', () => {
+  const OptField = (props) => <Field optional {...props} />
   const req = yup.mixed().required();
 
-  const one = getValidationSchema4(<Field name="a"><Field name="b" validator={req} /></Field>)
+  const one = getValidationSchema4(<OptField name="a"><OptField name="b" validator={req} /></OptField>)
   expectPasses(one, {a: {b: "foo"}})
   expectFails(one, {a: {}})
 
-  const two = getValidationSchema4(<Field><Field name="b" validator={req} /></Field>)
+  const two = getValidationSchema4(<OptField><OptField name="b" validator={req} /></OptField>)
   expectPasses(two, {b: "foo"})
   expectFails(two, {})
 
-  const three = getValidationSchema4(<Field name="a"><Field validator={req} /></Field>)
+  const three = getValidationSchema4(<OptField name="a"><OptField validator={req} /></OptField>)
   expectPasses(three, {a: "foo"})
   expectFails(three, {})
 
-  const four = getValidationSchema4(<Field><Field validator={req} /></Field>)
+  const four = getValidationSchema4(<OptField><OptField validator={req} /></OptField>)
   expectPasses(four, "foo")
   expectFails(four, null)
 
-  const five = getValidationSchema4(<Field validator={req} name="a"><Field name="b" /></Field>)
+  const five = getValidationSchema4(<OptField validator={req} name="a"><OptField name="b" /></OptField>)
   expectPasses(five, {a: {b: "foo"}})
-  // bug https://github.com/jquense/yup/issues/678
-  //expectFails(five, {})
+  expectFails(five, {})
 
-  const six = getValidationSchema4(<Field validator={req}><Field name="b" /></Field>)
+  const six = getValidationSchema4(<OptField validator={req}><OptField name="b" /></OptField>)
   expectPasses(six, {})
   expectFails(six, null)
 
-  const seven = getValidationSchema4(<Field validator={req} name="a"><Field /></Field>)
+  const seven = getValidationSchema4(<OptField validator={req} name="a"><OptField /></OptField>)
   expectPasses(seven, {a: "foo"})
   expectFails(seven, {})
 
-  const eight = getValidationSchema4(<Field validator={req}><Field /></Field>)
+  const eight = getValidationSchema4(<OptField validator={req}><OptField /></OptField>)
   expectPasses(eight, "foo")
   expectFails(eight, null)
 })
@@ -273,7 +260,6 @@ it('doesnt tolerate unknown fields: root', () => {
     </>
   )
 
-  expectPasses(schema, {})
   expectPasses(schema, {one: 'foo', two: 'bar'})
   expectFails(schema, {one: 'foo', two: 'bar', three: 'baz'})
 })
@@ -286,7 +272,21 @@ it('doesnt tolerate unknown fields: nested', () => {
     </Field>
   )
 
-  expectPasses(schema, {root: {}})
   expectPasses(schema, {root: {one: 'foo', two: 'bar'}})
   expectFails(schema, {root: {one: 'foo', two: 'bar', three: 'baz'}})
+})
+
+it('enforces required by default: unnamed Field', () => {
+  const schema = getValidationSchema4(<Field />);
+  expectPasses(schema, 'hello');
+  expectFails(schema, '');
+  expectFails(schema, undefined);
+})
+
+it('enforces requiredStrict by default: named Field', () => {
+  const schema = getValidationSchema4(<Field name='one'/>);
+  expectPasses(schema, {one: 'hello'});
+  expectFails(schema, {one: ''});
+  expectFails(schema, {one: undefined});
+  expectFails(schema, {});
 })

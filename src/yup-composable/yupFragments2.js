@@ -6,7 +6,7 @@ const fragmentNames = [
   'concat',
   'strict',
   'strip',
-  'defaultValue',
+  'default',
   'nullable',
   'required',
   'notRequired', 
@@ -54,7 +54,7 @@ const assignExtensionMethods = obj => fragmentNames.forEach(name => {
   obj[name] = (...args) => new YupFragment(name, args, obj.f);
 }) 
 
-class YupFragment {
+export default class YupFragment {
   constructor(name, args = [], prior) {
     if (name && prior) {
       this.f = schema => prior(schema)[name](...args)
@@ -73,15 +73,15 @@ class YupFragment {
 }
 
 const yupFragment = new YupFragment()
-export default yupFragment;
 
 // convenience exports
+export const defaultValue = yupFragment.default;
+
 export const label = yupFragment.label;
 export const meta = yupFragment.meta;
 export const concat = yupFragment.concat;
 export const strict = yupFragment.strict;
 export const strip = yupFragment.strip;
-export const defaultValue = yupFragment.defaultValue;
 export const nullable = yupFragment.nullable;
 export const required = yupFragment.required;
 export const notRequired = yupFragment.notRequired; 
