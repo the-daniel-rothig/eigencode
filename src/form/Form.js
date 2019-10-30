@@ -21,7 +21,6 @@ const FormProvider = ({id, children, initialValues = {}}) => {
     <InputConfigurationContext.Provider value={{inputs, register, deregister}}>
       <FormContext.Provider value={{uid, values, setValue, getValue, deleteValue}}>
         {children}
-        <Debug />
       </FormContext.Provider>
     </InputConfigurationContext.Provider>
   );

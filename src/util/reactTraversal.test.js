@@ -6,7 +6,7 @@ const Ctx = React.createContext();
   
 const flatten = ({array}) => array.filter(Boolean).map(x => x.toString().trim()).filter(Boolean).join(" ");
 const expectTextContent = (element) => {
-  const res = traverseDepthFirst(element, flatten)
+  const res = traverseDepthFirst(element, ({unbox}) => flatten({array: unbox()}))
   return expect(res);
 };
 
@@ -69,7 +69,7 @@ it('works with lazy types', async () => {
       <Lazy greeting="Hello">everybody</Lazy>
       <div> woo hoo</div>
     </React.Suspense>,
-    ({array}) => array.join("")
+    async ({unbox}) => (await unbox()).join("")
   );
   expect(res).toBe("Hello everybody woo hoo");
 })
@@ -367,4 +367,71 @@ it('warns against shouldComponentUpdate being ignored... but only once', () => {
   expectTextContent(<><Comp /><Comp /><Comp /></>).toBe('done done done');
   expect(global.console.warn).toHaveBeenCalledTimes(1)
   expect(global.console.warn).toHaveBeenCalledWith('WARNING: use of shouldComponentUpdate is not supported for static traversal, and its effects will be ignored.')
+})
+
+it('supports lazy eval of children', () => {
+  const Boom = () => {
+    throw "boom!"
+  }
+
+  const element = (
+    <>
+      <div className='danger'><Boom /></div>
+      <div>success</div>
+    </>
+  )
+
+  const res = traverseDepthFirst(element, 
+    ({element, unbox}) => {
+      if(element.props.className === 'danger') {
+        return '';
+      }
+      const array = unbox();
+      return flatten({array})
+    });
+
+  expect(res).toBe('success');
+})
+
+it('supports custom eval of children', () => {
+  const Hidden = ({children}) => {
+    return null;
+  }
+
+  const element = (
+    <Hidden>
+      <span>success</span>
+    </Hidden>
+  )
+
+  const res = traverseDepthFirst(element, 
+    ({element, unbox}) => {
+      if(element.type === Hidden) {
+        return flatten({array: unbox(element.props.children)});
+      }
+      const array = unbox();
+      return flatten({array})
+    });
+
+  expect(res).toBe('success');
+})
+
+it('passes through a context getter', () => {
+  const Ctx = React.createContext();
+
+  const element = (
+    <Ctx.Provider value={'success'}>
+      <span>before</span>
+    </Ctx.Provider>
+  )
+
+  const res = traverseDepthFirst(element, ({element, unbox, getContext}) => {
+    if (element.type === 'span') {
+      return getContext(Ctx);
+    } else {
+      return unbox().join("")
+    }
+  });
+
+  expect(res).toBe('success')
 })

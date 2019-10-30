@@ -75,3 +75,32 @@ World.`);
     done();
   }
 })
+
+it('passes though getContext', done => {
+  const Ctx = React.createContext();
+  const contextIntoSpan = ({element, getContext, unbox}) => {
+    if (element.type === 'span') {
+      return {
+        wantsSpacing: false,
+        value: getContext(Ctx)
+      }
+    }
+    else return extractText({element, unbox})
+  };
+
+  render(
+    <Ctx.Provider value={'success!'}>
+      <Reducer reduce={contextIntoSpan} onFinish={assertResult}>
+        <div>
+          <div>Hello</div>
+          <span>World.</span>
+        </div>
+    </Reducer>
+    </Ctx.Provider>
+  )
+  function assertResult(res) {
+    expect(res.value).toBe('Hello\nsuccess!');
+    done();
+  }
+
+})

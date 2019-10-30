@@ -2,12 +2,12 @@ import React from 'react';
 import Substituting from '../styled/Substituting';
 import debounce from 'lodash/debounce';
 
-const mapElement = (reduce, onFinish) => ({element, memo, siblingIndex, siblingCount: _siblingCount}) => {
+const mapElement = (reduce, onFinish) => ({element, memo, getContext, siblingIndex, siblingCount: _siblingCount}) => {
   const idx = siblingIndex || 0;
   const siblingCount = _siblingCount || 1;
   const root = memo ? memo.root : element;
   if (!element || !element.type) {    
-    const res = reduce({array: [], element, idx, siblingCount, root});
+    const res = reduce({unbox: () => [], element, getContext, idx, siblingCount, root});
     if (memo) {
       memo.returnValue(res, idx, siblingCount)
     } else {
@@ -22,7 +22,7 @@ const mapElement = (reduce, onFinish) => ({element, memo, siblingIndex, siblingC
     childrenValues[index] = val
     // todo: what if a child disappears, eg. becomes null? is that possible w/o parent re-evaluation?
     if (Object.keys(childrenValues).length === childrenCount) {
-      const res = reduce({array: Object.values(childrenValues), element, idx, siblingCount, root});
+      const res = reduce({unbox: () => Object.values(childrenValues), element, getContext, idx, siblingCount, root});
       if (memo) {
         memo.returnValue(res, idx, siblingCount)
       } else {

@@ -294,3 +294,25 @@ it('works with portal types', () => {
 
   expect(getByText("Hello").tagName).toBe("SPAN");
 })
+
+const Ctx = React.createContext();
+const contextIntoSpan = ({element, getContext}) => {
+  if (element.type === 'span') {
+    const val = getContext(Ctx);
+    return React.cloneElement(element, {children: val});
+  }
+  return element;
+}
+const ContextIntoSpan = ({children}) => <Substituting mapElement={contextIntoSpan}>{children}</Substituting>;
+
+it('provides context getter', () => {
+  const { getByText } = render(
+    <Ctx.Provider value={'success'}>
+      <ContextIntoSpan>
+        <span>before</span>
+      </ContextIntoSpan>
+    </Ctx.Provider>
+  )
+
+  expect(getByText('success').tagName).toBe('SPAN');
+})

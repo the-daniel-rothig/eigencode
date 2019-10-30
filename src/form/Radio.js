@@ -8,12 +8,15 @@ const Radio = ({value, children}) => {
   const form = useContext(FormContext);
 
   const setValue = form ? form.setValue : () => {}
+  const getValue = form ? form.getValue : () => '';
+
+  const currentValue = getValue(name);
 
   const id = [form && form.uid, name, value].filter(Boolean).join("-");
 
   return (
     <label htmlFor={id}>
-      <input type="radio" value={value} name={name} id={id} onClick={e => setValue(name, e.target.value)}/>
+      <input type="radio" selected={value === currentValue} value={value} name={name} id={id} onClick={e => setValue(name, e.target.value)}/>
       {children}
     </label>
   );

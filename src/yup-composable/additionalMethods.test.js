@@ -1,4 +1,4 @@
-import { string, mixed } from 'yup';
+import { string, mixed, array, object } from 'yup';
 import './additionalMethods';
 import setDefaultLocale from './setDefaultLocale';
 
@@ -57,6 +57,32 @@ describe('requiredStrict', () => {
   })
 })
 
+describe('unique', () => {
+  it('works with objects', () => {
+    const schema = array(object({
+      name: string().unique()
+    }))
+
+    const value = [{name: 'Daniel'}, {name: 'Daniel'}];
+
+    expect(() => schema.validateSync(value, {context: value})).toThrow("you cannot use the same answer for undefined twice")
+  })
+
+  it('works with plain strings', () => {
+    const value = ['Daniel', 'Daniel'];
+    expect(() => array(string().unique()).validateSync(value, {context: value})).toThrow("you cannot use the same answer for undefined twice")
+  })
+
+  it('passes plain strings', () => {
+    const value = ['Daniel', 'Krzia'];
+    expect(() => array(string().unique()).validateSync(value, {context: value})).not.toThrow()
+  })
+
+  it('throws an exception when context is not passed', () => {
+    expect(() => array(string().unique()).validateSync(['Daniel'])).toThrow(/requires value to be supplied as the context/)
+  })
+})
 it('exploratory: required', () => {
   expect(mixed().required().isValidSync([])).toBe(true)
 })
+

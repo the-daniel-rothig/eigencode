@@ -26,6 +26,7 @@ const doMapElement = (mapElement, element, memo, siblingIndex, siblingCount) => 
     memo: memo,
     siblingIndex: siblingIndex,
     siblingCount: siblingCount,
+    getContext: ctx => typeof ctx === 'object' ? ctx._currentValue : undefined, 
     type: element ? element.type || typeof element : undefined,
     props: element && element.props || {}
   })

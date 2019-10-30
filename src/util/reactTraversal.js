@@ -7,11 +7,12 @@ import Multiple from '../form/Multiple';
 // cooking with gas!
 const { ReactCurrentDispatcher } = React.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
 
+const messagesForLogOnce = [];
+  
 const makeLogOnce = () => {
-  const messages = [];
   const res = (message, level = 'warn') => {
-    if (!messages.includes(message)) {
-      messages.push(message);
+    if (!messagesForLogOnce.includes(message)) {
+      messagesForLogOnce.push(message);
       console[level](message);
     }  
   }
@@ -26,7 +27,9 @@ const notSupported = (name) => {
   throw new Error(`${name} is not currently supported`)
 }
 
-const flatten = arrayOfArrays => arrayOfArrays.reduce((agg, curr) => [...agg, ...curr], [])
+const REACT___shouldSetTextContent = (type, props) => {
+  return type === 'textarea' || type === 'option' || type === 'noscript' || typeof props.children === 'string' || typeof props.children === 'number' || typeof props.dangerouslySetInnerHTML === 'object' && props.dangerouslySetInnerHTML !== null && props.dangerouslySetInnerHTML.__html != null;
+}
 
 const getContext = (contextStack, ctx) => {
   if (!ctx) { 
@@ -130,8 +133,8 @@ const opaqueTypes = {
   current: [
     React.Fragment,
     React.Suspense,
-    Conditional,
-    Multiple
+    // Conditional,
+    // Multiple
   ]
 }
 
@@ -215,18 +218,25 @@ function processChild({child, contextStack, traverse, logOnce}) {
 const makeTraverseFunction = (reduce, root) => {
   const logOnce = makeLogOnce()
   const traverse = (element, contextStack, siblingIndex) => {
-    if (!element) { 
+    if (element === null || element === undefined) { 
       return null;
     }
     if (typeof element === "string" || typeof element === "number") {
-      return element;
+      return reduce({unbox: () => [], element, getContext, root, siblingIndex});
     }
-    const array = processChild({child: element, traverse, contextStack, logOnce})
-    if (array.filter(x => x && typeof x.then === "function").length > 0) {
-      return Promise.all(array).then(arr => reduce({array: arr, element, root, siblingIndex}))
-    } else {
-      return reduce({array, element, root, siblingIndex})
+
+    const unbox = (child, reduceOverride) => {
+      const saneChild = child ? <>{child}</> : element;
+      const newTraverse = reduceOverride ? makeTraverseFunction(reduceOverride, saneChild) : traverse;
+      const array = processChild({child: saneChild, traverse: newTraverse, contextStack, logOnce})
+      return array.filter(x => x && typeof x.then === "function").length > 0
+        ? Promise.all(array)
+        : array;
     }
+
+    const getContext1 = ctx => getContext(contextStack, ctx)
+
+    return reduce({unbox, element, getContext: getContext1, root, siblingIndex})
   }
 
   return traverse;

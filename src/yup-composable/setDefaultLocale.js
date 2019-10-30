@@ -4,6 +4,7 @@ export const localeValues = {
   mixed: {
     default: 'please correct ${label}',
     required: 'please enter ${label}',
+    unique: 'you cannot use the same answer for ${label} twice'
   },
   string: {
     max: ({label, max}) => max === 1 ? `${label} must be no more than ${max} character` : `${label} must be no more than ${max} characters`,

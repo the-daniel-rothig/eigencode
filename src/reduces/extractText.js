@@ -1,4 +1,4 @@
-export default ({array, element}) => {
+export default ({unbox, element}) => {
   if (!element || !element.type) {
     return {
       value: element || "",
@@ -8,7 +8,7 @@ export default ({array, element}) => {
   const wantsSpacing = typeof element.type === "string" &&
      !["span", "em", "strong", "b", "small", "u", "a", "abbr", "acronym", "big", "q", "s", "sub", "sup", "time"].includes(element.type);
 
-  const saneArray = array.filter(x => x !== null && x !== undefined).map(x => typeof x === "object" ? x : {
+  const saneArray = unbox().filter(x => x !== null && x !== undefined).map(x => typeof x === "object" ? x : {
     value: `${x}`,
     wantsSpacing: false
   });

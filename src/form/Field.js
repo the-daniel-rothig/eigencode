@@ -3,6 +3,7 @@ import FieldContext from './FieldContext'
 import InputConfigProvider from './InputConfigProvider';
 import InputConfigurationContext from './InputConfigurationContext';
 import { combineObjectPaths } from '../util/objectTraversal';
+import makeCamelCaseFieldName from '../util/makeCamelCaseFieldName';
 
 const Inner = ({children}) => {
   const { register, deregister } = useContext(InputConfigurationContext);
@@ -19,6 +20,7 @@ const Inner = ({children}) => {
 }
 
 export const FieldProvider = ({name = "", children, validator}) => {
+  
   if (name.startsWith("$")) {
     throw new Error(`Field name ${name} is not allowed: name must not start with "$"`)
   }
@@ -50,8 +52,8 @@ const FieldTag = ({className, tag, children}) => {
   );
 }
 
-const Field = ({className, tag, children, ...rest}) => (
-  <FieldProvider {...rest}>
+const Field = ({className, tag, children, name, ...rest}) => (
+  <FieldProvider name={makeCamelCaseFieldName(name)} {...rest}>
     <FieldTag tag={tag} className={className}>{children}</FieldTag>
   </FieldProvider>
 )

@@ -63,6 +63,14 @@ describe('yupFragments module', () => {
 
     expect(new Set(builderMethodsNotOnYupFragment)).toStrictEqual(new Set(knownNonBuilderMethods))
   })
+  
+  it('exports default as defaultValue', () => {
+    expect(yupFragments.defaultValue('foo').applyToSchema().validateSync(undefined)).toBe('foo');
+  })
+
+  it('has default property', () => {
+    expect(label('my value').default('foo').applyToSchema().validateSync(undefined)).toBe('foo');
+  })
 })
 
 describe('chain methods', () => {
@@ -148,14 +156,6 @@ describe('mergeYupFragments', () => {
     expect(requiredMerged.applyToSchema().isValidSync(undefined)).toBe(false);
     expect(notRequiredMerged.applyToSchema().isValidSync(undefined)).toBe(true);
   })
-
-  it('exports default as defaultValue', () => {
-    expect(yupFragments.defaultValue('foo').applyToSchema().validateSync(undefined)).toBe('foo');
-  })
-
-  it('has default property', () => {
-    expect(label('my value').default('foo').applyToSchema().validateSync(undefined)).toBe('foo');
-  })
 })
 
 describe('exploratory yup tests', () => {
@@ -222,7 +222,7 @@ describe('exploratory yup tests', () => {
     expect(schema.isValidSync({a: {b: undefined}})).toBe(true)
     expect(schema.isValidSync({a: {}})).toBe(true)
     expect(schema.isValidSync({a: null})).toBe(false)
-    expect(schema.isValidSync({a: undefined})).toBe(false) // fails
-    expect(schema.isValidSync({})).toBe(false) // fails
+    expect(schema.isValidSync({a: undefined})).toBe(false) 
+    expect(schema.isValidSync({})).toBe(false)
   })
 });

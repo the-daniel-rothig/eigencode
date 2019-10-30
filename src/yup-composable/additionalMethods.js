@@ -1,5 +1,6 @@
 import { string, mixed, addMethod } from 'yup'
 import { localeValues } from './setDefaultLocale';
+import { deepGet } from '../util/objectTraversal';
 
 addMethod(string, 'mustNotContain', function(stringOrRegex, message) {
   const getMatch = stringOrRegex instanceof RegExp ? v => stringOrRegex.exec(v)
@@ -33,3 +34,38 @@ addMethod(mixed, 'requiredStrict', function(message) {
     }
   });
 });
+
+
+const lastNumberIndexRegex = /\[([0-9]+)\](?!.*\[[0-9]+\])/;
+
+addMethod(mixed, 'unique', function(selector = x=>x, message) {
+  return this.test({
+    name: 'unique',
+    message: message || localeValues.mixed.unique,
+    test: function(value) {
+      const match = this.path.match(lastNumberIndexRegex);
+      if (!match) {
+        // if this is not in an array at all, it's unique by definition
+        return true;
+      }
+
+      const array = deepGet(this.options.context, this.path.substring(0, match.index));
+
+      if (!Array.isArray(array)) {
+        throw "yup error: unique() validation requires value to be supplied as the context.\n" +
+              "   you can do so by calling e.g. schema.validate(value, {context: value})\n" +
+              "   instead of schema.validate(value)";
+      }
+
+      const thisIndex = parseInt(match[1])
+      const pathInArray = this.path.substring(match.index + match[0].length);
+
+      for(var i = 0; i < thisIndex; i++) {
+        if (selector(value) === selector(deepGet(array[i], pathInArray))) {
+          return false;
+        }
+      }
+      return true;
+    }
+  })
+})
