@@ -1,7 +1,6 @@
 import React from 'react'
 import { render } from '@testing-library/react'
 import Reducer from './Reducer'
-import expectExport from 'expect'
 import extractText from '../reduces/extractText'
 
 it('doesnt explode', () => {
@@ -24,7 +23,7 @@ it('doesnt explode', () => {
     </Reducer>)
 })
 
-it('lets me extract text', () => {
+it('lets me extract text', (done) => {
   const expectedValue = 
 `One two. Three
 FourFive .
@@ -55,6 +54,7 @@ Eight
 
   function assertResult(res) {
     expect(res.value).toBe(expectedValue)
+    done();
   }
 })
 

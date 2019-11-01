@@ -29,18 +29,18 @@ const combinePartialResults = (array) => {
   return res.join("");
 }
 
-const reduce = ({unbox, element}) => {
+const reduce = async ({unbox, element}) => {
   if (!element || !element.type) {
     return {
       value: element || "",
       wantsSpacing: false
     }
   }
-  
+
   const wantsSpacing = typeof element.type === "string" &&
      !["span", "em", "strong", "b", "small", "u", "a", "abbr", "acronym", "big", "q", "s", "sub", "sup", "time"].includes(element.type);
 
-  const subStrings = unbox();
+  const subStrings = await unbox();
 
   return {
     value: combinePartialResults(subStrings),
