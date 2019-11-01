@@ -6,7 +6,7 @@ import extractText from '../reduces/extractText'
 
 it('doesnt explode', () => {
   render(
-  <Reducer reduce={extractText} onFinish={() => {}}>
+  <Reducer reduce={extractText.reduce} onFinish={() => {}}>
     <div>
         One
       <div>
@@ -34,7 +34,7 @@ Eight
 .`;
 
   render(
-    <Reducer reduce={extractText} onFinish={assertResult}>
+    <Reducer reduce={extractText.reduce} onFinish={assertResult}>
       <div>
         One <span>two</span>.
         Three
@@ -60,7 +60,7 @@ Eight
 
 it('resolves with empty tags', (done) => {
   render(
-    <Reducer reduce={extractText} onFinish={assertResult}>
+    <Reducer reduce={extractText.reduce} onFinish={assertResult}>
       <div>
         <span>Hello</span>
         <br />
@@ -85,7 +85,7 @@ it('passes though getContext', done => {
         value: getContext(Ctx)
       }
     }
-    else return extractText({element, unbox})
+    else return extractText.reduce({element, unbox})
   };
 
   render(

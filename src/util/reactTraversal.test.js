@@ -4,10 +4,9 @@ import { traverseDepthFirst } from './reactTraversal';
 
 const Ctx = React.createContext();
   
-const flatten = ({array}) => array.filter(Boolean).map(x => x.toString().trim()).filter(Boolean).join(" ");
 const expectTextContent = (element) => {
   const res = traverseDepthFirst(element, ({element, unbox}) => {
-    if (['number', 'string'].includes(typeof element) || !element) {
+    if (['number', 'string'].includes(typeof element)) {
       return `${element}`;
     } else {
       return unbox();

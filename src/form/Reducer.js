@@ -6,6 +6,7 @@ const mapElement = (reduce, onFinish) => ({element, memo, getContext, siblingInd
   const idx = siblingIndex || 0;
   const siblingCount = _siblingCount || 1;
   const root = memo ? memo.root : element;
+
   if (!element || !element.type) {    
     const res = reduce({unbox: () => [], element, getContext, idx, siblingCount, root});
     if (memo) {
