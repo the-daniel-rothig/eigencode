@@ -1,4 +1,4 @@
-import YupFragment, { mergeYupFragments, toSchema, when, min, max, oneOf, required, shape } from '../yup-composable/yupFragments2';
+import YupFragment, { mergeYupFragments, toSchema, when, min, max, oneOf, required, shape } from '../yup-composable/yupFragments';
 import * as yup from 'yup';
 import '../yup-composable/additionalMethods'
 import Field from '../form/Field';

@@ -3,7 +3,7 @@ import extractFormSummary from "./extractFormSummary"
 import Field from "../form/Field"
 import Label from "../form/Label";
 import TextInput from "../form/TextInput";
-import { traverseDepthFirst } from '../util/reactTraversal';
+import { traverseDepthFirst } from '../react-traversal/reactTraversal';
 import Radio from '../form/Radio';
 import Select from '../form/Select';
 import Conditional from '../form/Conditional';

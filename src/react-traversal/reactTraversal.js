@@ -1,9 +1,9 @@
 import React from 'react';
 import makeClassInstance from './reactTraversal.makeClassInstance';
-import logOnce from './logOnce';
+import logOnce from '../util/logOnce';
 import ReduceResult from './ReduceResult';
 import usingFakeDispatcher, { getContextFromStack } from './usingFakeDispatcher';
-import ReducerFunction from '../reduces/ReducerFunction';
+import ReducerFunction from '../reducers/ReducerFunction';
 
 const notSupported = (name) => {
   throw `${name} is not currently supported`

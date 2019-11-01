@@ -1,7 +1,7 @@
 import React from 'react'
 import { render } from '@testing-library/react'
 import Reducer from './Reducer'
-import extractText from '../reduces/extractText'
+import extractText from '../reducers/extractText'
 
 it('doesnt explode', () => {
   render(

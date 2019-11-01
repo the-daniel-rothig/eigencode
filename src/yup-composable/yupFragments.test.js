@@ -1,7 +1,7 @@
 import * as yup from 'yup';
-import YupFragment, * as yupFragments from "./yupFragments2"
+import YupFragment, * as yupFragments from "./yupFragments"
 
-const { array, object, string, mixed } = yup;
+const { object, string, mixed } = yup;
 const { mergeYupFragments, notRequired, required, label } = yupFragments;
 
 

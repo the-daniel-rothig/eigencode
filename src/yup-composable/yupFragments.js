@@ -1,105 +1,100 @@
 import * as yup from 'yup'
 
-const getF = (name, args = [], prior) => {
-  if (!name && !prior) {
-    return null;
-  }
-  if (name && prior) {
-    return x => {
-      const p = prior(x);
-      return typeof p[name] === "function" ? p[name](...args) : p;
+const fragmentNames = [
+  'label',
+  'meta',
+  'concat',
+  'strict',
+  'strip',
+  'default',
+  'nullable',
+  'required',
+  'notRequired', 
+  'optional',
+  'typeError',
+  'oneOf', 
+  'equals', 
+  'is',
+  'notOneOf', 
+  'not', 
+  'nope',
+  'when',
+  'test',
+  'transform',
+  'length',
+  'min',
+  'max',
+  'matches',
+  'email',
+  'url',
+  'ensure',
+  'trim',
+  'lowercase',
+  'uppercase',
+  'lessThan',
+  'moreThan',
+  'positive',
+  'negative',
+  'integer',
+  'truncate',
+  'round',
+  'of',
+  'compact',
+  'shape',
+  'from',
+  'unknown',
+  'noUnknown',
+  'transformKeys',
+  'camelCase',
+  'constantCase',
+  'snakeCase',
+];
+
+
+export default class YupFragment {
+  constructor(name, args = [], prior) {
+    if (name && prior) {
+      this.f = schema => prior(schema)[name](...args)
+    } else if (name) {
+      this.f = schema => schema[name](...args)
+    } else if (prior) {
+      this.f = prior
     }
+    this.__isYupFragment__ = true;
   }
-  if (name) {
-    return x => typeof x[name] === "function" ? x[name](...args) : x; 
-  }
-  return prior;
+
+  applyToSchema = schema => this.f 
+    ? this.f(schema || yup.mixed()) 
+    : schema || yup.mixed()
 }
 
-const mergeF = (f1, f2) => {
-  return f1 && f2 && (x => f2(f1(x))) || f2 || f1 || null;
-}
+const assignExtensionMethods = obj => fragmentNames.forEach(name => {
+  obj[name] = (...args) => new YupFragment(name, args, obj.f);
+}) 
 
-const mapToSchemas = obj => {
-  if (typeof obj !== "object") return obj;
+assignExtensionMethods(YupFragment.prototype)
 
-  if (typeof obj.toYupSchema === "function") {
-    return obj.toYupSchema()
-  }
-
-  Object.keys(obj).forEach(key => {
-    if (typeof obj[key].toYupSchema === "function") {
-      obj[key] = obj[key].toYupSchema()
-    }
-  });
-
-  return obj;
-}
-
-class YupFragment {
-  constructor(name, args, base, prior) {
-    this.f = getF(name, args, prior);
-    this.base = base;
-    this.__isYupSchema__ = true;
-  }
-
-  when  = (keys, builder) => typeof builder === "function"
-    ? proxied(new YupFragment('when', [keys, (...args) => mapToSchemas(builder(...args))], this.base, this.f))
-    : proxied(new YupFragment('when', [keys, mapToSchemas(builder)], this.base, this.f))
-    
-  withMutation = () => { throw "withMutation is not supported by YupFragment. Cast to Schema first by calling .toYupSchema()"; }
-
-  object = (...args)      => proxied(new YupFragment(args[0] && 'shape', args, yup.object, this.f))
-  array  = (...args)      => proxied(new YupFragment(args[0] && 'of', args, yup.array,  this.f))
-
-  shape  = (obj, ...rest)      => proxied(new YupFragment('shape', [mapToSchemas(obj), ...rest], this.base, this.f))
-  of     = (obj, ...rest)      => proxied(new YupFragment('of', [mapToSchemas(obj), ...rest], this.base, this.f))
-
-  toYupSchema = () => 
-    this.asYupSchema || // memoised as a convenience
-    (this.asYupSchema = this.f 
-        ? this.f(this.base ? this.base() : yup.mixed()) 
-        : this.base ? this.base() : yup.mixed())
-}
-
-const referenceMixedInstance = yup.mixed();
-
-const proxiedFunction = (name, thisRef) => new Proxy(() => {}, {
-  apply: (_obj, _thisArg, args) => {
-    if (typeof referenceMixedInstance[name] === "function" && !yup.isSchema(referenceMixedInstance[name](...args))) {
-      return thisRef.toYupSchema()[name](...args);
-    }
-    return proxied(new YupFragment(name, args, thisRef.base, thisRef.f))
-  }
-})
-
-const proxied = yupFragment => new Proxy(yupFragment, {
-  get: (obj, prop) => {
-    if (prop in obj) {
-      return obj[prop];
-    } 
-    if (yup[prop] && yup.isSchema(yup[prop].prototype)) {
-      return (...args) => proxied(new YupFragment(null, null, () => yup[prop](...args), obj.f))
-    }
-    return proxiedFunction(prop, obj);
-  }
-})
-
-export const yupFragment = proxied(new YupFragment())
+const yupFragment = new YupFragment()
 
 // convenience exports
+export const defaultValue = yupFragment.default;
+
 export const label = yupFragment.label;
 export const meta = yupFragment.meta;
 export const concat = yupFragment.concat;
 export const strict = yupFragment.strict;
 export const strip = yupFragment.strip;
-export const defaultValue = yupFragment.default;
 export const nullable = yupFragment.nullable;
 export const required = yupFragment.required;
-export const notRequired = yupFragment.notRequired;
+export const notRequired = yupFragment.notRequired; 
+export const optional = yupFragment.optional;
 export const typeError = yupFragment.typeError;
-export const oneOf = yupFragment.oneOf;
-export const notOneOf = yupFragment.notOneOf;
+export const oneOf = yupFragment.oneOf; 
+export const equals = yupFragment.equals; 
+export const is = yupFragment.is;
+export const notOneOf = yupFragment.notOneOf; 
+export const not = yupFragment.not; 
+export const nope = yupFragment.nope;
 export const when = yupFragment.when;
 export const test = yupFragment.test;
 export const transform = yupFragment.transform;
@@ -124,54 +119,45 @@ export const of = yupFragment.of;
 export const compact = yupFragment.compact;
 export const shape = yupFragment.shape;
 export const from = yupFragment.from;
+export const unknown = yupFragment.unknown;
 export const noUnknown = yupFragment.noUnknown;
+export const transformKeys = yupFragment.transformKeys;
 export const camelCase = yupFragment.camelCase;
 export const constantCase = yupFragment.constantCase;
+export const snakeCase = yupFragment.snakeCase;
 
-export const string = yupFragment.string;
-export const number = yupFragment.number;
-export const date = yupFragment.date;
-export const bool = yupFragment.bool;
-export const boolean = yupFragment.boolean;
-export const object = yupFragment.object;
-export const array = yupFragment.array;
-
-export const clone = yupFragment.clone;
-export const describe = yupFragment.describe;
-export const validate = yupFragment.validate;
-export const validateAt = yupFragment.validateAt;
-export const validateSync = yupFragment.validateSync;
-export const validateSyncAt = yupFragment.validateSyncAt;
-export const isValid = yupFragment.isValid;
-export const isValidSync = yupFragment.isValidSync;
-export const cast = yupFragment.cast;
-export const isType = yupFragment.isType;
+const isFragment = fragment => fragment && fragment.__isYupFragment__;
 
 /*
 A       B       rtn
 Frag    Frag    Frag    // ok
 Schema  Schema  Schema  // concat (may error because of yup's schema type limitations)
-Schema  Frag    Schema  // apply B on A
-Frag    Schema  Schema  // apply A on B, then reapply B to undo any overrides
+Schema  Frag    Schema  // toYupSchema and concat (may error because of yup's schema type limitations)
+Frag    Schema  Schema  // Apply A to B, but then re-concat B to offset any overrides
 */
-export const mergeYupFragments = (...args) => {
-  const fragments = args.filter(Boolean).filter(x => yup.isSchema(x));
-  return fragments.reduce((a,b) => { 
-    if (a instanceof YupFragment && b instanceof YupFragment) {
-      return new YupFragment(
-        null,
-        null,
-        b.base || a.base,
-        mergeF(a.f, b.f));
+export const mergeYupFragments = (arrayOfFragments) => {
+  const fragments = arrayOfFragments.filter(Boolean).filter(x => yup.isSchema(x) || isFragment(x));
+  if (fragments.length === 0) {
+    return yupFragment;
+  }
+  if (fragments.length === 1) {
+    return fragments[0];
+  }
+  return fragments.slice(1).reduce((a,b) => { 
+    if (isFragment(a) && isFragment(b)) {
+      return new YupFragment(null, null, b.f && a.f ? schema => b.f(a.f(schema)) : a.f || b.f)
+    } else if (isFragment(a)) {
+      //todo: test effect of re-concat
+      return a.applyToSchema(b).concat(b);
+    } else if (isFragment(b)) {
+      return b.applyToSchema(a);
+    } else {
+      return a.concat(b);
     }
-    if (b instanceof YupFragment) {
-      return typeof b.f === "function" ? b.f(a) : a 
-    }
-    if (a instanceof YupFragment) {
-      return typeof a.f === "function"
-        ? a.f(b).concat(b)
-        : b;
-    }
-    return a.concat(b); 
-  }, new YupFragment());
+  }, fragments[0]);
 };
+
+export const toSchema = schemaOrFragmentOrNull => 
+  yup.isSchema(schemaOrFragmentOrNull) ? schemaOrFragmentOrNull :
+  schemaOrFragmentOrNull && schemaOrFragmentOrNull.__isYupFragment__ ? schemaOrFragmentOrNull.applyToSchema() :
+  schemaOrFragmentOrNull;

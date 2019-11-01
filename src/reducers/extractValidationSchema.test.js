@@ -1,9 +1,9 @@
 import React from 'react';
-import { traverseDepthFirst } from "./reactTraversal"
-import Field from "../form/Field"
+import { traverseDepthFirst } from "../react-traversal/reactTraversal"
 import * as yup from 'yup';
-import extractValidationSchema3 from '../reduces/extractValidationSchema3';
-import { toSchema } from '../yup-composable/yupFragments2';
+import extractValidationSchema from './extractValidationSchema';
+import { toSchema } from '../yup-composable/yupFragments';
+import Field from "../form/Field"
 import Conditional from '../form/Conditional';
 import Multiple from '../form/Multiple';
 import Select from '../form/Select';
@@ -11,8 +11,8 @@ import Radio from '../form/Radio';
 import EmailInput from '../form/EmailInput';
 import NumberInput from '../form/NumberInput';
 
-const getValidationSchema4 = elem => {
-  const res = traverseDepthFirst(elem, extractValidationSchema3)
+const getValidationSchema = elem => {
+  const res = traverseDepthFirst(elem, extractValidationSchema)
   return toSchema(res);
 }
 
@@ -22,13 +22,13 @@ const expectFails = (schema, val) => expect(schema.isValidSync(val, {context: va
 
 
 it('works on a simple field', () => {
-  const schema = getValidationSchema4(<Field validator={myValidator} />)
+  const schema = getValidationSchema(<Field validator={myValidator} />)
   expectPasses(schema, "foo");
   expectFails(schema, "bar");
 })
 
 it('works with two named fields', () => {
-  const schema = getValidationSchema4(
+  const schema = getValidationSchema(
     <>
       <Field name='one' validator={myValidator} />
       <Field name='two' validator={myValidator} />
@@ -40,7 +40,7 @@ it('works with two named fields', () => {
 })
 
 it('works with named Field in Conditional', () => {
-  const schema = getValidationSchema4(
+  const schema = getValidationSchema(
     <>
       <Field name='one' validator={myValidator} />
       <Conditional when='one' is='foobar'>
@@ -57,7 +57,7 @@ it('works with named Field in Conditional', () => {
 })
 
 it('works with Multiple', () => {
-  const schema = getValidationSchema4(
+  const schema = getValidationSchema(
     <>
       <Multiple name='firstNames'>
         <Field validator={myValidator} />
@@ -71,7 +71,7 @@ it('works with Multiple', () => {
 })
 
 it('works with named Fields within Multiple', () => {
-  const schema = getValidationSchema4(
+  const schema = getValidationSchema(
     <>
       <Multiple name='multi'>
         <Field name='a' validator={myValidator} />
@@ -85,7 +85,7 @@ it('works with named Fields within Multiple', () => {
 })
 
 it('works with unnamed Field in Conditional in Multiple', () => {
-  const schema = getValidationSchema4(
+  const schema = getValidationSchema(
     <>
       <Multiple name='multi'>
         <Conditional when='$solo' is='foobar'>
@@ -102,7 +102,7 @@ it('works with unnamed Field in Conditional in Multiple', () => {
 })
 
 it('works with named Field in Conditional in Multiple', () => {
-  const schema = getValidationSchema4(
+  const schema = getValidationSchema(
     <>
       <Multiple name='multi'>
         <Conditional when='$solo' is='foobar'>
@@ -123,7 +123,7 @@ it('works with named Field in Conditional in Multiple', () => {
 })
 
 it('works with unnamed Field in unnamed Multiple', () => {
-  const schema = getValidationSchema4(
+  const schema = getValidationSchema(
     <Multiple>
       <Field validator={myValidator} />
     </Multiple>
@@ -135,7 +135,7 @@ it('works with unnamed Field in unnamed Multiple', () => {
 })
 
 it('respects min setting of Multiple', () => {
-  const schema = getValidationSchema4(
+  const schema = getValidationSchema(
     <Multiple min={2}>
       <Field validator={myValidator} />
     </Multiple>
@@ -149,7 +149,7 @@ it('respects min setting of Multiple', () => {
 })
 
 it('respects max setting of Multiple', () => {
-  const schema = getValidationSchema4(
+  const schema = getValidationSchema(
     <Multiple max={2}>
       <Field validator={myValidator} />
     </Multiple>
@@ -161,7 +161,7 @@ it('respects max setting of Multiple', () => {
 })
 
 it('doesnt require an optional Multiple instance even if min is set', () => {
-  const schema = getValidationSchema4(
+  const schema = getValidationSchema(
     <Multiple name="multi" optional min={2} />
   )
 
@@ -172,41 +172,41 @@ it('works with nested fields', () => {
   const OptField = (props) => <Field optional {...props} />
   const req = yup.mixed().required();
 
-  const one = getValidationSchema4(<OptField name="a"><OptField name="b" validator={req} /></OptField>)
+  const one = getValidationSchema(<OptField name="a"><OptField name="b" validator={req} /></OptField>)
   expectPasses(one, {a: {b: "foo"}})
   expectFails(one, {a: {}})
 
-  const two = getValidationSchema4(<OptField><OptField name="b" validator={req} /></OptField>)
+  const two = getValidationSchema(<OptField><OptField name="b" validator={req} /></OptField>)
   expectPasses(two, {b: "foo"})
   expectFails(two, {})
 
-  const three = getValidationSchema4(<OptField name="a"><OptField validator={req} /></OptField>)
+  const three = getValidationSchema(<OptField name="a"><OptField validator={req} /></OptField>)
   expectPasses(three, {a: "foo"})
   expectFails(three, {})
 
-  const four = getValidationSchema4(<OptField><OptField validator={req} /></OptField>)
+  const four = getValidationSchema(<OptField><OptField validator={req} /></OptField>)
   expectPasses(four, "foo")
   expectFails(four, null)
 
-  const five = getValidationSchema4(<OptField validator={req} name="a"><OptField name="b" /></OptField>)
+  const five = getValidationSchema(<OptField validator={req} name="a"><OptField name="b" /></OptField>)
   expectPasses(five, {a: {b: "foo"}})
   expectFails(five, {})
 
-  const six = getValidationSchema4(<OptField validator={req}><OptField name="b" /></OptField>)
+  const six = getValidationSchema(<OptField validator={req}><OptField name="b" /></OptField>)
   expectPasses(six, {})
   expectFails(six, null)
 
-  const seven = getValidationSchema4(<OptField validator={req} name="a"><OptField /></OptField>)
+  const seven = getValidationSchema(<OptField validator={req} name="a"><OptField /></OptField>)
   expectPasses(seven, {a: "foo"})
   expectFails(seven, {})
 
-  const eight = getValidationSchema4(<OptField validator={req}><OptField /></OptField>)
+  const eight = getValidationSchema(<OptField validator={req}><OptField /></OptField>)
   expectPasses(eight, "foo")
   expectFails(eight, null)
 })
 
 it('uses Select values to filter allowed values', () => {
-  const schema = getValidationSchema4(
+  const schema = getValidationSchema(
     <Field>
       <Select options={['one', 'two']} />
     </Field>
@@ -218,7 +218,7 @@ it('uses Select values to filter allowed values', () => {
 })
 
 it('uses Radio values to filter allowed values', () => {
-  const schema = getValidationSchema4(
+  const schema = getValidationSchema(
     <Field>
       <Radio value='one'>One</Radio>
       <Radio value='two'>Two</Radio>
@@ -231,7 +231,7 @@ it('uses Radio values to filter allowed values', () => {
 })
 
 it('restricts fields to email if there is an EmailInput', () => {
-  const schema = getValidationSchema4(
+  const schema = getValidationSchema(
     <Field>
       <EmailInput />
     </Field>
@@ -242,7 +242,7 @@ it('restricts fields to email if there is an EmailInput', () => {
 })
 
 it('restricts fields to number if there is a NumberInput', () => {
-  const schema = getValidationSchema4(
+  const schema = getValidationSchema(
     <Field>
       <NumberInput />
     </Field>
@@ -253,7 +253,7 @@ it('restricts fields to number if there is a NumberInput', () => {
 })
 
 it('doesnt tolerate unknown fields: root', () => {
-  const schema = getValidationSchema4(
+  const schema = getValidationSchema(
     <>
       <Field name="one" validator={myValidator}/>
       <Field name="two" />
@@ -265,7 +265,7 @@ it('doesnt tolerate unknown fields: root', () => {
 })
 
 it('doesnt tolerate unknown fields: nested', () => {
-  const schema = getValidationSchema4(
+  const schema = getValidationSchema(
     <Field name="root">
       <Field name="one" validator={myValidator}/>
       <Field name="two" />
@@ -277,14 +277,14 @@ it('doesnt tolerate unknown fields: nested', () => {
 })
 
 it('enforces required by default: unnamed Field', () => {
-  const schema = getValidationSchema4(<Field />);
+  const schema = getValidationSchema(<Field />);
   expectPasses(schema, 'hello');
   expectFails(schema, '');
   expectFails(schema, undefined);
 })
 
 it('enforces requiredStrict by default: named Field', () => {
-  const schema = getValidationSchema4(<Field name='one'/>);
+  const schema = getValidationSchema(<Field name='one'/>);
   expectPasses(schema, {one: 'hello'});
   expectFails(schema, {one: ''});
   expectFails(schema, {one: undefined});
