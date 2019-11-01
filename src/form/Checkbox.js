@@ -22,7 +22,7 @@ const Checkbox = ({value, className, children}) => {
 
   return (
     <label className={className} onClick={onClick}>
-      <input type="checkbox" selected={currentValue.includes(value)} value={value} name={name} />
+      <input type="checkbox" checked={currentValue.includes(value)} value={value} name={name} />
       {children}
     </label>
   );

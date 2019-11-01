@@ -43,7 +43,6 @@ const Conditional = ({when, is, preserveValues, onExpanding = invokeCallback, on
   if (!shouldShow && effectiveVisibility && targetVisibility) {
     setTargetVisibility(false);
     onCollapsing(() => {
-      inputs.forEach(i => deleteValue(i.name));
       setEffectiveVisibility(false)
     })
   }
@@ -51,6 +50,13 @@ const Conditional = ({when, is, preserveValues, onExpanding = invokeCallback, on
   if (shouldShow && !effectiveVisibility && !targetVisibility) {
     setTargetVisibility(true)
     onExpanding(() => setEffectiveVisibility(true))
+  }
+
+  if (!effectiveVisibility) {
+    inputs.forEach(i => {
+      deregister(i);
+      deleteValue(i.name)
+    });
   }
 
   const mapRegister = item => {
@@ -66,14 +72,9 @@ const Conditional = ({when, is, preserveValues, onExpanding = invokeCallback, on
     };
   };
 
-  const mapDeregister = preserveValues ? undefined : item => {
-    deregister(item);
-    return item;
-  }
-
   return (    
       effectiveVisibility ? (
-        <InputConfigProvider mapRegister={mapRegister} mapDeregister={mapDeregister}>
+        <InputConfigProvider mapRegister={mapRegister}>
           {children}
         </InputConfigProvider>
       ) : null

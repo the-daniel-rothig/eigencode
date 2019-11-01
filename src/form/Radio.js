@@ -13,7 +13,7 @@ const Radio = ({value, className, children}) => {
 
   return (
     <label className={className} onClick={e => setValue(name, value)}>
-      <input type="radio" selected={value === currentValue} value={value} name={name} />
+      <input type="radio" checked={value === currentValue} value={value} name={name} />
       {children}
     </label>
   );

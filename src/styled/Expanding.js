@@ -1,10 +1,11 @@
-import React, { useRef, useLayoutEffect} from 'react';
+import React, { useRef, useLayoutEffect, useState} from 'react';
 import AnimateHeight from 'react-animate-height';
 import useExpiringState from '../hooks/useExpiringState';
 
 const Expanding = ({render, className, bounce = true}) => {
   const divRef = useRef();
   const [state, setState, isStale] = useExpiringState({collapsed: !!bounce});
+  const [animating, setAnimating] = useState(false);
 
   useLayoutEffect(() => {
     if (!divRef.current || divRef.current.innerHTML.length === 0) {
@@ -21,21 +22,29 @@ const Expanding = ({render, className, bounce = true}) => {
   }
 
   const show = next => {
-    setState({})
-    if (next) {
-      next();
+    if (animating) {
+      setState({cb: next, collapsed: false, multipleAnimations: true})
+    } else {
+      setState({collapsed: false})
+      if (next) {
+        next();
+      }
     }
   }
 
   return (
     <AnimateHeight 
       className='expanding'
-      duration={200}
+      duration={state.multipleAnimations ? 5 : 200}
       height={state.collapsed ? 0 : 'auto'}
+      onAnimationStart={() => {
+        setAnimating(true)
+      }}
       onAnimationEnd={() => {
         if (!isStale() && state.cb) {
           state.cb();
         }
+        setAnimating(false)
       }}
     >
       <div className='expanding-layout-reset'/>

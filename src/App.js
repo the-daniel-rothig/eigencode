@@ -4,7 +4,6 @@ import Form from './form/Form';
 import TextInput from './form/TextInput';
 import Label from './form/Label';
 import Field from './styled/Field';
-import Radio from './styled/Radio';
 import Conditional from './styled/Conditional';
 import { string } from 'yup';
 
@@ -12,6 +11,7 @@ import './yup/extensions';
 import Multiple from './styled/Multiple';
 import YesNo from './styled/YesNo';
 import Checkbox from './styled/Checkbox';
+import Radio from './form/Radio';
 import FormContext from './form/FormContext';
 
 const Debug = () => {
@@ -72,6 +72,8 @@ const ExampleForm = () => (
         <Field name='hasMiddleName'>
           <Label>Do you have a middle name?</Label>
           <YesNo />
+          {/* <Radio value='yes'>Yes</Radio>
+          <Radio value='no'>No</Radio> */}
         </Field>
         <Conditional
           when='hasMiddleName'

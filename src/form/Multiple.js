@@ -11,7 +11,7 @@ const SingleItem = ({remove, children}) => {
     <>    
       {children}
       {(remove) && (
-        <Button onClick={remove}>Remove</Button>
+        <button type='button' onClick={remove}>Remove</button>
       )}
     </>
   )
@@ -66,7 +66,7 @@ const Multiple = ({children, className, name, min=1, max, renderItem = SingleIte
         </FieldProvider>
       ))}
       {(!max || arr.length < max) &&(
-        <Button onClick={add}>Add another</Button>
+        <button type='button' onClick={add}>Add another</button>
       )}
     </FieldProvider>
   )
