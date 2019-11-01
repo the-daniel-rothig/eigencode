@@ -1,0 +1,59 @@
+:root {
+  --radio-cursor: pointer;
+  --radio-size: 27px;
+}
+
+.radio {
+  margin-top: 13px;
+  height: calc(var(--radio-size) + 3px);
+  position: relative;
+  display: block;
+  padding-left: calc(var(--radio-size) + 10px);
+  line-height: 1.65;
+  cursor: var(--radio-cursor);
+}
+
+.radio input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+    cursor: var(--radio-cursor);
+}
+
+.radio .checkmark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: var(--radio-size);
+  width: var(--radio-size);
+  border: solid 1px #999;
+  border-radius: 50%;
+  cursor: var(--radio-cursor);
+}
+
+.radio input:focus ~ .checkmark,
+.radio:hover .checkmark {
+  border-color: #777;
+}
+
+.radio:hover .checkmark:after {
+  background-color: #2284bd
+}
+
+.checkmark:after {
+  content: "";
+  display: block;
+  
+  height: var(--radio-size);  
+  border-radius: 50%;  
+  background: #2b8cc4;  
+  transform: scale(0);
+  width: var(--radio-size);
+}
+
+input:checked ~ .checkmark:after {
+  transform: scale(0.7);
+  transition: transform 0.16s;
+}

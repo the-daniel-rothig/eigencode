@@ -1,0 +1,10 @@
+.yesNoContainer {
+  display: flex;
+}
+
+.yesNoContainer>* {
+  margin-left: 25px;
+}
+.yesNoContainer>*:first-child {
+  margin-left: 0;
+}

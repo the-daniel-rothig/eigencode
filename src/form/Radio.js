@@ -1,9 +1,8 @@
-import React, { useEffect, useContext } from 'react';
+import React, { useContext } from 'react';
 import FieldContext from './FieldContext';
 import FormContext from './FormContext';
-import InputConfigurationContext from './InputConfigurationContext';
 
-const Radio = ({value, children}) => {
+const Radio = ({value, className, children}) => {
   const { name } = useContext(FieldContext);
   const form = useContext(FormContext);
 
@@ -12,11 +11,9 @@ const Radio = ({value, children}) => {
 
   const currentValue = getValue(name);
 
-  const id = [form && form.uid, name, value].filter(Boolean).join("-");
-
   return (
-    <label htmlFor={id}>
-      <input type="radio" selected={value === currentValue} value={value} name={name} id={id} onClick={e => setValue(name, e.target.value)}/>
+    <label className={className} onClick={e => setValue(name, value)}>
+      <input type="radio" selected={value === currentValue} value={value} name={name} />
       {children}
     </label>
   );

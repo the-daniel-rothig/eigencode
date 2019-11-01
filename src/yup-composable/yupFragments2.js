@@ -50,9 +50,6 @@ const fragmentNames = [
   'snakeCase',
 ];
 
-const assignExtensionMethods = obj => fragmentNames.forEach(name => {
-  obj[name] = (...args) => new YupFragment(name, args, obj.f);
-}) 
 
 export default class YupFragment {
   constructor(name, args = [], prior) {
@@ -64,13 +61,18 @@ export default class YupFragment {
       this.f = prior
     }
     this.__isYupFragment__ = true;
-    assignExtensionMethods(this);
   }
 
   applyToSchema = schema => this.f 
     ? this.f(schema || yup.mixed()) 
     : schema || yup.mixed()
 }
+
+const assignExtensionMethods = obj => fragmentNames.forEach(name => {
+  obj[name] = (...args) => new YupFragment(name, args, obj.f);
+}) 
+
+assignExtensionMethods(YupFragment.prototype)
 
 const yupFragment = new YupFragment()
 
@@ -131,12 +133,12 @@ A       B       rtn
 Frag    Frag    Frag    // ok
 Schema  Schema  Schema  // concat (may error because of yup's schema type limitations)
 Schema  Frag    Schema  // toYupSchema and concat (may error because of yup's schema type limitations)
-Frag    Schema  Schema  // apply Frag to Schema (B's base wins out anyway)
+Frag    Schema  Schema  // Apply A to B, but then re-concat B to offset any overrides
 */
 export const mergeYupFragments = (arrayOfFragments) => {
   const fragments = arrayOfFragments.filter(Boolean).filter(x => yup.isSchema(x) || isFragment(x));
   if (fragments.length === 0) {
-    return null;
+    return yupFragment;
   }
   if (fragments.length === 1) {
     return fragments[0];
@@ -145,7 +147,8 @@ export const mergeYupFragments = (arrayOfFragments) => {
     if (isFragment(a) && isFragment(b)) {
       return new YupFragment(null, null, b.f && a.f ? schema => b.f(a.f(schema)) : a.f || b.f)
     } else if (isFragment(a)) {
-      return a.f ? a.f(b) : b;
+      //todo: test effect of re-concat
+      return a.f ? a.f(b).concat(b) : b;
     } else if (isFragment(b)) {
       return b.f ? b.f(a) : a;
     } else {

@@ -19,9 +19,10 @@ const SingleItem = ({remove, children}) => {
 
 const Multiple = ({children, className, name, min=1, max, renderItem = SingleItem}) => {
   const outer = useContext(FormContext);
-  const setValue = outer ? outer.setValue : () => {}
+  const setValue = outer ? outer.setValue : () => {};
+  const deleteValue = outer ? outer.deleteValue : () => {};
 
-  const arr = outer ? outer.getValue(name) : [] || [];
+  const arr = (outer ? outer.getValue(name) : []) || [];
   const [uids, setUids]= useState(arr.map(() => makeUid()))
   
   const fieldContext = useContext(FieldContext);

@@ -151,8 +151,8 @@ export const isType = yupFragment.isType;
 A       B       rtn
 Frag    Frag    Frag    // ok
 Schema  Schema  Schema  // concat (may error because of yup's schema type limitations)
-Schema  Frag    Schema  // toYupSchema and concat (may error because of yup's schema type limitations)
-Frag    Schema  Schema  // apply Frag to Schema (B's base wins out anyway)
+Schema  Frag    Schema  // apply B on A
+Frag    Schema  Schema  // apply A on B, then reapply B to undo any overrides
 */
 export const mergeYupFragments = (...args) => {
   const fragments = args.filter(Boolean).filter(x => yup.isSchema(x));
@@ -164,12 +164,14 @@ export const mergeYupFragments = (...args) => {
         b.base || a.base,
         mergeF(a.f, b.f));
     }
-    if (a instanceof YupFragment) {
-      return a.f(b)
+    if (b instanceof YupFragment) {
+      return typeof b.f === "function" ? b.f(a) : a 
     }
-    const saneB = typeof b.toYupSchema === "function"
-      ? b.toYupSchema()
-      : b;
+    if (a instanceof YupFragment) {
+      return typeof a.f === "function"
+        ? a.f(b).concat(b)
+        : b;
+    }
     return a.concat(b); 
   }, new YupFragment());
 };

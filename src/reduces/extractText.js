@@ -1,19 +1,7 @@
-export default ({unbox, element}) => {
-  if (!element || !element.type) {
-    return {
-      value: element || "",
-      wantsSpacing: false
-    }
-  }
-  const wantsSpacing = typeof element.type === "string" &&
-     !["span", "em", "strong", "b", "small", "u", "a", "abbr", "acronym", "big", "q", "s", "sub", "sup", "time"].includes(element.type);
+import ReducerFunction from "./ReducerFunction";
 
-  const saneArray = unbox().filter(x => x !== null && x !== undefined).map(x => typeof x === "object" ? x : {
-    value: `${x}`,
-    wantsSpacing: false
-  });
-
-  if (saneArray.length === 0) {
+const combinePartialResults = (array) => {
+  if (array.length === 0) {
     return {
       value: "",
       wantsSpacing: wantsSpacing
@@ -22,24 +10,42 @@ export default ({unbox, element}) => {
 
   const res = [];
 
-  for (var i = 0; i<saneArray.length; i++) {
-    if (saneArray[i].value === "") {
+  for (var i = 0; i<array.length; i++) {
+    if (array[i].value === "") {
       continue;
     }
-    res.push(saneArray[i].value)
+    res.push(array[i].value)
 
-    const shouldAddSpace = i !== saneArray.length - 1 && // there is a next sibling
-      (saneArray[i].wantsSpacing || saneArray[i+1].wantsSpacing) && // and one of us wants spacing
-      !/\s$/.test(saneArray[i].value) && // and I have no space at the end
-      !/^\s/.test(saneArray[i+1].value); // and the sibling has no space at the start
+    const shouldAddSpace = i !== array.length - 1 && // there is a next sibling
+      (array[i].wantsSpacing || array[i+1].wantsSpacing) && // and one of us wants spacing
+      !/\s$/.test(array[i].value) && // and I have no space at the end
+      !/^\s/.test(array[i+1].value); // and the sibling has no space at the start
 
     if (shouldAddSpace) {
       res.push("\n")
     }
   }
 
+  return res.join("");
+}
+
+const reduce = ({unbox, element}) => {
+  if (!element || !element.type) {
+    return {
+      value: element || "",
+      wantsSpacing: false
+    }
+  }
+  
+  const wantsSpacing = typeof element.type === "string" &&
+     !["span", "em", "strong", "b", "small", "u", "a", "abbr", "acronym", "big", "q", "s", "sub", "sup", "time"].includes(element.type);
+
+  const subStrings = unbox();
+
   return {
-    value: res.join(""),
+    value: combinePartialResults(subStrings),
     wantsSpacing: wantsSpacing,
   }
 }
+
+export default new ReducerFunction(reduce, combinePartialResults);

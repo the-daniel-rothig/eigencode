@@ -1,19 +1,26 @@
 import React, { useContext, useState, useReducer } from 'react';
 import ReactDOM from 'react-dom';
-import { traverseDepthFirst, traverseWidthFirst } from './reactTraversal';
+import { traverseDepthFirst } from './reactTraversal';
 
 const Ctx = React.createContext();
   
 const flatten = ({array}) => array.filter(Boolean).map(x => x.toString().trim()).filter(Boolean).join(" ");
 const expectTextContent = (element) => {
-  const res = traverseDepthFirst(element, ({unbox}) => flatten({array: unbox()}))
-  return expect(res);
+  const res = traverseDepthFirst(element, ({element, unbox}) => {
+    if (['number', 'string'].includes(typeof element) || !element) {
+      return `${element}`;
+    } else {
+      return unbox();
+    }
+  })
+
+  return expect(res.join(" "));
 };
 
 it('allows me to mock the dispatcher', () =>{
   const Comp = ({children}) => {
     const [salutation] = useState("Hello")
-    return <div>{salutation} {children}</div>;
+    return <div>{salutation}{children}</div>;
   }
 
   expectTextContent(<Comp>everybody</Comp>).toBe("Hello everybody");
@@ -69,9 +76,15 @@ it('works with lazy types', async () => {
       <Lazy greeting="Hello">everybody</Lazy>
       <div> woo hoo</div>
     </React.Suspense>,
-    async ({unbox}) => (await unbox()).join("")
+    async ({element, unbox}) => {
+      if (!element || ['number', 'string'].includes(typeof element)) {
+        return element;
+      } else {
+        return unbox()
+      }
+    }
   );
-  expect(res).toBe("Hello everybody woo hoo");
+  expect(res.join("")).toBe("Hello everybody woo hoo");
 })
 
 it('works with portal types', () => {
@@ -109,53 +122,6 @@ it('works with Context.Consumer', () => {
 })
 it('stops propagation at the bottom', () => {
   traverseDepthFirst(<div />, ({element}) => expect(element).toBeTruthy())
-})
-it('can traverse width first', () => {
-  const strings = []
-  traverseWidthFirst(
-    <div>
-      <div>
-        <span>One</span>
-        <span>Two</span>
-      </div>
-      <span>Three</span>
-    </div>,
-    element => {
-      if (typeof element === "string") {
-        strings.push(element)
-      }
-    } 
-  )
-
-  expect(strings.join(" ")).toBe("Three One Two")
-})
-
-it('can be used to find an element, stopping the search then', () => {
-  let summary = null;
-
-  const DontTouchMe = () => {
-    throw new Error('This should not be evaluated')
-  }
-
-  traverseWidthFirst(
-    <div>
-      <div>
-        Foo
-      </div>
-      <div>
-        <summary>success</summary>
-        <DontTouchMe /> 
-      </div>
-    </div>,
-    element => {
-      if (element.type === "summary") {
-        summary = element.props.children;
-        return true;
-      }
-    }
-  );
-
-  expect(summary).toBe('success')
 })
 
 it('flushes initial state changes', () => {
@@ -383,14 +349,16 @@ it('supports lazy eval of children', () => {
 
   const res = traverseDepthFirst(element, 
     ({element, unbox}) => {
-      if(element.props.className === 'danger') {
-        return '';
+      if (!element || !element.type) {
+        return element;
       }
-      const array = unbox();
-      return flatten({array})
+      if(element.props.className === 'danger') {
+        return undefined;
+      }
+      return unbox();
     });
 
-  expect(res).toBe('success');
+  expect(res[0]).toBe('success');
 })
 
 it('supports custom eval of children', () => {
@@ -406,14 +374,16 @@ it('supports custom eval of children', () => {
 
   const res = traverseDepthFirst(element, 
     ({element, unbox}) => {
-      if(element.type === Hidden) {
-        return flatten({array: unbox(element.props.children)});
+      if (!element || !element.type) {
+        return element;
       }
-      const array = unbox();
-      return flatten({array})
+      if(element.type === Hidden) {
+        return unbox(element.props.children);
+      }
+      return unbox();
     });
 
-  expect(res).toBe('success');
+  expect(res[0]).toBe('success');
 })
 
 it('passes through a context getter', () => {
@@ -429,9 +399,31 @@ it('passes through a context getter', () => {
     if (element.type === 'span') {
       return getContext(Ctx);
     } else {
-      return unbox().join("")
+      return unbox()
     }
   });
 
-  expect(res).toBe('success')
+  expect(res[0]).toBe('success')
+})
+
+it('flatten unbox results', () => {
+  const element = (
+    <div>
+      <div>
+        <span>huge</span>
+        <div>
+          <span>success</span>
+        </div>
+      </div>
+    </div>
+  )
+
+  const res = traverseDepthFirst(element, ({element, unbox}) => {
+    if (element.type === "span") {
+      return element.props.children;
+    }
+    return unbox();
+  })
+
+  expect(res).toStrictEqual(['huge', 'success']);
 })

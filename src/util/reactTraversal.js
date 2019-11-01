@@ -1,128 +1,12 @@
 import React from 'react';
 import makeClassInstance from './reactTraversal.makeClassInstance';
-import { Exception } from 'handlebars';
-import Conditional from '../form/Conditional';
-import Multiple from '../form/Multiple';
-
-// cooking with gas!
-const { ReactCurrentDispatcher } = React.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
-
-const messagesForLogOnce = [];
-  
-const makeLogOnce = () => {
-  const res = (message, level = 'warn') => {
-    if (!messagesForLogOnce.includes(message)) {
-      messagesForLogOnce.push(message);
-      console[level](message);
-    }  
-  }
-  return res;
-}
-
-const notImplemented = (name) => {
-  return `WARNING: use of ${name} is not supported for static traversal, and its effects will be ignored.`
-}
+import logOnce from './logOnce';
+import ReduceResult from './ReduceResult';
+import usingFakeDispatcher, { getContextFromStack } from './usingFakeDispatcher';
+import ReducerFunction from '../reduces/ReducerFunction';
 
 const notSupported = (name) => {
-  throw new Error(`${name} is not currently supported`)
-}
-
-const REACT___shouldSetTextContent = (type, props) => {
-  return type === 'textarea' || type === 'option' || type === 'noscript' || typeof props.children === 'string' || typeof props.children === 'number' || typeof props.dangerouslySetInnerHTML === 'object' && props.dangerouslySetInnerHTML !== null && props.dangerouslySetInnerHTML.__html != null;
-}
-
-const getContext = (contextStack, ctx) => {
-  if (!ctx) { 
-    return null;
-  } 
-
-  const providerType = 
-    ctx.Provider ? ctx.Provider :
-    ctx._context ? ctx._context.Provider : 
-    null;
-
-  if (!providerType) {
-    return null;
-  }
-  for(var i = contextStack.length-1; i >= 0; i--) {
-    if (contextStack[i].type === providerType) {
-      return contextStack[i].value;
-    }
-  }
-  return null;
-}
-
-const passThrough = x => x
-
-const makeFakeDispatcher = (contextStack, logOnce) => {
-  const rebuild = { rebuild: false };
-  const _rebuild = (r) => {
-    if (r !== undefined) {
-      rebuild.current = !!r;
-    }
-
-    return rebuild.current;
-  }
-
-  const stateStack = [];
-  const stateIndex = { current: -1 };
-  const _rewind = () => {
-    stateIndex.current = -1;
-    _rebuild(false);
-  }
-
-  const registerState = (x, getNextState) => {
-    stateIndex.current = stateIndex.current+1;
-    const idx = stateIndex.current;
-    if (stateStack.length - 1  < idx) {
-      stateStack.push(x);
-    }
-    const val = stateStack[idx];
-    const setVal = (...args) => {
-      const y = getNextState(stateStack[idx], ...args)
-      if (stateStack[idx] === y) {
-        return;
-      }
-      stateStack[idx] = y;
-      _rebuild(true);
-    }
-    return [val, setVal];
-  }
-
-  return {
-    readContext: ctx => getContext(contextStack, ctx),
-    useCallback: passThrough,
-    useContext: ctx => getContext(contextStack, ctx),
-    useEffect: () => logOnce(notImplemented('useEffect')),
-    useImperativeHandle: () => logOnce(notImplemented('useImperativeHandle')),
-    useLayoutEffect: () => logOnce(notImplemented('useLayoutEffect')),
-    useMemo: passThrough,
-    useReducer: (reducer, initialState) => registerState(initialState, reducer),
-    useRef: (initial) => {
-      const ref = {current: initial};
-      return ref;
-    },
-    useState: x => registerState(x, (oldState, newState) => newState),
-    useDebugValue: () => logOnce(notImplemented('useDebugValue')),
-    useResponder: () => logOnce(notImplemented('useResponder')),
-    useDeferredValue: () => logOnce(notImplemented('useDeferredValue')),
-    useTransition: () => logOnce(notImplemented('useTransition')),
-    _rebuild,
-    _rewind
-  };
-}
-
-// SYNC ONLY!
-const usingFakeDispatcher = (contextStack, logOnce, cb) => {
-  const fake = makeFakeDispatcher(contextStack, logOnce)
-  const original = ReactCurrentDispatcher.current;
-  ReactCurrentDispatcher.current = fake;
-  try {
-    return cb(fake);
-  }
-  finally {
-    ReactCurrentDispatcher.current = original;
-  }
+  throw `${name} is not currently supported`
 }
 
 const shouldConstruct = (Component) => {
@@ -133,18 +17,16 @@ const opaqueTypes = {
   current: [
     React.Fragment,
     React.Suspense,
-    // Conditional,
-    // Multiple
   ]
 }
 
-function processChild({child, contextStack, traverse, logOnce}) {
+function processChild({child, contextStack, traverse}) {
   const saneTraverse = traverse || ((...args) => {
     return args
   });
 
   const mapToResult = (children, mappingContextStack) => {
-    const array = React.Children.toArray(children);
+    const array = Array.isArray(children) ? children : [children] //React.Children.toArray(children);
     const res = array.map((innerChild, i) => saneTraverse(innerChild, mappingContextStack, i));
     return res;
   }
@@ -158,7 +40,7 @@ function processChild({child, contextStack, traverse, logOnce}) {
     return resolvedChildren;
   }
   if (child.type && child.type.$$typeof && child.type.$$typeof.toString() === "Symbol(react.context)") {
-    const inner = child.props.children(getContext(contextStack, child.type));
+    const inner = child.props.children(getContextFromStack(contextStack, child.type));
     return [saneTraverse(inner, contextStack)];
   }
   if (child.type && child.type.$$typeof && child.type.$$typeof.toString() === "Symbol(react.lazy)") {
@@ -175,9 +57,7 @@ function processChild({child, contextStack, traverse, logOnce}) {
     return resolvedChildren;
   }
   if (typeof child === 'string' || typeof child === 'number') {
-    // n.b.!
-    //return [child];
-    throw new Exception('this shouldnt happen!')
+    throw 'this shouldnt happen!'
   } 
   if (child.type && opaqueTypes.current.includes(child.type) || typeof child.type === 'string') {
     const resolvedChildren = mapToResult(child.props.children, contextStack)
@@ -187,9 +67,9 @@ function processChild({child, contextStack, traverse, logOnce}) {
     if (!!child.type.contextTypes) notSupported(`contextTypes properties on classes like ${child.type.name}`)
     if (!!child.type.childContextTypes) notSupported(`childContextTypes properties on classes like ${child.type.name}`)
 
-    const { inst, isUpdateRequired, doUpdate } = makeClassInstance(child, getContext(contextStack, child.type.contextType));
+    const { inst, isUpdateRequired, doUpdate } = makeClassInstance(child, getContextFromStack(contextStack, child.type.contextType));
     if (inst.shouldComponentUpdate) {
-      logOnce(notImplemented('shouldComponentUpdate'))
+      logOnce('WARNING: use of shouldComponentUpdate is not supported for static traversal, and its effects will be ignored.');
     }
     let traversed = undefined;
     do {
@@ -200,7 +80,7 @@ function processChild({child, contextStack, traverse, logOnce}) {
     
     return [traversed];
   } else {
-    let res = usingFakeDispatcher(contextStack, logOnce, (dispatcher) => {
+    let res = usingFakeDispatcher(contextStack, (dispatcher) => {
       let traversed = undefined;
       do {
         dispatcher._rewind();
@@ -211,32 +91,43 @@ function processChild({child, contextStack, traverse, logOnce}) {
       return [traversed];
     });
     return res;
-    //return [saneTraverse(inner, contextStack)];
   }
 }
 
-const makeTraverseFunction = (reduce, root) => {
-  const logOnce = makeLogOnce()
+const makeTraverseFunction = (reduce, isRoot) => {
+  
   const traverse = (element, contextStack, siblingIndex) => {
-    if (element === null || element === undefined) { 
-      return null;
-    }
-    if (typeof element === "string" || typeof element === "number") {
-      return reduce({unbox: () => [], element, getContext, root, siblingIndex});
+    const getContext = ctx => getContextFromStack(contextStack, ctx)
+    
+    if (!element || !element.type) { 
+      return reduce.reduce({unbox: () => undefined, element, getContext, isRoot: false, isLeaf: true, siblingIndex});
     }
 
     const unbox = (child, reduceOverride) => {
       const saneChild = child ? <>{child}</> : element;
-      const newTraverse = reduceOverride ? makeTraverseFunction(reduceOverride, saneChild) : traverse;
-      const array = processChild({child: saneChild, traverse: newTraverse, contextStack, logOnce})
-      return array.filter(x => x && typeof x.then === "function").length > 0
-        ? Promise.all(array)
-        : array;
+      if (reduceOverride) {
+        const newIsRoot = child ? el => !!child && (Array.isArray(child) ? child : [child]).includes(el) : isRoot
+        const saneOverride = ReducerFunction.cast(reduceOverride)
+        const newTraverse = makeTraverseFunction(saneOverride, newIsRoot);
+        const array = processChild({child: saneChild, traverse: newTraverse, contextStack});
+
+        return array.filter(x => x && typeof x.then === "function").length > 0
+          ? Promise.all(array).then(arr => saneOverride.finalTransform(ReduceResult.flatten(arr)))
+          : saneOverride.finalTransform(ReduceResult.flatten(array));
+      } else {
+        const array = processChild({child: saneChild, traverse, contextStack })
+        
+        return array.filter(x => x && typeof x.then === "function").length > 0
+          ? Promise.all(array).then(arr => ReduceResult.flatten(arr))
+          : ReduceResult.flatten(array);
+      }
     }
 
-    const getContext1 = ctx => getContext(contextStack, ctx)
+    const reduceResult = reduce.reduce({unbox, element, getContext, siblingIndex, isRoot: isRoot(element), isLeaf: false})
 
-    return reduce({unbox, element, getContext: getContext1, root, siblingIndex})
+    return typeof reduceResult.then === "function"
+      ? reduceResult.then(res => ReduceResult.cast(res))
+      : ReduceResult.cast(reduceResult);
   }
 
   return traverse;
@@ -246,50 +137,10 @@ export const traverseDepthFirst = (
   child, 
   reduceChildrenArray
 ) => {
-  const saneReduceChildrenArray = reduceChildrenArray || (({array}) => array);
-  const traverse = makeTraverseFunction(saneReduceChildrenArray, child);
-  return traverse(child, []);
-}
-
-export const traverseWidthFirst = (
-  element,
-  handleElement
-) => {
-  const logOnce = makeLogOnce();
-  const queue = [{
-    child: element,
-    contextStack: [],
-    logOnce
-  }];
-
-
-  while (queue.length > 0) {
-    // todo: give a nicer interface with the element type pre-processed
-    if (handleElement(queue[0].child)) {
-      // interrupt indicated
-      return;
-    }
-
-    const frame = queue.shift();
-
-    if (!!frame.child.type) {
-      const newFrames = processChild(frame);
-      newFrames.forEach(newFrame => {
-        queue.push({
-          child: newFrame[0],
-          contextStack: newFrame[1],
-          logOnce
-        })
-      });
-    }
-  }
-}
-
-export const registerOpaqueTypes = (...args) => {
-  const saneArgs = 
-    args.length > 1 ? args :
-    Array.isArray(args[0]) ? args[0] :
-    [args[0]];
-
-  opaqueTypes.current = [...opaqueTypes.current, ...saneArgs];
+  const saneReduceChildrenArray = ReducerFunction.cast(reduceChildrenArray || (({array}) => array));
+  const traverse = makeTraverseFunction(saneReduceChildrenArray, e => e === child);
+  const res = traverse(child, []);
+  return res && typeof res.then === "function"
+    ? res.then(arr => saneReduceChildrenArray.finalTransform(ReduceResult.flatten(arr)))
+    : saneReduceChildrenArray.finalTransform(ReduceResult.flatten(res));
 }

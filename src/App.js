@@ -1,16 +1,63 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import './App.css';
 import Form from './form/Form';
 import TextInput from './form/TextInput';
 import Label from './form/Label';
 import Field from './styled/Field';
-import Radio from './form/Radio';
+import Radio from './styled/Radio';
 import Conditional from './styled/Conditional';
 import { string } from 'yup';
 
 import './yup/extensions';
 import Multiple from './styled/Multiple';
-import getValidationSchema from './util/getValidationSchema';
+import YesNo from './styled/YesNo';
+import Checkbox from './styled/Checkbox';
+import FormContext from './form/FormContext';
+
+const Debug = () => {
+  const { values } = useContext(FormContext);
+
+  // const shape = {};
+  // inputs.filter(i => i.validator).map(i => ({
+  //   validator: i.validator,
+  //   path: i.name.replace(/\[[0-9]+\]/g, "[]").split(".").filter(Boolean)
+  // })).forEach(({validator, path}) => {
+  //   let target = shape;
+  //   path.slice(0, -1).forEach(p => {
+  //     target[p] = target[p] || {};
+  //     target = target[p];
+  //   })
+  //   target[path[path.length -1]] = validator;
+  // })
+
+  // const toSchema = obj => {
+  //   if (obj.__isYupSchema__) {
+  //     return obj;
+  //   }
+  //   const s = {}
+  //   Object.keys(obj).forEach(key => {
+  //     if (key.endsWith("[]")) {
+  //       s[key.slice(0, -2)] = array().of(toSchema(obj[key]));
+  //     } else {
+  //       s[key] = toSchema(obj[key])
+  //     }
+  //   })
+
+  //   return object().shape(s)
+  // }
+
+  // const validationSchema = toSchema(shape);
+
+  let message = 'ok';
+
+  // try {
+  //   validationSchema.validateSync(values, {context: values});
+  // } catch(e) {
+  //   message = e.message
+  // }
+
+  return (<pre>{JSON.stringify(values, null, '  ')}</pre>)
+}
 
 const ExampleForm = () => (
       <Form>
@@ -24,8 +71,7 @@ const ExampleForm = () => (
         </Field>
         <Field name='hasMiddleName'>
           <Label>Do you have a middle name?</Label>
-          <Radio value="yes">Yes</Radio>
-          <Radio value="no">No</Radio>
+          <YesNo />
         </Field>
         <Conditional
           when='hasMiddleName'
@@ -40,11 +86,16 @@ const ExampleForm = () => (
           <Label>How old are you?</Label>
           <TextInput />
         </Field>
+        <Field name='iceCreamFlavours'>
+          <Label>What are your favourite ice cream flavours?</Label>
+          <Checkbox value='vanilla'>Vanilla</Checkbox>
+          <Checkbox value='chocolate'>Chocolate</Checkbox>
+          <Checkbox value='strawberry'>Strawberry</Checkbox>
+        </Field>
 
         <Field name='likesAnimals'>
           <Label>Do you like animals?</Label>
-          <Radio value="yes">Yes</Radio>
-          <Radio value="no">No</Radio>
+          <YesNo />
         </Field>
         <Conditional when='likesAnimals' is='yes'>
           <Multiple name='animals'>
@@ -61,8 +112,7 @@ const ExampleForm = () => (
             </Field>
             <Field name='hasPet'>
               <Label>Do you have one as a pet?</Label>
-              <Radio value='yes'>Yes</Radio>
-              <Radio value='no'>No</Radio>
+              <YesNo />
             </Field>
             <Conditional when='hasPet' is='yes'>
               <Field name='pet' validator={string().required()}>
@@ -72,7 +122,7 @@ const ExampleForm = () => (
             </Conditional>
           </Multiple>
         </Conditional>
-
+        <Debug />
       </Form>
 )
 

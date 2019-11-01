@@ -9,29 +9,34 @@ import Select from '../form/Select';
 import Conditional from '../form/Conditional';
 import Multiple from '../form/Multiple';
 import extractText from './extractText';
+import ReducerFunction from './ReducerFunction';
 
-import flatten from 'lodash/flatten';
-
-const findElement = (selector, andThenReduce) => async ({element, unbox}) => {
-  if (selector(element)) {
-    const reduced = await unbox(element, andThenReduce); 
-    return reduced && reduced[0] ? reduced[0].value : "";
+const findWithin = (
+  selector, 
+  andThenReduce = ({element}) => element
+) => ReducerFunction.single(
+  ({element, isLeaf, unbox}) => {
+    if (!isLeaf && selector(element)) {
+      const reduced = unbox(element, andThenReduce); 
+      return reduced;
+    }
+    return unbox();
   }
-  const inner = flatten(await unbox()).filter(x => x !== undefined)
-  return inner[0];
-}
+);
 
-const getSectionHeading = ({isSection, isHeading}) => async ({element, unbox}) => {
-  if (isSection(element)) {
-    const h1 = await unbox(element, findElement(e => isHeading(e), extractText))
-    return h1 && h1[0] || "";
+const getSectionHeading = ({isSection, isHeading}) => ReducerFunction.single(
+  ({element, isRoot, unbox}) => {
+    if (isRoot && isSection(element)) {
+      const h1 = unbox(element, findWithin(isHeading, extractText))
+      return h1 || "";
+    }
+    return unbox();
   }
-  return false;
-}
+);
 
 
 const getFormSummary = async (element, values, identifySection) => {
-  return await traverseDepthFirst(<>{element}</>, extractFormSummary(values, identifySection))
+  return await traverseDepthFirst(element, extractFormSummary(values, identifySection))
 }
 
 describe('extractFormSummary', () => {

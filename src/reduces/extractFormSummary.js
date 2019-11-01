@@ -1,15 +1,9 @@
 import React from 'react'
 import Field, { FieldProvider } from "../form/Field";
-import flatten from "lodash/flattenDeep"
 import Label from "../form/Label";
-import { traverseDepthFirst } from "../util/reactTraversal";
 import extractText from "./extractText";
-import TextInput from "../form/TextInput";
-import InputBase from "../form/InputBase";
 import Radio from "../form/Radio";
-import Select from "../form/Select";
 import Conditional, { isConditionalShowing } from "../form/Conditional";
-import FormContext from "../form/FormContext";
 import FieldContext from "../form/FieldContext";
 import { deepGet } from "../util/objectTraversal";
 import makeCamelCaseFieldName from "../util/makeCamelCaseFieldName";
@@ -20,33 +14,18 @@ const firstValueOfType = (array, ...type) =>
 const allOfType = (array, ...type) => 
   array.filter(x => type.includes(x.type))
 
-export default (values, identifySection = () => false) => async ({unbox, element, getContext}) => {
+export default (values, identifySection = () => false) => async ({element, getContext, isLeaf, unbox}) => {
   const fullyQualifiedName = (rawName) => {
     const fieldContext = getContext(FieldContext);
     return `${fieldContext && fieldContext.name ? fieldContext.name + "." : ""}${makeCamelCaseFieldName(rawName)}`;
   } 
 
-  if (!element || typeof element !== "object") {
-    return undefined;
+  if (isLeaf) {
+    return unbox();
   }
-  const section = await identifySection({element, unbox});
-  if (!!section || typeof section === "string") {
-    const contents = flatten(await unbox()).filter(Boolean);
-    return {
-      type: 'section',
-      label: section,
-      contents
-    }
-  }
-  if (element.type === Label) {
-    const textContent = (await unbox(element.props.children, extractText)).map(x => x.value)[0]; 
-    return {
-      type: 'label',
-      val: textContent
-    }
-  }
+
   if (element.type === Field) {
-    const children = flatten(await unbox()).filter(Boolean);
+    const children = await unbox();
     const options = allOfType(children, 'option');
     const fields = allOfType(children, 'field', 'group');
     const dataName = fullyQualifiedName(element.props.name);
@@ -69,10 +48,10 @@ export default (values, identifySection = () => false) => async ({unbox, element
 
   if (element.type === Conditional) {
     const outerFieldContext = getContext(FieldContext);
-
     const shouldShow = isConditionalShowing(element.props.when, element.props.is, outerFieldContext && outerFieldContext.name, x => deepGet(values, x));
-    const children = flatten(await unbox(element.props.children)).filter(Boolean)
-    return children.map(x => !shouldShow && ['field', 'group'].includes(x.type) ? {...x, concealed: true} : x)
+    const c2 = await unbox(element.props.children)
+
+    return c2.map(x => !shouldShow && ['field', 'group'].includes(x.type) ? {...x, concealed: true} : x);
   }
 
   if (element.type === Multiple) {
@@ -80,25 +59,35 @@ export default (values, identifySection = () => false) => async ({unbox, element
     const value = deepGet(values, dataName);
     const valueArray = Array.isArray(value) ? value : [];
 
-    return {
+    const multi = {
       type: 'multiple',
       name: element.props.name,
       entries: await Promise.all(valueArray.map(async (entry, idx) => {
         const name = `${makeCamelCaseFieldName(element.props.name)}[${idx}]`;
-        const children = flatten(await unbox(<FieldProvider name={name}>{element.props.children}</FieldProvider>)).filter(Boolean)
+        const children = await unbox(<FieldProvider name={name}>{element.props.children}</FieldProvider>)
         return children;
       }))
     }
 
+    return multi;
+  }
+
+  if (element.type === Label) {
+    const textContent = await unbox(element.props.children, extractText); 
+    return {
+      type: 'label',
+      val: textContent
+    }
   }
   
   if (element.type === Radio) {
     return {
       type: 'option',
-      label: (await unbox(element.props.children, extractText)).map(x => x.value)[0],
+      label: await unbox(element.props.children, extractText),
       value: element.props.value
     }
   }
+
   if (element.type === "option") {
     return {
       type: 'option',
@@ -106,6 +95,16 @@ export default (values, identifySection = () => false) => async ({unbox, element
       value: element.props.value
     }
   }
-  const inner = await unbox();
-  return flatten(inner).filter(Boolean)
+  
+  const section = await unbox(element, identifySection)
+  if (typeof section === "string") {
+    const contents = await unbox(); 
+    return {
+      type: 'section',
+      label: section,
+      contents
+    };
+  }
+
+  return unbox()
 } 
