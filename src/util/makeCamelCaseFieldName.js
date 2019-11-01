@@ -6,11 +6,11 @@ const entirelyCamelCaseTestRegex = /^[$A-Za-z0-9]+$/;
 
 export default name => {
   if (!name) {
-    return null;
+    return name;
   }
   if (camelCaseTestRegex.test(name)) {
     const suggestion = name.replace(/[A-Z]/g, s => ` ${s}`).toLowerCase();
-    logOnce(`field name seems to already be in camelCase: "${name}". This will affect validation messages. Please specify it in mid-sentence case instead (e.g. ${suggestion})`, 'error');
+    logOnce(`field name seems to already be in camelCase: "${name}". This will affect validation messages. Please specify it in mid-sentence case instead (e.g. '${suggestion}')`, 'error');
   }
   if (entirelyCamelCaseTestRegex.test(name)) {
     return name;

@@ -1,4 +1,4 @@
-import YupFragment, { mergeYupFragments, toSchema, when, min, max, oneOf, required } from '../yup-composable/yupFragments2';
+import YupFragment, { mergeYupFragments, toSchema, when, min, max, oneOf, required, shape } from '../yup-composable/yupFragments2';
 import * as yup from 'yup';
 import '../yup-composable/additionalMethods'
 import Field from '../form/Field';
@@ -10,47 +10,50 @@ import EmailInput from '../form/EmailInput';
 import Select from '../form/Select';
 import Radio from '../form/Radio';
 import TextInput from '../form/TextInput';
-
+import ReducerFunction from './ReducerFunction';
 
 const dottify = str => typeof str === "string" && str[0] === "$" ? str : `.${str}`
 
-export default ({element, array}) => {
+export default ReducerFunction.single(({element, unbox, isLeaf}) => {
+  if (isLeaf) {
+    return unbox();
+  }
   const {props, type} = element;
-  const combined = mergeYupFragments(array);
   const name = props.name ? makeCamelCaseFieldName(props.name) : undefined;    
 
-  if (element === null || element === undefined) {
-    return {};
-  } else if (element.type === TextInput) {
+  if (type === TextInput) {
     return yup.string();
-  } else if (element.type === EmailInput) {
+  } else if (type === EmailInput) {
     return yup.string().email();
-  } else if (element.type === NumberInput) {
+  } else if (type === NumberInput) {
     return yup.number();
-  } else if (element.type === Select) {
-    const allowedValues = (element.props.options || []).map(opt => 
+  } else if (type === Select) {
+    const allowedValues = (props.options || []).map(opt => 
       typeof opt.value === "string" ? opt.value : typeof opt.label === "string" ? opt.label : opt);
     return  oneOf(allowedValues)
-  } else if (element.type === Radio) {
-    const allowedValues = [(element.props.value || element.props.children || "").toString()]
+  } else if (type === Radio) {
+    const allowedValues = [(props.value || props.children || "").toString()]
     return oneOf(allowedValues);
   } else if (type === Field) {
+    const combined = mergeYupFragments(unbox());
     const fragmentWithThis = mergeYupFragments([
       !props.optional && new YupFragment('requiredStrict'),
       props.validator, 
       combined])
     return name
-      ? yup.object({[name]: toSchema(fragmentWithThis) || yup.mixed()}).noUnknown().strict().default(undefined) // bug https://github.com/jquense/yup/issues/678
+      ? yup.object().shape({[name]: toSchema(fragmentWithThis) || yup.mixed()}).noUnknown().strict().default(undefined) // bug https://github.com/jquense/yup/issues/678
       : fragmentWithThis;
   } else if (type === Conditional && props.when && props.is) {
-    const whenWithDots = Array.isArray(props.when) 
+    const combined = mergeYupFragments(unbox(props.children));
+    const whenWithDots = Array.isArray(props.when)
       ? props.when.map(dottify) 
       : dottify(props.when);
     return when(whenWithDots, {
       is: props.is,
-      then: combined
+      then: s => mergeYupFragments([s, combined])
     });
   } else if (type === Multiple) {
+    const combined = mergeYupFragments(unbox(props.children));
     let multiSchemaFragments = [
       !props.optional && new YupFragment('requiredStrict'),
       props.min !== 0 && min(props.min || 1),
@@ -65,6 +68,6 @@ export default ({element, array}) => {
       ? yup.object({[name]: multiSchema}).noUnknown().strict().default(undefined) // bug https://github.com/jquense/yup/issues/678
       : multiSchema;
   } else {
-    return combined;
+    return mergeYupFragments(unbox());
   }
-}
+});

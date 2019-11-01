@@ -148,9 +148,9 @@ export const mergeYupFragments = (arrayOfFragments) => {
       return new YupFragment(null, null, b.f && a.f ? schema => b.f(a.f(schema)) : a.f || b.f)
     } else if (isFragment(a)) {
       //todo: test effect of re-concat
-      return a.f ? a.f(b).concat(b) : b;
+      return a.applyToSchema(b).concat(b);
     } else if (isFragment(b)) {
-      return b.f ? b.f(a) : a;
+      return b.applyToSchema(a);
     } else {
       return a.concat(b);
     }
