@@ -1,16 +1,17 @@
 {
   "private": true,
   "workspaces": [
-    "context-filter",
-    "eigencode-shared-utils",
-    "eigenform",
-    "eigenform-demo",
-    "react-traversal",
-    "yup-extensions",
-    "yup-fragment"
+    "packages/context-filter",
+    "packages/eigencode-shared-utils",
+    "packages/eigenform",
+    "packages/eigenform-demo",
+    "packages/react-traversal",
+    "packages/yup-extensions",
+    "packages/yup-fragment"
   ],
   "scripts": {
-    "test": "jest"
+    "test": "jest --watch",
+    "demo": "cd packages/eigenform-demo && yarn start"
   },
   "jest": {
     "setupFiles": [
