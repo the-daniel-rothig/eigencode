@@ -1,0 +1,10 @@
+{
+  "name": "yup-fragment",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/yupFragments.js",
+  "main:src": "src/yupFragments.js",
+  "dependencies": {
+    "yup": "^0.27.0"
+  }
+}

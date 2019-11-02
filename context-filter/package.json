@@ -1,0 +1,14 @@
+{
+  "name": "context-filter",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/ContextFilter.js",
+  "main:src": "src/ContextFilter.js",
+  "dependencies": {
+    "lodash": "^4.17.15",
+    "react": "^16.9.0"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^9.3.1"
+  }
+}

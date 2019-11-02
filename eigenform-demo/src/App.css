@@ -1,0 +1,61 @@
+form {
+  max-width: 960px;
+  margin: auto;
+}
+
+pre {
+  padding: 1rem;
+  background-color: #ccc;
+}
+
+.field, .conditional--flat, .conditional .conditional, label {
+  margin:1rem 0 0 0;
+  padding: 0;
+  border: none;
+}
+
+.button {
+  margin:1rem 0 0 0;
+}
+
+.conditional {
+  margin: 0.2rem 0 0 0.2rem;
+  padding: 0.4rem 0 0.3rem 1rem;
+  border-left: solid 3px #bbb;
+}
+.multiple__item { 
+  margin-top: 0.7rem;
+  border: solid 1px #999;
+  padding: 1em;
+  width: 50%;
+  min-width: 300px;
+}
+
+label {
+  display: block;
+}
+
+input {
+  margin: 0.5rem 0 0 0;
+  padding: 0.5rem;
+}
+
+input[type='radio'],
+input[type='checkbox'] {
+  margin-right: 0.5rem;
+}
+
+
+:first-child {
+  margin-top:0;
+}
+
+.expanding:first-child>div>.expanding-layout-reset ~ * {
+  margin-top:0;
+}
+
+.reveal {
+  padding: 0.3rem 0.3rem 0.3rem 0.6em;
+  margin-left: 0.3rem;
+  border-left: solid 2px #aaa;
+}
