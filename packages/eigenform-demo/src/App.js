@@ -42,7 +42,7 @@ const ExampleForm = () => (
           <Label>Do you have a middle name?</Label>
           <YesNo />
           {/* <Radio value='yes'>Yes</Radio>
-          <Radio value='no'>No</Radio> */}
+          <Radio value='no'>No</Radio>  */}
         </Field>
         <Conditional
           when='hasMiddleName'

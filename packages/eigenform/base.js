@@ -12,3 +12,4 @@ export { default as NumberInput } from './src/form/NumberInput';
 export { default as Radio } from './src/form/Radio';
 export { default as Select } from './src/form/Select';
 export { default as TextInput } from './src/form/TextInput';
+export { default as YesNo } from './src/form/YesNo';

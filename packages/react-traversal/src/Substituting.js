@@ -48,15 +48,30 @@ const doMapElement = (mapElement, element, memo, siblingIndex, siblingCount) => 
 const makeElementMapper = mapElement => {
   const elementMapper = (childElement, memo, siblingIndex, siblingCount) => {
     if (childElement && childElement.type === Substituting) {
-      const combined = (args) => {
-        let one = childElement.props.mapElement(args), newMemo = memo;
-        if (Array.isArray(one)) {
-          one = one[0]
-          newMemo = one[1]
+      const mapElementOne = mapElement;
+      const memoOne = memo;
+            
+      const mapElementTwo = childElement.props.mapElement;
+      const memoTwo = undefined; // for now!
+
+      const memoCombined = {
+        memoOne,
+        memoTwo
+      };
+
+      const mapElementCombined = ({memo, element, ...rest}) => {
+        const resultTwo = mapElementTwo({memo: memo.memoTwo, element, ...rest});
+        const intermediateElement = Array.isArray(resultTwo) ? resultTwo[0] : resultTwo; 
+        const resultOne = mapElementOne({memo: memo.memoOne, element: intermediateElement, ...rest});
+        const finalElement = Array.isArray(resultOne) ? resultOne[0] : resultOne;
+        const finalMemo = {
+          memoOne: Array.isArray(resultOne) ? resultOne[1] : memo.memoOne,
+          memoTwo: Array.isArray(resultTwo) ? resultTwo[1] : memo.memoTwo,
         }
-        return doMapElement(mapElement, one, newMemo, siblingIndex, siblingCount);
+        return [finalElement, finalMemo];
       }
-      return <Recursor elementMapper={makeElementMapper(combined)} memo={memo}>{childElement.props.children}</Recursor>;
+
+      return <Recursor elementMapper={makeElementMapper(mapElementCombined)} memo={memoCombined}>{childElement.props.children}</Recursor>;
     }
     if (typeof childElement === "function") {
       return (...args) => {
@@ -79,7 +94,8 @@ const makeElementMapper = mapElement => {
       }
       if(REACT___shouldSetTextContent(mapped.type, mapped.props)) {
         // react will not actually evaluate children of some nodes (as an optimisation),
-        // so call mapElement directly here. 
+        // so Recursor would not drill to the text contents of these.
+        // This is why, when we encounter such nodes, we call mapElement on the children directly 
         const [child] = doMapElement(mapElement, mapped.props.children, mappedMemo);
         return React.cloneElement(mapped, {children: child});
       }
@@ -126,6 +142,20 @@ const makeElementMapper = mapElement => {
         key: mapped.key,
         ref: mapped.ref
       };
+    }
+
+    if (getSymbol(mapped) === "forward_ref") {
+      const MappedForwardRef = React.forwardRef((props, ref) => {
+        const inner = mapped.type.render(props, ref);
+        return <Recursor elementMapper={elementMapper} memo={mappedMemo}>{inner}</Recursor>
+      })
+
+      const element = <MappedForwardRef {...mapped.props} />
+      return {
+        ...element,
+        key: mapped.key,
+        ref: mapped.ref,
+      }
     }
     
     if (shouldConstruct(mapped.type)) {

@@ -87,7 +87,7 @@ function processChild({child, contextStack, traverse}) {
         const inner = child.type(child.props)
         traversed = saneTraverse(inner, contextStack)
       } while(dispatcher._rebuild())
-
+      // bug: traversed could already be an array
       return [traversed];
     });
     return res;

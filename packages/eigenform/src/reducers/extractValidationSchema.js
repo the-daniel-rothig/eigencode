@@ -1,4 +1,4 @@
-import YupFragment, { mergeYupFragments, toSchema, when, min, max, oneOf } from 'yup-fragment';
+import YupFragment, { mergeYupFragments, toSchema, when, min, max, oneOf, label } from 'yup-fragment';
 import * as yup from 'yup';
 import 'yup-extensions';
 import { ReducerFunction } from 'react-traversal';
@@ -15,9 +15,9 @@ import TextInput from '../form/TextInput';
 
 const dottify = str => typeof str === "string" && str[0] === "$" ? str : `.${str}`
 
-export default ReducerFunction.single(({element, unbox, isLeaf}) => {
+export default ReducerFunction.single(async ({element, unbox, isLeaf}) => {
   if (isLeaf) {
-    return unbox();
+    return await unbox();
   }
   const {props, type} = element;
   const name = props.name ? makeCamelCaseFieldName(props.name) : undefined;    
@@ -36,16 +36,17 @@ export default ReducerFunction.single(({element, unbox, isLeaf}) => {
     const allowedValues = [(props.value || props.children || "").toString()]
     return oneOf(allowedValues);
   } else if (type === Field) {
-    const combined = mergeYupFragments(unbox());
+    const combined = mergeYupFragments(await unbox());
     const fragmentWithThis = mergeYupFragments([
       !props.optional && new YupFragment('requiredStrict'),
+      props.name && label(props.name),
       props.validator, 
       combined])
     return name
       ? yup.object().shape({[name]: toSchema(fragmentWithThis) || yup.mixed()}).noUnknown().strict().default(undefined) // bug https://github.com/jquense/yup/issues/678
       : fragmentWithThis;
   } else if (type === Conditional && props.when && props.is) {
-    const combined = mergeYupFragments(unbox(props.children));
+    const combined = mergeYupFragments(await unbox(props.children));
     const whenWithDots = Array.isArray(props.when)
       ? props.when.map(dottify) 
       : dottify(props.when);
@@ -54,11 +55,12 @@ export default ReducerFunction.single(({element, unbox, isLeaf}) => {
       then: s => mergeYupFragments([s, combined])
     });
   } else if (type === Multiple) {
-    const combined = mergeYupFragments(unbox(props.children));
+    const combined = mergeYupFragments(await unbox(props.children));
     let multiSchemaFragments = [
       !props.optional && new YupFragment('requiredStrict'),
       props.min !== 0 && min(props.min || 1),
       props.max && max(props.max),
+      props.name && label(props.name),
       props.validator,
       yup.array(toSchema(combined) || undefined),
     ];
@@ -69,6 +71,6 @@ export default ReducerFunction.single(({element, unbox, isLeaf}) => {
       ? yup.object({[name]: multiSchema}).noUnknown().strict().default(undefined) // bug https://github.com/jquense/yup/issues/678
       : multiSchema;
   } else {
-    return mergeYupFragments(unbox());
+    return mergeYupFragments(await unbox());
   }
 });
