@@ -3,7 +3,7 @@ import { logOnce } from "eigencode-shared-utils";
 export default class ReducerFunction {
   constructor(reduce, finalTransform = x => x) {
     if (typeof reduce !== 'function') {
-      throw `ReducerFunction error: ${obj} is not a function`
+      throw `ReducerFunction error: ${reduce} is not a function`
     }
     this.reduce = reduce;
     this.finalTransform = finalTransform;

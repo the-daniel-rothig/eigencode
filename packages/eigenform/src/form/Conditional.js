@@ -40,17 +40,20 @@ const Conditional = ({when, is, preserveValues, onExpanding = invokeCallback, on
 
   const [targetVisibility, setTargetVisibility] = useState(shouldShow);
   const [effectiveVisibility, setEffectiveVisibility] = useState(shouldShow);
+  console.log('rendering conditional', shouldShow, effectiveVisibility, targetVisibility)
 
-  if (!shouldShow && effectiveVisibility && targetVisibility) {
+  if (!shouldShow && targetVisibility) {
     setTargetVisibility(false);
     onCollapsing(() => {
       setEffectiveVisibility(false)
     })
   }
 
-  if (shouldShow && !effectiveVisibility && !targetVisibility) {
+  if (shouldShow && !targetVisibility) {
     setTargetVisibility(true)
-    onExpanding(() => setEffectiveVisibility(true))
+    onExpanding(() => {
+      setEffectiveVisibility(true)
+    })
   }
 
   if (!effectiveVisibility) {
@@ -75,9 +78,9 @@ const Conditional = ({when, is, preserveValues, onExpanding = invokeCallback, on
 
   return (    
       effectiveVisibility ? (
-        <InputConfigProvider mapRegister={mapRegister}>
-          {children}
-        </InputConfigProvider>
+        // <InputConfigProvider mapRegister={mapRegister}>
+          children
+        // </InputConfigProvider>
       ) : null
   )
 }

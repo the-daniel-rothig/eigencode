@@ -32,5 +32,7 @@ export default (cb, deps) => {
     promisesToFlush.current = [];
   }
 
-  return [curriedCallback, set];
+  const val = ref.current === uninitialised ? undefined : ref.current;
+
+  return [curriedCallback, val, set];
 }

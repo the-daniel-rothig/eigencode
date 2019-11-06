@@ -2,6 +2,73 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 
+const PropagationStopper = React.memo(({children}) => children, (p,n) => p.children === n.children);
+
+// same props as instance - to trigger same re-evals
+class DerivedClass extends React.Component {
+  constructor(propsAndInstance, ...args) {
+    super(propsAndInstance, ...args);
+
+    const { ___$EIGENCODE_PAYLOAD, ...props } = propsAndInstance;
+
+    this.instance = new ___$EIGENCODE_PAYLOAD.innerType(props, ...args);
+    this.state = this.instance.state;
+
+    const protectedNames = [
+      'constructor',
+      'setState',
+      'forceUpdate',
+      'render',
+      'UNSAFE_componentWillUpdate'
+    ]
+
+    let ownFunctions = [];
+    let target = this.instance;
+    while (target.constructor !== React.Component) {
+      target = Object.getPrototypeOf(target);
+      ownFunctions = ownFunctions.concat(Object.getOwnPropertyNames(target)
+        .filter(x => typeof this.instance[x] === "function" && !protectedNames.includes(x)));
+    } 
+    
+    ownFunctions.forEach(key => {
+      this[key] = function(...args) {
+        this.instance[key](...args);
+      }
+    });
+
+    const derived = this;
+
+    this.instance.setState = function(...args) {
+      derived.setState(...args);
+    }
+
+    this.instance.forceUpdate = function(...args) {
+      derived.forceUpdate(...args);
+    }
+
+    this.UNSAFE_componentWillUpdate = (nextProps, nextState, nextContext) => {
+      if (typeof this.instance.UNSAFE_componentWillUpdate === "function") {
+        this.instance.UNSAFE_componentWillUpdate(nextProps, nextState, nextContext)
+      }
+      this.instance.props = nextProps;
+      this.instance.context = nextContext;
+      this.instance.state = nextState;
+    }
+    
+    if (this.instance instanceof React.PureComponent) {
+      this.shouldComponentUpdate = function(nextProps) {
+        const keys = [...new Set([...Object.keys(nextProps), ...Object.keys(this.props)])]
+        return keys.reduce((m, x) => m || nextProps[x] !== this.props[x], false)
+      }
+    }
+
+    this.render = function() {
+      const res = this.instance.render();
+      return <Recursor memo={this.props.___$EIGENCODE_PAYLOAD.memo} elementMapper={this.props.___$EIGENCODE_PAYLOAD.elementMapper}>{res}</Recursor>
+    }
+  }
+}
+
 const shouldConstruct = (Component) => {
   return Component && Component.prototype && Component.prototype.isReactComponent;
 }
@@ -47,6 +114,8 @@ const doMapElement = (mapElement, element, memo, siblingIndex, siblingCount) => 
 
 const makeElementMapper = mapElement => {
   const elementMapper = (childElement, memo, siblingIndex, siblingCount) => {
+    console.log('render recursor for', childElement && childElement.type ? childElement.type.name || childElement.type : childElement)
+  
     if (childElement && childElement.type === Substituting) {
       const mapElementOne = mapElement;
       const memoOne = memo;
@@ -85,7 +154,7 @@ const makeElementMapper = mapElement => {
       return mapped;
     }
 
-    if (typeof mapped.type === "string" || getSymbol(mapped) === "provider" || mapped.type === React.Suspense || mapped.type === React.Fragment) {
+    if (typeof mapped.type === "string" || mapped.type === React.Suspense || mapped.type === React.Fragment) {
       if (React.Children.count(mapped.props.children) === 0) {
         // special case to avoid errors with void tags
         // still invoke mapElement to flush side effects but don't render
@@ -102,6 +171,18 @@ const makeElementMapper = mapElement => {
       
       return React.cloneElement(mapped, {children: (
         <Recursor elementMapper={elementMapper} memo={mappedMemo}>{mapped.props.children}</Recursor>
+      )})
+    }
+
+    if (getSymbol(mapped) === "memo") {
+      return React.cloneElement(mapped, {children: (
+        <Recursor elementMapper={elementMapper} memo={mappedMemo}>{mapped.props.children}</Recursor>
+      )})
+    }
+
+    if (getSymbol(mapped) === "provider") {
+      return React.cloneElement(mapped, {children: (
+        <Recursor elementMapper={elementMapper} memo={mappedMemo}><PropagationStopper><>{mapped.props.children}</></PropagationStopper></Recursor>
       )})
     }
 
@@ -157,44 +238,43 @@ const makeElementMapper = mapElement => {
         ref: mapped.ref,
       }
     }
-    
-    if (shouldConstruct(mapped.type)) {
-      class Derived extends mapped.type {
-        constructor(...args) {
-          super(...args)
-        }
-
-        render() {
-          const res = super.render();
-          return <Recursor elementMapper={elementMapper} memo={mappedMemo}>{res}</Recursor>
-        }
-      }
-      return <Derived {...mapped.props} />;
-    }
 
     if (typeof mapped.type === "function") {
+      const inner = mapped.type(mapped.props);
       const mappedElement = (
         <Recursor elementMapper={elementMapper} memo={mappedMemo}>
-          {mapped.type(mapped.props)}
+          {inner}
         </Recursor>
       );
       return mappedElement;
     }
 
-    throw "This shouldn't happen"
+    throw "This shouldn't happen";
   };
   return elementMapper;
 };
 
-const Recursor = ({children, elementMapper, memo}) => {
-  const siblingCount = React.Children.count(children);
-  if (siblingCount === 0) {
+const Recursor = React.memo(({children, elementMapper, memo, siblingIndex, siblingCount}) => {
+  const childrenCount = React.Children.count(children);
+  if (childrenCount === 0) {
     // special case to flush mapElement side effects
-    return elementMapper(null, memo);
+    return elementMapper(null, memo, 0, 1);
+  } else if (childrenCount === 1) {
+    const c = React.Children.toArray(children)[0];
+    const payload = {
+      innerType: c && c.type,
+      elementMapper,
+      memo,
+      siblingIndex,
+      siblingCount
+    };
+    return c && shouldConstruct(c && c.type)
+      ? <DerivedClass ___$EIGENCODE_PAYLOAD={payload} {...c.props} />
+      : elementMapper(c, memo, siblingIndex, siblingCount);
   } 
-  const newChildren = React.Children.map(children, (c, i) => elementMapper(c, memo, i, siblingCount));
+  const newChildren = React.Children.map(children, (c, i) => <Recursor elementMapper={elementMapper} memo={memo} siblingIndex={i} siblingCount={childrenCount}>{c}</Recursor>);
   return newChildren; 
-} 
+}, (p,n) => n.children && n.children.type === PropagationStopper);
 
 const Substituting = ({children, mapElement}) => {
   if (!mapElement) {

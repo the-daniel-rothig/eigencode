@@ -14,7 +14,7 @@ const Expanding = ({render, className, bounce = true}) => {
       setState({})
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [render])
 
   
   const hide = next => {
@@ -53,6 +53,6 @@ const Expanding = ({render, className, bounce = true}) => {
       </div>
     </AnimateHeight> 
   );
-}
+};
 
 export default Expanding;

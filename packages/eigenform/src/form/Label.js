@@ -6,9 +6,9 @@ import InputConfigurationContext from './InputConfigurationContext';
 const Label = ({children}) => {
   const { name } = useContext(FieldContext);
   const { uid } = useContext(FormContext);
-  const { localInputs } = useContext(InputConfigurationContext);
+  //const { localInputs } = useContext(InputConfigurationContext);
 
-  const hasSetTypeFields = localInputs.length > 1
+  const hasSetTypeFields = false; //localInputs.length > 1
 
   const Tag = hasSetTypeFields ? 'legend' : 'label';
   const htmlFor = hasSetTypeFields ? '' : `${uid}-${name}`;

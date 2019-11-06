@@ -6,6 +6,7 @@ export { default as Field } from './src/form/Field';
 export { default as Form } from './src/form/Form';
 export { default as FieldContext } from './src/form/FieldContext';
 export { default as FormContext } from './src/form/FormContext';
+export { default as FieldFeedback } from './src/form/FieldFeedback';
 export { default as InputBase } from './src/form/InputBase';
 export { default as Label } from './src/form/Label';
 export { default as Multiple } from './src/styled/Multiple';

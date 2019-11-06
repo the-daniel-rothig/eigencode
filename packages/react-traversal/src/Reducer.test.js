@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useContext } from 'react'
 import { render } from '@testing-library/react'
 import Reducer from './Reducer'
 import extractText from './reducers/extractText'
@@ -103,4 +103,49 @@ it('passes though getContext', done => {
     done();
   }
 
+})
+ 
+it('manages provider children correctly', async () => {
+  const Ctx = React.createContext();
+  
+  var hitCount = 0;
+  var manipulateProvider;
+  const Probe = ({children}) => {
+    
+    hitCount += 1;
+    return children || null;
+  }
+
+  const Consumer = () => {
+    const ctx = useContext(Ctx);
+    return <span data-testid='consumer'>{ctx.value}</span>
+  }
+
+  const Provider = ({children}) => {
+    const [value, setValue] = useState('');
+    manipulateProvider = setValue;
+    return <Ctx.Provider value={{value, setValue}}>{children}</Ctx.Provider>
+  }
+  const WithReducer = ({children}) => {
+    const ctx = Ctx._currentValue;//useContext(Ctx);
+    return <Reducer reduce={extractText.reduce} onFinish={() => {ctx.setValue('after')}}>{children}</Reducer>
+  }
+  
+  const {getByTestId} = render (
+    <Provider>
+      <WithReducer>
+        <Probe>
+          <Probe />
+        </Probe>
+        <Consumer />
+      </WithReducer>
+    </Provider>
+  )
+  expect(hitCount).toBe(2);
+
+  await new Promise(ok => setTimeout(ok,10));
+
+  //manipulateProvider('after');
+  expect(getByTestId('consumer').innerHTML).toBe('after');
+  expect(hitCount).toBe(2);
 })

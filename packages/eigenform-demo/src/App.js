@@ -12,6 +12,7 @@ import {
   Field,
   Form,
   FieldContext,
+  FieldFeedback,
   FormContext,
   InputBase,
   Label,
@@ -33,6 +34,7 @@ const ExampleForm = () => (
         <Field name='firstName' validator={string().required()}>
           <Label>First name</Label>
           <TextInput />
+          <FieldFeedback />
         </Field>
         <Field name='lastName' validator={string().required()}>
           <Label>Last name</Label>
@@ -55,7 +57,7 @@ const ExampleForm = () => (
         </Conditional>
         <Field name='age' validator={number()}>
           <Label>How old are you?</Label>
-          <TextInput />
+          <NumberInput />
         </Field>
         <Field name='iceCreamFlavours'>
           <Label>What are your favourite ice cream flavours?</Label>

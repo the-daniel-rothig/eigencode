@@ -2,10 +2,7 @@ import ReducerFunction from "../ReducerFunction";
 
 const combinePartialResults = (array) => {
   if (array.length === 0) {
-    return {
-      value: "",
-      wantsSpacing: wantsSpacing
-    }
+    return "";
   }
 
   const res = [];

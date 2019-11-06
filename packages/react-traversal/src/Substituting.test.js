@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useContext } from 'react';
 import ReactDOM from 'react-dom';
 import ReactDOMServer from 'react-dom/server';
 import Substituting from './Substituting';
@@ -315,4 +315,49 @@ it('provides context getter', () => {
   )
 
   expect(getByText('success').tagName).toBe('SPAN');
+})
+
+it('works with forward-ref', () => {
+  
+})
+
+it('works with memos', () => {
+  
+})
+
+it('manages provider children correctly', () => {
+  var hitCount = 0;
+  var manipulateProvider;
+  const Probe = ({children}) => {
+    
+    hitCount += 1;
+    return children || null;
+  }
+
+  const Consumer = () => {
+    const ctx = useContext(Ctx);
+    return <span data-testid='consumer'>{ctx}</span>
+  }
+
+  const Provider = ({children}) => {
+    const [state, setState] = useState('');
+    manipulateProvider = setState;
+    return <Ctx.Provider value={state}>{children}</Ctx.Provider>
+  }
+  
+  const {getByTestId} = render (
+    <Substituting mapElement={({element}) => element}>
+        <Provider>
+        <Probe>
+          <Probe />
+        </Probe>
+        <Consumer />
+      </Provider>
+    </Substituting>
+  )
+
+  expect(hitCount).toBe(2);
+  manipulateProvider('after');
+  expect(getByTestId('consumer').innerHTML).toBe('after');
+  expect(hitCount).toBe(2);
 })
