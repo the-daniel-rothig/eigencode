@@ -1,29 +1,12 @@
-import React, { useEffect, useContext } from 'react';
+import React, { useContext } from 'react';
 import FieldContext from './FieldContext';
-import FormContext from './FormContext';
 
 const InputBase = ({type = 'text'}) => {
-  const { name } = useContext(FieldContext);
-  const form = useContext(FormContext);
+  const { name, uid, fieldValue, setValue } = useContext(FieldContext);
+  const id = [uid, name].filter(Boolean).join("-");
+  const value = fieldValue || '';
 
-  const getValue = form ? form.getValue : () => {}
-  const setValue = form ? form.setValue : () => {}
-
-  const id = [form && form.uid, name].filter(Boolean).join("-");
-  useEffect(() => {
-    setValue(name, getValue(name) || '')
-  },[])
-
-  // The default value ensures the input is controlled from the start
-  const value = getValue(name) || '';
-
-  const onKeyDown = e => {
-    if (e.keyCode === 13) { // enter
-      return false;
-    }
-  }
-
-  return <input type={type} value={value} name={name} id={id} onChange={e => setValue(name, e.target.value)} onKeyDown={onKeyDown}/>
+  return <input type={type} value={value} name={name} id={id} onChange={e => setValue(e.target.value)} />
 }
 
 export default InputBase;

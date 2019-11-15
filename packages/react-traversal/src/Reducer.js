@@ -11,7 +11,7 @@ const mapElement = (initialReduce, onFinish) => ({element, memo, getContext, sib
   const idx = siblingIndex || 0;
   const siblingCount = _siblingCount || 1;
   const root = memo ? memo.root : element;
-  const reduce = memo && memo.reduce || initialReduce;  
+  const reduce = (memo && memo.reduce) || initialReduce;  
     
   if (!element || typeof element !== "object" || (Array.isArray(element) && element.length === 0)) {  
     const promise = reduce({unbox: () => undefined, element, getContext, isRoot: root === element, isLeaf: true})

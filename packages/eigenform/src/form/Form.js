@@ -8,26 +8,33 @@ import throttle from 'lodash/throttle';
 import isEqual from 'lodash/isEqual'
 
 const FormProvider = ({id, children, initialValues = {}}) => {
-  console.log('rendering FormProvider')
   const uid = useRef(id || makeUid()).current;
-  
-  const { runValidation } = useContext(ValidationScopeContext);
-  const throttlededRunValidation = useRef(throttle(runValidation, 100));
-  
-  const [values, setState] = useState(initialValues)
-  const getValue = name => deepGet(values, name);
-  const deleteValue = name => setState({...deepDelete(values, name)})
-  const setValue = (name, value) => {
-    console.log('setValueCalled')
-    if (!isEqual(deepGet(values, name), value)) {
-      const newValues = {...deepSet(values, name, value)}
-      throttlededRunValidation.current(newValues);
-      setState(newValues);
-    }
+  const [updateForcingState, setUpdateForcingState] = useState(false);
+  const forceUpdate = () => {
+    setUpdateForcingState(!updateForcingState);
   }
   
+  const { runValidation } = useContext(ValidationScopeContext);
+  const throttlededRunValidation = useRef(throttle(runValidation, 1000));
+  
+  const valuesRef = useRef(initialValues);
+  const getValue = name => deepGet(valuesRef.current, name); // todo: clone
+  const deleteValue = name => {
+    deepDelete(valuesRef.current, name);
+    throttlededRunValidation.current(valuesRef.current);
+    forceUpdate();
+  };
+
+  const setValue = (name, value) => {
+    if (!isEqual(deepGet(valuesRef.current, name), value)) {
+      deepSet(valuesRef.current, name, value);
+      throttlededRunValidation.current(valuesRef.current);
+      forceUpdate();
+    }
+  };
+  
   return (
-      <FormContext.Provider value={{uid, values, setValue, getValue, deleteValue}}>
+      <FormContext.Provider value={{uid, setValue, getValue, deleteValue}}>
           {children}
       </FormContext.Provider>
   );

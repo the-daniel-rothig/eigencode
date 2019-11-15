@@ -8,11 +8,7 @@ import FieldContext from './FieldContext';
 import { deepGet } from 'eigencode-shared-utils';
 import isEqual from 'lodash/isEqual';
 
-
-
 const ValidationScopeOuter = ({children, isComplete}) => {
-  console.log('render validationscopeouter')
-  
   const [errors, setErrors] = useState();
   const setErrorsIfNotEqual = e => {
     if (!isEqual(e, errors)) {
@@ -42,10 +38,8 @@ const ValidationScopeOuter = ({children, isComplete}) => {
   const [runValidation, schema, setSchemaForCallback] = useDeferredCallback(doRunValidation, [fieldContext && fieldContext.name]);
   const setSchema = useCallback(s => {
     if (!schema || !isEqual(schema.describe(), toSchema(s).describe())) {
-      console.log('update')
       setSchemaForCallback(toSchema(s))
     } else {
-      console.log('dont update')
     }
   }, [schema]);
 
@@ -57,8 +51,8 @@ const ValidationScopeOuter = ({children, isComplete}) => {
 }
 
 const ValidationScopeInner = ({children}) => {
-  // todo - no no
-  const ctx = useContext(ValidationScopeContext)//useContext(ValidationScopeContext);
+  // big ol' hack... don't do this at home
+  const ctx = ValidationScopeContext._currentValue;
   return (
   <Reducer reduce={extractValidationSchema.reduce} onFinish={ctx.setSchema}>
     {children}
@@ -67,7 +61,7 @@ const ValidationScopeInner = ({children}) => {
 }
 
 const ValidationScope = ({children, isComplete}) => (
-  <ValidationScopeOuter>
+  <ValidationScopeOuter isComplete={isComplete}>
     <ValidationScopeInner>
       {children}
     </ValidationScopeInner>

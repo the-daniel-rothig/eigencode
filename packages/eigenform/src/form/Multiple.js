@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useRef } from 'react';
 import { combineObjectPaths } from 'eigencode-shared-utils';
 import { FieldProvider } from './Field';
 import FieldContext from './FieldContext';
@@ -22,40 +22,43 @@ const Multiple = ({children, className, name, min=1, max, renderItem = SingleIte
   const deleteValue = outer ? outer.deleteValue : () => {};
 
   const arr = (outer ? outer.getValue(name) : []) || [];
-  const [uids, setUids]= useState(arr.map(() => makeUid()))
+  const uids = useRef(arr.map(() => makeUid()))
   
   const fieldContext = useContext(FieldContext);
   const fullyQualifiedName = combineObjectPaths(fieldContext && fieldContext.name, name);
 
   useEffect(() => {
     if (min && arr.length < min) {
+      uids.current = [...(new Array(min))].map(() => makeUid());
       setValue(
         fullyQualifiedName,
         [...(new Array(min))].map((v, i) => arr[i] || null)
       )
-      setUids([...(new Array(min))].map(() => makeUid()))
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const add = (e) => {
-    e.preventDefault()
-    uids.push(makeUid())
-    setValue(fullyQualifiedName, [...arr, null]);
+    uids.current.push(makeUid())
+    if (outer) {
+      const arrx = outer.getValue(name);
+      outer.setValue(fullyQualifiedName, [...arrx, null]);
+    }
   }
 
   const removeAt = idx => e => {
-    //e.preventDefault()
-    console.log('remove idx = '+idx)
-    uids.splice(idx, 1);
-    deleteValue(`${fullyQualifiedName}[${idx}]`);
+    uids.current.splice(idx, 1);
+    if (outer) {
+      const arrx = outer.getValue(name);
+      setValue(fullyQualifiedName, [...arrx.filter((x, i) => i !== idx)]);
+    }
   }
 
   const RenderItem = renderItem;
-  
+
   return (
     <FieldProvider name={name}>
-      {uids.map((v, i) => (
+      {uids.current.map((v, i) => (
         <FieldProvider name={`[${i}]`} key={v}>
           <RenderItem 
             index={i}

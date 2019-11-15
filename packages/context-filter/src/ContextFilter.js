@@ -21,9 +21,9 @@ class ContextFilterInner extends React.Component {
   }
 
   shouldComponentUpdate(nextProps) {
-    return nextProps.children !== this.props.children ||
-           nextProps.contextType !== this.props.contextType ||
-           !isEqual(nextProps.value, this.props.value);
+    const equals = nextProps.isUnchanged || isEqual;
+    return nextProps.contextType !== this.props.contextType ||
+           !equals(this.props.value, nextProps.value);
   }
 
   render() {
@@ -36,10 +36,10 @@ class ContextFilterInner extends React.Component {
   }
 }
 
-const ContextFilter = ({of: ofContext, to: toContext, map, children}) => {
+const ContextFilter = ({of: ofContext, to: toContext, map, isUnchanged, children}) => {
   const context = useContext(ofContext)
   const mappedValue = map(context);
-  return <ContextFilterInner contextType={toContext || ofContext} value={mappedValue}>{children}</ContextFilterInner>
+  return <ContextFilterInner contextType={toContext || ofContext} value={mappedValue} isUnchanged={isUnchanged}>{children}</ContextFilterInner>
 
 }
 

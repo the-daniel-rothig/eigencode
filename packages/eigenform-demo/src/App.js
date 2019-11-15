@@ -25,32 +25,32 @@ import {
  } from 'eigenform/styled'
 
 const Debug = () => {
-  const { values } = useContext(FormContext);
-  return (<pre>{JSON.stringify(values, null, '  ')}</pre>)
+  const { getValue } = useContext(FormContext);
+  return (<pre>{JSON.stringify(getValue(""), null, '  ')}</pre>)
 }
 
 const ExampleForm = () => (
       <Form>
-        <Field name='firstName' validator={string().required()}>
+        <Field name='your first name' validator={string().required()}>
           <Label>First name</Label>
           <TextInput />
           <FieldFeedback />
         </Field>
-        <Field name='lastName' validator={string().required()}>
+        <Field name='your last name' validator={string().required()}>
           <Label>Last name</Label>
           <TextInput />
         </Field>
-        <Field name='hasMiddleName'>
+        <Field name='if you have a middle name'>
           <Label>Do you have a middle name?</Label>
           <YesNo />
           {/* <Radio value='yes'>Yes</Radio>
           <Radio value='no'>No</Radio>  */}
         </Field>
         <Conditional
-          when='hasMiddleName'
+          when='ifYouHaveAMiddleName'
           is='yes'
         >
-          <Field name='middleName' validator={string().required()}>
+          <Field name='middle name' validator={string().required()}>
             <Label>Please tell us your middle name</Label>
             <TextInput />
           </Field>

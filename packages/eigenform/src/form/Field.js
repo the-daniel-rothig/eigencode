@@ -2,19 +2,29 @@ import React, { useContext, useEffect } from 'react'
 import { combineObjectPaths } from 'eigencode-shared-utils';
 import FieldContext from './FieldContext'
 import makeCamelCaseFieldName from '../util/makeCamelCaseFieldName';
+import ContextFilter from 'context-filter';
+import FormContext from './FormContext';
+import isEqual from 'lodash/isEqual';
 
-export const FieldProvider = ({name = "", children, validator}) => {
-  
-  if (name.startsWith("$")) {
-    throw new Error(`Field name ${name} is not allowed: name must not start with "$"`)
-  }
+export const FieldProvider = ({name= "", children}) => {
   const outer = useContext(FieldContext);
   const fullyQualifiedName = combineObjectPaths(outer && outer.name, name);
+  const map = formContext => ({
+    name: fullyQualifiedName,
+    uid: formContext ? formContext.uid : 'form',
+    fieldValue: formContext ? formContext.getValue(fullyQualifiedName) : undefined,
+    setValue: formContext ? v => formContext.setValue(fullyQualifiedName, v) : () => {},
+    deleteValue: formContext ? () => formContext.deleteValue(fullyQualifiedName) : () => {},
+  });
+
+  const isUnchanged = (before, after) => {
+    return before.name === after.name && before.uid === after.uid && isEqual(before.fieldValue, after.fieldValue);
+  }
 
   return (
-      <FieldContext.Provider value={{name: fullyQualifiedName}}>
-          {children}
-      </FieldContext.Provider>
+    <ContextFilter of={FormContext} to={FieldContext} map={map} isUnchanged={isUnchanged}>
+      {children}
+    </ContextFilter>
   )
 }
 

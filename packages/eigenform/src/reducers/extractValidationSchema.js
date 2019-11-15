@@ -20,8 +20,6 @@ export default ReducerFunction.single(async ({element, unbox, isLeaf}) => {
     return await unbox();
   }
   const {props, type} = element;
-  const name = props.name ? makeCamelCaseFieldName(props.name) : undefined;    
-
   if (type === TextInput) {
     return yup.string();
   } else if (type === EmailInput) {
@@ -42,7 +40,8 @@ export default ReducerFunction.single(async ({element, unbox, isLeaf}) => {
       props.name && label(props.name),
       props.validator, 
       combined])
-    return name
+    const name = props.name ? makeCamelCaseFieldName(props.name) : undefined;    
+  return name
       ? yup.object().shape({[name]: toSchema(fragmentWithThis) || yup.mixed()}).noUnknown().strict().default(undefined) // bug https://github.com/jquense/yup/issues/678
       : fragmentWithThis;
   } else if (type === Conditional && props.when && props.is) {
@@ -66,6 +65,7 @@ export default ReducerFunction.single(async ({element, unbox, isLeaf}) => {
     ];
     
     const multiSchema = toSchema(mergeYupFragments(multiSchemaFragments));
+    const name = props.name ? makeCamelCaseFieldName(props.name) : undefined;    
 
     return name
       ? yup.object({[name]: multiSchema}).noUnknown().strict().default(undefined) // bug https://github.com/jquense/yup/issues/678
