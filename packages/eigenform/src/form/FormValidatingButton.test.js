@@ -12,9 +12,11 @@ const Feedback = () => {
   return <pre data-testid='feedback'>{JSON.stringify(errors)}</pre>
 }
 
+const getValue = () => ({foo: 'foo', bar: '', baz: 'baz'});
+
 it('works', async () => {
   const { getByText, getByTestId } = render(
-    <FormContext.Provider value={{values: {foo: 'foo', bar: '', baz: 'baz'}}}>
+    <FormContext.Provider value={{getValue}}>
       <ValidationScope>
         <Field name='foo'/>
         <Field name='bar'/>
@@ -41,7 +43,7 @@ it('works', async () => {
 
 it('can render a custom component', async () => {
   const { getByText, getByTestId } = render (
-    <FormContext.Provider value={{values: {foo: 'foo', bar: '', baz: 'baz'}}}>
+    <FormContext.Provider value={{getValue}}>
       <ValidationScope>
         <Field name='foo'/>
         <Field name='bar'/>

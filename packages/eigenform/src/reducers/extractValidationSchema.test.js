@@ -13,9 +13,9 @@ import Radio from '../form/Radio';
 import EmailInput from '../form/EmailInput';
 import NumberInput from '../form/NumberInput';
 
-const getValidationSchema = elem => {
+const getValidationSchema = async elem => {
   const res = traverseDepthFirst(elem, extractValidationSchema)
-  return toSchema(res);
+  return toSchema(await res);
 }
 
 const myValidator = yup.string().matches(/foo/)
@@ -23,14 +23,14 @@ const expectPasses = (schema, val) => expect(schema.isValidSync(val, {context: v
 const expectFails = (schema, val) => expect(schema.isValidSync(val, {context: val})).toBe(false);
 
 
-it('works on a simple field', () => {
-  const schema = getValidationSchema(<Field validator={myValidator} />)
+it('works on a simple field', async () => {
+  const schema = await getValidationSchema(<Field validator={myValidator} />)
   expectPasses(schema, "foo");
   expectFails(schema, "bar");
 })
 
-it('works with two named fields', () => {
-  const schema = getValidationSchema(
+it('works with two named fields', async () => {
+  const schema = await getValidationSchema(
     <>
       <Field name='one' validator={myValidator} />
       <Field name='two' validator={myValidator} />
@@ -41,8 +41,8 @@ it('works with two named fields', () => {
   expectFails(schema, {one: 'foo', two: 'bar'});
 })
 
-it('works with named Field in Conditional', () => {
-  const schema = getValidationSchema(
+it('works with named Field in Conditional', async () => {
+  const schema = await getValidationSchema(
     <>
       <Field name='one' validator={myValidator} />
       <Conditional when='one' is='foobar'>
@@ -58,8 +58,8 @@ it('works with named Field in Conditional', () => {
   expectPasses(schema, {one: 'foobar', two: 'foo', three: 'foo'})
 })
 
-it('works with Multiple', () => {
-  const schema = getValidationSchema(
+it('works with Multiple', async () => {
+  const schema = await getValidationSchema(
     <>
       <Multiple name='firstNames'>
         <Field validator={myValidator} />
@@ -72,8 +72,8 @@ it('works with Multiple', () => {
   expectFails(schema, {firstNames: "foo", lastName: "foo"});
 })
 
-it('works with named Fields within Multiple', () => {
-  const schema = getValidationSchema(
+it('works with named Fields within Multiple', async () => {
+  const schema = await getValidationSchema(
     <>
       <Multiple name='multi'>
         <Field name='a' validator={myValidator} />
@@ -86,8 +86,8 @@ it('works with named Fields within Multiple', () => {
   expectPasses(schema, {multi: [{a: 'foo', b: 'foo'}], c: 'foo'})
 })
 
-it('works with unnamed Field in Conditional in Multiple', () => {
-  const schema = getValidationSchema(
+it('works with unnamed Field in Conditional in Multiple', async () => {
+  const schema = await getValidationSchema(
     <>
       <Multiple name='multi'>
         <Conditional when='$solo' is='foobar'>
@@ -103,8 +103,8 @@ it('works with unnamed Field in Conditional in Multiple', () => {
   expectPasses(schema, {solo: 'foobar', multi: ["foo"]})
 })
 
-it('works with named Field in Conditional in Multiple', () => {
-  const schema = getValidationSchema(
+it('works with named Field in Conditional in Multiple', async () => {
+  const schema = await getValidationSchema(
     <>
       <Multiple name='multi'>
         <Conditional when='$solo' is='foobar'>
@@ -124,8 +124,8 @@ it('works with named Field in Conditional in Multiple', () => {
   expectPasses(schema, {solo: 'foobar', multi: [{a: 'foo', b: 'foo', c: 'foo'}]})
 })
 
-it('works with unnamed Field in unnamed Multiple', () => {
-  const schema = getValidationSchema(
+it('works with unnamed Field in unnamed Multiple', async () => {
+  const schema = await getValidationSchema(
     <Multiple>
       <Field validator={myValidator} />
     </Multiple>
@@ -136,8 +136,8 @@ it('works with unnamed Field in unnamed Multiple', () => {
   expectFails(schema, ['foo', 'bar'])
 })
 
-it('respects min setting of Multiple', () => {
-  const schema = getValidationSchema(
+it('respects min setting of Multiple', async () => {
+  const schema = await getValidationSchema(
     <Multiple min={2}>
       <Field validator={myValidator} />
     </Multiple>
@@ -150,8 +150,8 @@ it('respects min setting of Multiple', () => {
   expectPasses(schema, ['foo', 'foo'])
 })
 
-it('respects max setting of Multiple', () => {
-  const schema = getValidationSchema(
+it('respects max setting of Multiple', async () => {
+  const schema = await getValidationSchema(
     <Multiple max={2}>
       <Field validator={myValidator} />
     </Multiple>
@@ -162,53 +162,53 @@ it('respects max setting of Multiple', () => {
   expectFails(schema, ["foo", "foo", "foo"])
 })
 
-it('doesnt require an optional Multiple instance even if min is set', () => {
-  const schema = getValidationSchema(
+it('doesnt require an optional Multiple instance even if min is set', async () => {
+  const schema = await getValidationSchema(
     <Multiple name="multi" optional min={2} />
   )
 
   expectPasses(schema, {})
 })
 
-it('works with nested fields', () => {
+it('works with nested fields', async () => {
   const OptField = (props) => <Field optional {...props} />
   const req = yup.mixed().required();
 
-  const one = getValidationSchema(<OptField name="a"><OptField name="b" validator={req} /></OptField>)
+  const one = await getValidationSchema(<OptField name="a"><OptField name="b" validator={req} /></OptField>)
   expectPasses(one, {a: {b: "foo"}})
   expectFails(one, {a: {}})
 
-  const two = getValidationSchema(<OptField><OptField name="b" validator={req} /></OptField>)
+  const two = await getValidationSchema(<OptField><OptField name="b" validator={req} /></OptField>)
   expectPasses(two, {b: "foo"})
   expectFails(two, {})
 
-  const three = getValidationSchema(<OptField name="a"><OptField validator={req} /></OptField>)
+  const three = await getValidationSchema(<OptField name="a"><OptField validator={req} /></OptField>)
   expectPasses(three, {a: "foo"})
   expectFails(three, {})
 
-  const four = getValidationSchema(<OptField><OptField validator={req} /></OptField>)
+  const four = await getValidationSchema(<OptField><OptField validator={req} /></OptField>)
   expectPasses(four, "foo")
   expectFails(four, null)
 
-  const five = getValidationSchema(<OptField validator={req} name="a"><OptField name="b" /></OptField>)
+  const five = await getValidationSchema(<OptField validator={req} name="a"><OptField name="b" /></OptField>)
   expectPasses(five, {a: {b: "foo"}})
   expectFails(five, {})
 
-  const six = getValidationSchema(<OptField validator={req}><OptField name="b" /></OptField>)
+  const six = await getValidationSchema(<OptField validator={req}><OptField name="b" /></OptField>)
   expectPasses(six, {})
   expectFails(six, null)
 
-  const seven = getValidationSchema(<OptField validator={req} name="a"><OptField /></OptField>)
+  const seven = await getValidationSchema(<OptField validator={req} name="a"><OptField /></OptField>)
   expectPasses(seven, {a: "foo"})
   expectFails(seven, {})
 
-  const eight = getValidationSchema(<OptField validator={req}><OptField /></OptField>)
+  const eight = await getValidationSchema(<OptField validator={req}><OptField /></OptField>)
   expectPasses(eight, "foo")
   expectFails(eight, null)
 })
 
-it('uses Select values to filter allowed values', () => {
-  const schema = getValidationSchema(
+it('uses Select values to filter allowed values', async () => {
+  const schema = await getValidationSchema(
     <Field>
       <Select options={['one', 'two']} />
     </Field>
@@ -219,8 +219,8 @@ it('uses Select values to filter allowed values', () => {
   expectFails(schema, 'three')
 })
 
-it('uses Radio values to filter allowed values', () => {
-  const schema = getValidationSchema(
+it('uses Radio values to filter allowed values', async () => {
+  const schema = await getValidationSchema(
     <Field>
       <Radio value='one'>One</Radio>
       <Radio value='two'>Two</Radio>
@@ -232,8 +232,8 @@ it('uses Radio values to filter allowed values', () => {
   expectFails(schema, 'three')
 })
 
-it('restricts fields to email if there is an EmailInput', () => {
-  const schema = getValidationSchema(
+it('restricts fields to email if there is an EmailInput', async () => {
+  const schema = await getValidationSchema(
     <Field>
       <EmailInput />
     </Field>
@@ -243,8 +243,8 @@ it('restricts fields to email if there is an EmailInput', () => {
   expectFails(schema, "danielexamplecom")
 })
 
-it('restricts fields to number if there is a NumberInput', () => {
-  const schema = getValidationSchema(
+it('restricts fields to number if there is a NumberInput', async () => {
+  const schema = await getValidationSchema(
     <Field>
       <NumberInput />
     </Field>
@@ -254,8 +254,8 @@ it('restricts fields to number if there is a NumberInput', () => {
   expectFails(schema, "foo")
 })
 
-it('doesnt tolerate unknown fields: root', () => {
-  const schema = getValidationSchema(
+it('doesnt tolerate unknown fields: root', async () => {
+  const schema = await getValidationSchema(
     <>
       <Field name="one" validator={myValidator}/>
       <Field name="two" />
@@ -266,8 +266,8 @@ it('doesnt tolerate unknown fields: root', () => {
   expectFails(schema, {one: 'foo', two: 'bar', three: 'baz'})
 })
 
-it('doesnt tolerate unknown fields: nested', () => {
-  const schema = getValidationSchema(
+it('doesnt tolerate unknown fields: nested', async () => {
+  const schema = await getValidationSchema(
     <Field name="root">
       <Field name="one" validator={myValidator}/>
       <Field name="two" />
@@ -278,15 +278,15 @@ it('doesnt tolerate unknown fields: nested', () => {
   expectFails(schema, {root: {one: 'foo', two: 'bar', three: 'baz'}})
 })
 
-it('enforces required by default: unnamed Field', () => {
-  const schema = getValidationSchema(<Field />);
+it('enforces required by default: unnamed Field', async () => {
+  const schema = await getValidationSchema(<Field />);
   expectPasses(schema, 'hello');
   expectFails(schema, '');
   expectFails(schema, undefined);
 })
 
-it('enforces requiredStrict by default: named Field', () => {
-  const schema = getValidationSchema(<Field name='one'/>);
+it('enforces requiredStrict by default: named Field', async () => {
+  const schema = await getValidationSchema(<Field name='one'/>);
   expectPasses(schema, {one: 'hello'});
   expectFails(schema, {one: ''});
   expectFails(schema, {one: undefined});

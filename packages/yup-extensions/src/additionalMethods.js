@@ -30,6 +30,7 @@ addMethod(mixed, 'requiredStrict', function(message) {
     message: message || localeValues.mixed.requiredStrict || localeValues.mixed.required,
     exclusive: true,
     test: function(value) {
+      const foo = this;
       return value !== null && value !== undefined && (Array.isArray(value) || notJustWhitespaceTestRegex.test(`${value}`))
     }
   });

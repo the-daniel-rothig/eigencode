@@ -1,5 +1,5 @@
-import React, { useState, useContext, useCallback } from 'react';
-import { Reducer }  from 'react-traversal';
+import React, { useState, useRef, useContext, useCallback } from 'react';
+import { Reducer2 }  from 'react-traversal';
 import extractValidationSchema from '../reducers/extractValidationSchema';
 import ValidationScopeContext from './ValidationScopeContext';
 import useDeferredCallback from '../hooks/useDeferredCallback';
@@ -9,7 +9,7 @@ import { deepGet } from 'eigencode-shared-utils';
 import isEqual from 'lodash/isEqual';
 
 const ValidationScopeOuter = ({children, isComplete}) => {
-  const [errors, setErrors] = useState();
+  const [errors, setErrors] = useState([]);
   const setErrorsIfNotEqual = e => {
     if (!isEqual(e, errors)) {
       setErrors(e);
@@ -26,7 +26,7 @@ const ValidationScopeOuter = ({children, isComplete}) => {
 
     return relaxedSchema.validate(reachValue, {context: reachValue, abortEarly: false, stripUnknown: !isComplete})
       .then((v) => {
-        setErrorsIfNotEqual(undefined)
+        setErrorsIfNotEqual([])
         return v;
       })
       .catch(e => {
@@ -34,14 +34,14 @@ const ValidationScopeOuter = ({children, isComplete}) => {
       });
   }
 
-  
-  const [runValidation, schema, setSchemaForCallback] = useDeferredCallback(doRunValidation, [fieldContext && fieldContext.name]);
-  const setSchema = useCallback(s => {
-    if (!schema || !isEqual(schema.describe(), toSchema(s).describe())) {
-      setSchemaForCallback(toSchema(s))
-    } else {
+  const [schemaState, setSchemaState] = useState(undefined);
+  const runValidation = useCallback(value => {
+    if (schemaState) {
+      doRunValidation(schemaState, value)
     }
-  }, [schema]);
+  }, [schemaState, errors]);
+
+  const setSchema = setSchemaState;
 
   return (
     <ValidationScopeContext.Provider value={{runValidation, errors, setSchema}}>
@@ -54,9 +54,9 @@ const ValidationScopeInner = ({children}) => {
   // big ol' hack... don't do this at home
   const ctx = ValidationScopeContext._currentValue;
   return (
-  <Reducer reduce={extractValidationSchema.reduce} onFinish={ctx.setSchema}>
+  <Reducer2 reducerFunction={extractValidationSchema} onFinish={ctx.setSchema}>
     {children}
-  </Reducer> 
+  </Reducer2> 
   )
 }
 

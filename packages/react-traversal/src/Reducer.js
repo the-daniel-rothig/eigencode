@@ -55,10 +55,12 @@ const mapElement = (initialReduce, onFinish) => ({element, memo, getContext, sib
   const returnValue = (val, index, childrenCount) => {
     childrenValues[index] = val
     // todo: what if a child disappears, eg. becomes null? is that possible w/o parent re-evaluation?
-    if (Object.keys(childrenValues).length === childrenCount) {
+    //if (Object.keys(childrenValues).length === childrenCount) {
+    setTimeout(() => {
       const res = Object.values(childrenValues);
       resolveUnboxPromises.forEach(resolve => resolve(res));
-    }
+    },1000);
+    //}
   }
   return [newElement, {returnValue, reduce: newReduce, root}]
 }
@@ -80,10 +82,14 @@ const Reducer = ({children, reduce, onFinish}) => {
   })
 
   const map = mapElement(reduce, debouncedOnFinish);
-  // wrap children in fragment to ensure there is a root-level element to be reduced.
+
+  // ensure there is a root-level element to be reduced to.
+  const c = React.Children.count(children) === 1 ?
+    children : <>{children}</>;
+
   return (
     <Substituting mapElement={map}>
-      <>{children}</>
+      {c}
     </Substituting>
   )
 }

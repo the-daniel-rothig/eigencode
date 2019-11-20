@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 
-const PropagationStopper = React.memo(({children}) => children, (p,n) => p.children === n.children);
+const PropagationStopper = React.memo(({children}) => children, (p,n) => true);
 
 // same props as instance - to trigger same re-evals
 
@@ -186,10 +186,12 @@ const makeElementMapper = mapElement => {
         memoTwo
       };
 
-      const mapElementCombined = ({memo, element, ...rest}) => {
-        const resultTwo = mapElementTwo({memo: memo.memoTwo, element, ...rest});
+      const mapElementCombined = ({memo, element, type, props, ...rest}) => {
+        const resultTwo = mapElementTwo({memo: memo.memoTwo, element, type, props, ...rest});
         const intermediateElement = Array.isArray(resultTwo) ? resultTwo[0] : resultTwo; 
-        const resultOne = mapElementOne({memo: memo.memoOne, element: intermediateElement, ...rest});
+        const intermediateType = intermediateElement ? intermediateElement.type || typeof intermediateElement : undefined;
+        const intermediateProps = intermediateElement && intermediateElement.props || {};
+        const resultOne = mapElementOne({memo: memo.memoOne, element: intermediateElement, type: intermediateType, props: intermediateProps, ...rest});
         const finalElement = Array.isArray(resultOne) ? resultOne[0] : resultOne;
         const finalMemo = {
           memoOne: Array.isArray(resultOne) ? resultOne[1] : memo.memoOne,
@@ -221,7 +223,7 @@ const makeElementMapper = mapElement => {
     }
 
     if (typeof mapped.type === "string" || mapped.type === React.Suspense || mapped.type === React.Fragment) {
-      if (React.Children.count(mapped.props.children) === 0) {
+      if (React.Children.toArray(mapped.props.children).length === 0) {
         // special case to avoid errors with void tags
         // still invoke mapElement to flush side effects but don't render
         doMapElement(mapElement, null, mappedMemo)
@@ -281,7 +283,7 @@ const makeElementMapper = mapElement => {
         Recursor({
           children: mapped.children,
           memo: mappedMemo,
-          mapElement
+          elementMapper
         }),
         mapped.containerInfo, 
         mapped.key);
@@ -364,13 +366,18 @@ const makeElementMapper = mapElement => {
 };
 
 const Recursor = ({children, elementMapper, memo, siblingIndex, siblingCount}) => {
-  const childrenCount = React.Children.count(children);
+  const childrenCount = React.Children.toArray(children).length;
   if (childrenCount === 0) {
     // special case to flush mapElement side effects
-    return elementMapper(null, memo, 0, 1);
+    const res = elementMapper(null, memo, siblingIndex, siblingCount);
+    return [true, false, undefined].includes(res) ? null : res;
   } else if (childrenCount === 1) {
     const c = React.Children.toArray(children)[0];
-    return elementMapper(c, memo, siblingIndex, siblingCount);
+    const res = elementMapper(c, memo, siblingIndex, siblingCount);
+    // if (getSymbol(res) === "provider") {
+    //   return <Memoed element={res} original={c} />
+    // }
+    return [true, false, undefined].includes(res) ? null : res;
   } 
   const newChildren = React.Children.map(children, (c, i) => Recursor({
     elementMapper,
@@ -380,8 +387,21 @@ const Recursor = ({children, elementMapper, memo, siblingIndex, siblingCount}) =
     children: c
   }))
   return newChildren; 
-}//, (p,n) => n.children && n.children.type === PropagationStopper);
+}
 
+class PropagationStopper2 extends React.Component {
+  constructor(props) {
+    super(props)
+  }
+
+  shouldComponentUpdate() {
+    return false;
+  }
+
+  render() {
+    return this.props.children;
+  }
+}
 const Substituting = ({children, mapElement}) => {
   if (!mapElement) {
     throw 'Substituting has no mapElement function specified'

@@ -160,4 +160,4 @@ export const mergeYupFragments = (arrayOfFragments) => {
 export const toSchema = schemaOrFragmentOrNull => 
   yup.isSchema(schemaOrFragmentOrNull) ? schemaOrFragmentOrNull :
   schemaOrFragmentOrNull && schemaOrFragmentOrNull.__isYupFragment__ ? schemaOrFragmentOrNull.applyToSchema() :
-  schemaOrFragmentOrNull;
+  yup.mixed();

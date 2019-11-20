@@ -340,14 +340,14 @@ it('manages provider children correctly', () => {
   }
 
   const Provider = ({children}) => {
-    const [state, setState] = useState('');
+    const [state, setState] = useState('before');
     manipulateProvider = setState;
     return <Ctx.Provider value={state}>{children}</Ctx.Provider>
   }
   
   const {getByTestId} = render (
     <Substituting mapElement={({element}) => element}>
-        <Provider>
+      <Provider>
         <Probe>
           <Probe />
         </Probe>

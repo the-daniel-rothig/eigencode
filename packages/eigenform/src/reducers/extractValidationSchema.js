@@ -3,6 +3,8 @@ import * as yup from 'yup';
 import 'yup-extensions';
 import { ReducerFunction } from 'react-traversal';
 
+import isEqual from 'lodash/isEqual';
+
 import makeCamelCaseFieldName from '../util/makeCamelCaseFieldName';
 import Field from '../form/Field';
 import Multiple from '../form/Multiple';
@@ -15,9 +17,35 @@ import TextInput from '../form/TextInput';
 
 const dottify = str => typeof str === "string" && str[0] === "$" ? str : `.${str}`
 
-export default ReducerFunction.single(async ({element, unbox, isLeaf}) => {
+const describeSchema = schemaOrFragment => {
+  const schema = toSchema(schemaOrFragment);
+  const baseDescribe = schema.describe();
+
+  const fieldsObj = schema.fields ? Object.assign({}, ...Object.keys(schema.fields).map(key => ({
+    [key]: describeSchema(schema.fields[key])
+  }))) : null;
+  return {
+    ...baseDescribe,
+    ...(fieldsObj ? {fields: fieldsObj} : {}),
+    ...(schema._subType ? {subType: describeSchema(schema._subType)} : {}),
+    ...(schema._conditions.length 
+      ? Object.assign({}, ...schema._conditions.map((c,i) => ({[`condition_${i}`]: {
+        refs: c.refs.map(r => r.path),
+        schema: describeSchema(c.fn())
+      }}))) 
+      : {})
+  };
+}
+const shouldUpdate = (previous, next) => {
+  const one = describeSchema(previous);
+  const two = describeSchema(next);
+  const res = !isEqual(one, two);
+  return res;
+}
+
+const reduce = ({element, unbox, isLeaf}) => {
   if (isLeaf) {
-    return await unbox();
+    return unbox();
   }
   const {props, type} = element;
   if (type === TextInput) {
@@ -25,52 +53,62 @@ export default ReducerFunction.single(async ({element, unbox, isLeaf}) => {
   } else if (type === EmailInput) {
     return yup.string().email();
   } else if (type === NumberInput) {
-    return yup.number();
+    return yup.string().matches(/^[0-9]*$/);
   } else if (type === Select) {
     const allowedValues = (props.options || []).map(opt => 
       typeof opt.value === "string" ? opt.value : typeof opt.label === "string" ? opt.label : opt);
-    return  oneOf(allowedValues)
+    return oneOf(allowedValues)
   } else if (type === Radio) {
     const allowedValues = [(props.value || props.children || "").toString()]
     return oneOf(allowedValues);
   } else if (type === Field) {
-    const combined = mergeYupFragments(await unbox());
-    const fragmentWithThis = mergeYupFragments([
-      !props.optional && new YupFragment('requiredStrict'),
-      props.name && label(props.name),
-      props.validator, 
-      combined])
-    const name = props.name ? makeCamelCaseFieldName(props.name) : undefined;    
-  return name
-      ? yup.object().shape({[name]: toSchema(fragmentWithThis) || yup.mixed()}).noUnknown().strict().default(undefined) // bug https://github.com/jquense/yup/issues/678
-      : fragmentWithThis;
+    return unbox(null, null, res => {      
+      const combined = mergeYupFragments(res);
+      const fragmentWithThis = mergeYupFragments([
+        !props.optional && new YupFragment('requiredStrict'),
+        props.name && label(props.name),
+        props.validator, 
+        combined])
+      const name = props.name ? makeCamelCaseFieldName(props.name) : undefined;    
+      return name
+        ? yup.object().shape({[name]: toSchema(fragmentWithThis) || yup.mixed()}).noUnknown().strict().default(undefined) // bug https://github.com/jquense/yup/issues/678
+        : fragmentWithThis;
+    })
   } else if (type === Conditional && props.when && props.is) {
-    const combined = mergeYupFragments(await unbox(props.children));
-    const whenWithDots = Array.isArray(props.when)
-      ? props.when.map(dottify) 
-      : dottify(props.when);
-    return when(whenWithDots, {
-      is: props.is,
-      then: s => mergeYupFragments([s, combined])
-    });
+    return unbox(null, null, res => {
+      const combined = mergeYupFragments(res);
+      const whenWithDots = Array.isArray(props.when)
+        ? props.when.map(dottify) 
+        : dottify(props.when);
+      return when(whenWithDots, {
+        is: props.is,
+        then: s => toSchema(mergeYupFragments([s, combined]))
+      });
+    })
   } else if (type === Multiple) {
-    const combined = mergeYupFragments(await unbox(props.children));
-    let multiSchemaFragments = [
-      !props.optional && new YupFragment('requiredStrict'),
-      props.min !== 0 && min(props.min || 1),
-      props.max && max(props.max),
-      props.name && label(props.name),
-      props.validator,
-      yup.array(toSchema(combined) || undefined),
-    ];
-    
-    const multiSchema = toSchema(mergeYupFragments(multiSchemaFragments));
-    const name = props.name ? makeCamelCaseFieldName(props.name) : undefined;    
+    return unbox(null, null, res => {
+      const combined = mergeYupFragments(res);
+      let multiSchemaFragments = [
+        !props.optional && new YupFragment('requiredStrict'),
+        props.min !== 0 && min(props.min || 1),
+        props.max && max(props.max),
+        props.name && label(props.name),
+        props.validator,
+        yup.array(toSchema(combined) || undefined),
+      ];
+      
+      const multiSchema = toSchema(mergeYupFragments(multiSchemaFragments));
+      const name = props.name ? makeCamelCaseFieldName(props.name) : undefined;    
 
-    return name
-      ? yup.object({[name]: multiSchema}).noUnknown().strict().default(undefined) // bug https://github.com/jquense/yup/issues/678
-      : multiSchema;
+      return name
+        ? yup.object({[name]: multiSchema}).noUnknown().strict().default(undefined) // bug https://github.com/jquense/yup/issues/678
+        : multiSchema;
+    })
   } else {
-    return mergeYupFragments(await unbox());
+    return unbox(null, null, res => {
+      return mergeYupFragments(res);
+    })
   }
-});
+};
+
+export default ReducerFunction.single(reduce, shouldUpdate);

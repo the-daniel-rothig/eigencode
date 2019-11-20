@@ -1,38 +1,39 @@
-import { useRef, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import isEqual from 'lodash/isEqual';
 
 const uninitialised = Symbol('eigenform.uninitialised');
 
 export default (cb, deps) => {
-  const ref = useRef(uninitialised);
-  const promisesToFlush = useRef([]);
-
+  const [state, setState] = useState(uninitialised);
+  const [promisesToFlush, setPromisesToFlush] = useState([]);
+  
   // empty the promises when the dependencies change - because they are to be considered stale.
-  useEffect(() => () => promisesToFlush.current = [], deps)
+  useEffect(() => () => setPromisesToFlush([]), deps)
 
-  const curriedCallback = (...args) => {
-    if (ref.current !== uninitialised) {
-      return cb(ref.current, ...args)
-    } else {
-      return new Promise((ok, reject) => {
-        promisesToFlush.current.push({ok, reject, args});
-      })
-    }
-  }
-
-  const set = newValue => {
-    ref.current = newValue;
-    promisesToFlush.current.forEach(({ok, reject, args}) => {
+  if (state !== uninitialised && promisesToFlush.length) {
+    promisesToFlush.forEach(({ok, reject, args}) => {
       try {
-        const result = cb(ref.current, ...args)
+        const result = cb(state, ...args)
         ok(result);
       } catch (e) {
         reject(e);
       }
     });
-    promisesToFlush.current = [];
+    setPromisesToFlush([]);
   }
 
-  const val = ref.current === uninitialised ? undefined : ref.current;
+  const curriedCallback = useCallback((...args) => {    
+    return new Promise((ok, reject) => {
+      setPromisesToFlush([...promisesToFlush, {ok, reject, args}]);
+    })
+  }, [state, cb, promisesToFlush])
 
-  return [curriedCallback, val, set];
+  const get = useCallback(() => state === uninitialised ? undefined : state, [state]);
+  const set = useCallback(newVal =>{
+    if (state === uninitialised || isEqual(state.describe(), newVal.describe())) {
+      setState(newVal);
+    }
+  }, [state]);
+
+  return [curriedCallback, get, set];
 }

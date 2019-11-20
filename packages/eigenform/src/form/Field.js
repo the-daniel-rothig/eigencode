@@ -22,7 +22,7 @@ export const FieldProvider = ({name= "", children}) => {
   }
 
   return (
-    <ContextFilter of={FormContext} to={FieldContext} map={map} isUnchanged={isUnchanged}>
+    <ContextFilter of={FormContext} to={FieldContext} map={map}>
       {children}
     </ContextFilter>
   )

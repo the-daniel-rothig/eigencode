@@ -59,3 +59,13 @@ input[type='checkbox'] {
   margin-left: 0.3rem;
   border-left: solid 2px #aaa;
 }
+
+.field-feedback{
+  display: block;
+  margin-top: 0.3rem;
+  color: #a22;
+}
+
+.field-feedback::before {
+  content: "⚠ "
+}

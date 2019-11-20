@@ -8,7 +8,7 @@ const FormValidatingButton = React.forwardRef(({children, className}, ref) => {
   const form = useContext(FormContext);
   const isFunc = typeof children === "function";
 
-  const onClick = () => runValidation(form.values);
+  const onClick = () => runValidation(form.getValue(''));
   
   if (isFunc) {
     return children(onClick);

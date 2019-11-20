@@ -1,42 +1,55 @@
-import React, { useState, useRef, useContext } from 'react'
+import React, { useCallback, useRef, useContext, useReducer } from 'react'
 import { deepSet, deepGet, deepDelete } from 'eigencode-shared-utils';
 import FormContext from './FormContext';
 import makeUid from '../util/makeUid';
 import ValidationScope from './ValidationScope';
 import ValidationScopeContext from './ValidationScopeContext';
-import throttle from 'lodash/throttle';
-import isEqual from 'lodash/isEqual'
+import debounce from 'lodash/debounce';
+import cloneDeep from 'lodash/cloneDeep';
 
 const FormProvider = ({id, children, initialValues = {}}) => {
   const uid = useRef(id || makeUid()).current;
-  const [updateForcingState, setUpdateForcingState] = useState(false);
-  const forceUpdate = () => {
-    setUpdateForcingState(!updateForcingState);
-  }
   
-  const { runValidation } = useContext(ValidationScopeContext);
-  const throttlededRunValidation = useRef(throttle(runValidation, 1000));
-  
-  const valuesRef = useRef(initialValues);
-  const getValue = name => deepGet(valuesRef.current, name); // todo: clone
-  const deleteValue = name => {
-    deepDelete(valuesRef.current, name);
-    throttlededRunValidation.current(valuesRef.current);
-    forceUpdate();
-  };
-
-  const setValue = (name, value) => {
-    if (!isEqual(deepGet(valuesRef.current, name), value)) {
-      deepSet(valuesRef.current, name, value);
-      throttlededRunValidation.current(valuesRef.current);
-      forceUpdate();
+  const [values, dispatch] = useReducer((state,action) => {
+    const { value, name, type } = action;
+    switch(type) {
+      case 'delete':
+        deepDelete(state, name);
+        return {...state}
+      case 'set': 
+        deepSet(state, name, value);
+        return {...state}
+      default: throw 'boo' 
     }
-  };
+  }, initialValues);
+
+  const { runValidation } = useContext(ValidationScopeContext);
+  const throttlededRunValidation = useCallback(debounce(runValidation, 40, {leading: false}), [runValidation]);
+
+  throttlededRunValidation(values)
+    
+  const getValue = useCallback(name => cloneDeep(deepGet(values, name)), [values]);
+  const deleteValue = useCallback((name) => {
+    //throttlededRunValidation(values)
+    dispatch({
+      type: 'delete',
+      name
+    })
+  }, [throttlededRunValidation, values])
+
+  const setValue = useCallback((name, value) => {
+    //throttlededRunValidation(values)
+    dispatch({
+      type: 'set',
+      name,
+      value
+    })
+  }, [throttlededRunValidation, values]);
   
   return (
-      <FormContext.Provider value={{uid, setValue, getValue, deleteValue}}>
-          {children}
-      </FormContext.Provider>
+    <FormContext.Provider value={{uid, setValue, getValue, deleteValue}}>
+        {children}
+    </FormContext.Provider>
   );
 }
 

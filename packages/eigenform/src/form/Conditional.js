@@ -18,7 +18,7 @@ const getFieldNames = ({unbox, element, isLeaf}) => {
   if (element.type === Field || element.type === Multiple) {
     // we can just the top level field names here - removing them
     // will implicitly remove their descendants
-    return makeCamelCaseFieldName(element.props.name);
+    return [makeCamelCaseFieldName(element.props.name)];
   }
   return unbox();
 }

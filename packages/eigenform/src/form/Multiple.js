@@ -16,10 +16,11 @@ const SingleItem = ({remove, children}) => {
   )
 }
 
+const NEW_ITEM_VALUE = () => ({});
+
 const Multiple = ({children, className, name, min=1, max, renderItem = SingleItem}) => {
   const outer = useContext(FormContext);
   const setValue = outer ? outer.setValue : () => {};
-  const deleteValue = outer ? outer.deleteValue : () => {};
 
   const arr = (outer ? outer.getValue(name) : []) || [];
   const uids = useRef(arr.map(() => makeUid()))
@@ -32,7 +33,7 @@ const Multiple = ({children, className, name, min=1, max, renderItem = SingleIte
       uids.current = [...(new Array(min))].map(() => makeUid());
       setValue(
         fullyQualifiedName,
-        [...(new Array(min))].map((v, i) => arr[i] || null)
+        [...(new Array(min))].map((v, i) => arr[i] || NEW_ITEM_VALUE())
       )
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -42,7 +43,7 @@ const Multiple = ({children, className, name, min=1, max, renderItem = SingleIte
     uids.current.push(makeUid())
     if (outer) {
       const arrx = outer.getValue(name);
-      outer.setValue(fullyQualifiedName, [...arrx, null]);
+      outer.setValue(fullyQualifiedName, [...arrx, NEW_ITEM_VALUE()]);
     }
   }
 

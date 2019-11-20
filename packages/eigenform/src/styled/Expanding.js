@@ -2,7 +2,7 @@ import React, { useRef, useLayoutEffect, useState} from 'react';
 import AnimateHeight from 'react-animate-height';
 import { useExpiringState } from 'eigencode-shared-utils';
 
-const Expanding = ({render, className, bounce = true}) => {
+const Expanding = ({render, className, children, bounce = true}) => {
   const divRef = useRef();
   const [state, setState, isStale] = useExpiringState({collapsed: !!bounce});
   const [animating, setAnimating] = useState(false);
@@ -49,7 +49,7 @@ const Expanding = ({render, className, bounce = true}) => {
     >
       <div className='expanding-layout-reset'/>
       <div ref={divRef} className={className}>
-        {render({show, hide})}
+        {render ? render({show, hide}) : children}
       </div>
     </AnimateHeight> 
   );
