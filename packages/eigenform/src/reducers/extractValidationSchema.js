@@ -24,23 +24,24 @@ const describeSchema = schemaOrFragment => {
   const fieldsObj = schema.fields ? Object.assign({}, ...Object.keys(schema.fields).map(key => ({
     [key]: describeSchema(schema.fields[key])
   }))) : null;
+
+  const conditions = schema._conditions.map((c,i) => ({
+      refs: c.refs.map(r => r.path),
+      schema: describeSchema(c.fn())
+    }));
+
   return {
     ...baseDescribe,
     ...(fieldsObj ? {fields: fieldsObj} : {}),
     ...(schema._subType ? {subType: describeSchema(schema._subType)} : {}),
-    ...(schema._conditions.length 
-      ? Object.assign({}, ...schema._conditions.map((c,i) => ({[`condition_${i}`]: {
-        refs: c.refs.map(r => r.path),
-        schema: describeSchema(c.fn())
-      }}))) 
-      : {})
+    conditions
   };
 }
 const shouldUpdate = (previous, next) => {
-  const one = describeSchema(previous);
-  const two = describeSchema(next);
-  const res = !isEqual(one, two);
-  return res;
+  return !isEqual(
+    describeSchema(previous),
+    describeSchema(next)
+  );
 }
 
 const getContents = ({element, defaultReturn}) => {
@@ -118,6 +119,6 @@ const reduce = ({element, unbox, isLeaf}) => {
   }
 };
 
-const finalise = x => toSchema(Array.isArray(x) ? x[0] : x);
+const finalise = x => toSchema(x[0]);
 
 export default new ReducerFunction(reduce, shouldUpdate, getContents, finalise);

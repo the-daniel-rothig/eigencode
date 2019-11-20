@@ -19,7 +19,7 @@ const mapElement = (initialReducerFunction, onFinish) => ({element, memo, getCon
     if (memo) {
       memo.returnValue(res, idx, siblingCount)
     } else {
-      onFinish(reducerFunction.finalTransform(res))
+      onFinish(reducerFunction.finalTransform([res]))
     }
     return [element, {root}];
   }    
@@ -73,7 +73,7 @@ const mapElement = (initialReducerFunction, onFinish) => ({element, memo, getCon
     if (memo) {
       memo.returnValue(rtnValue, idx, siblingCount);
     } else {
-      onFinish(reducerFunction.finalTransform(rtnValue))
+      onFinish(reducerFunction.finalTransform([rtnValue]))
     }
   }
   return [newElement, {returnValue, reducerFunction: newReducerFunction, root}]

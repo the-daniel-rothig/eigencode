@@ -43,4 +43,4 @@ const reduce = ({unbox, element}) => {
   }))
 }
 
-export default new ReducerFunction(reduce, undefined, undefined, x => combinePartialResults(Array.isArray(x) ? x : [x]));
+export default new ReducerFunction(reduce, undefined, undefined, combinePartialResults);
