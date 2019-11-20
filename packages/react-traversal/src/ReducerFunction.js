@@ -1,5 +1,3 @@
-import { logOnce } from "eigencode-shared-utils";
-
 const defaultShouldUpdate = (one, two) => one !== two;
 const defaultFinalTransform = x => x;
 
@@ -13,16 +11,16 @@ export default class ReducerFunction {
     this.getContents = saneOptions.getContents;
 
     if (typeof this.reduce !== 'function') {
-      throw `ReducerFunction error: reduce is not a function`
+      throw new Error('ReducerFunction error: reduce is not a function')
     }
     if (typeof this.finalTransform !== 'function') {
-      throw `ReducerFunction error: finalTransform is not a function`
+      throw new Error('ReducerFunction error: finalTransform is not a function')
     }
     if (typeof this.shouldUpdate !== 'function') {
-      throw `ReducerFunction error: shouldUpdate is not a function`
+      throw new Error('ReducerFunction error: shouldUpdate is not a function')
     }
     if (!!this.getContents && typeof this.getContents !== 'function') {
-      throw `ReducerFunction error: getContents is not a function`
+      throw new Error('ReducerFunction error: getContents is not a function')
     }
   }
 

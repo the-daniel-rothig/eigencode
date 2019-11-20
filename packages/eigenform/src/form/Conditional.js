@@ -75,11 +75,10 @@ const ConditionalInner = ({when, is, preserveValues, onExpanding = invokeCallbac
   
   const { whenValues, deleteValue } = useContext(ConditionalContext)
   const [fields, doSetFields] = useState([]);
-  const setFields = newFields => {
-    if(!isEqual(newFields, fields)) doSetFields(newFields);
-  };
+  const setFields = newFields => doSetFields(oldFields => 
+    isEqual(oldFields, newFields) ? oldFields : newFields
+  );
 
-  
   const shouldShow = isConditionalShowing(when, is, fieldContext && fieldContext.name, key => whenValues[key])
 
   const [targetVisibility, setTargetVisibility] = useState(shouldShow);

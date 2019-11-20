@@ -1,16 +1,9 @@
 import React, { useContext } from 'react';
 import FieldContext from './FieldContext';
-import FormContext from './FormContext';
 
 const Checkbox = ({value, className, children}) => {
   const { name, fieldValue, setValue } = useContext(FieldContext);
-  //const form = useContext(FormContext);
-
-  // const setValue = form ? form.setValue : () => {}
-  // const getValue = form ? form.getValue : () => '';
-
-  // const currentValue = getValue(name) || [];
-
+  
   const onClick = (e) => {
     const beforeValue = fieldValue || [];
     if (e.target.checked) {
@@ -22,7 +15,7 @@ const Checkbox = ({value, className, children}) => {
 
   return (
     <label className={className} onClick={onClick}>
-      <input type="checkbox" checked={fieldValue && fieldValue.includes(value)} value={value} name={name} />
+      <input type="checkbox" checked={!!fieldValue && fieldValue.includes(value)} value={value} name={name} onChange={() => {}} />
       {children}
     </label>
   );

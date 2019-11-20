@@ -1,6 +1,5 @@
 import React, { useContext } from 'react';
 import FieldContext from './FieldContext';
-import FormContext from './FormContext';
 
 const Radio = ({value, className, children}) => {
   const { name, setValue, fieldValue } = useContext(FieldContext);

@@ -19,6 +19,6 @@ export default name => {
   if (!match) {
     logOnce(`field name "${name}" should begin with an article (the, your, my, their, a, an) or a conjunction (if, whether)`);
   }
-  const asCamelCase = (match ? match[1] : name).trim().toLowerCase().replace(/[^a-z0-9\s\-]/g, "").replace(/[\s\-]+(.)/g, (match, firstCharacter) => firstCharacter.toUpperCase());
+  const asCamelCase = (match ? match[1] : name).trim().toLowerCase().replace(/[^a-z0-9\s-]/g, "").replace(/[\s-]+(.)/g, (match, firstCharacter) => firstCharacter.toUpperCase());
   return asCamelCase;
 }

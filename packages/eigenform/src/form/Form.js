@@ -19,14 +19,14 @@ const FormProvider = ({id, children, initialValues = {}}) => {
       case 'set': 
         deepSet(state, name, value);
         return {...state}
-      default: throw 'boo' 
+      default: return state;
     }
   }, initialValues);
 
   const { runValidation } = useContext(ValidationScopeContext);
-  const throttlededRunValidation = useCallback(debounce(runValidation, 40, {leading: false}), [runValidation]);
+  const throttledRunValidation = useCallback(debounce(runValidation, 40, {leading: false}), [runValidation]);
 
-  throttlededRunValidation(values)
+  throttledRunValidation(values)
     
   const getValue = useCallback(name => cloneDeep(deepGet(values, name)), [values]);
   const deleteValue = useCallback((name) => {

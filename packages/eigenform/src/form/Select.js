@@ -12,6 +12,7 @@ const Select = ({options}) => {
   const id = [form && form.uid, name].filter(Boolean).join("-");
   useEffect(() => {
     setValue(name, getValue(name) || '')
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   },[])
 
   const value = getValue(name) || '';

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import FieldFeedbackBase from '../form/FieldFeedback';
 import Expanding from './Expanding';
-import { Reducer } from 'react-traversal';
 
 const FieldFeedback = () => {
   const [error, setError] = useState();

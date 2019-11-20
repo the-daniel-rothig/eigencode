@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from 'react'
+import React, { useContext } from 'react'
 import { combineObjectPaths } from 'eigencode-shared-utils';
 import FieldContext from './FieldContext'
 import makeCamelCaseFieldName from '../util/makeCamelCaseFieldName';
@@ -22,7 +22,7 @@ export const FieldProvider = ({name= "", children}) => {
   }
 
   return (
-    <ContextFilter of={FormContext} to={FieldContext} map={map}>
+    <ContextFilter of={FormContext} to={FieldContext} map={map} isUnchanged={isUnchanged}>
       {children}
     </ContextFilter>
   )

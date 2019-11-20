@@ -1,3 +1,4 @@
+/* eslint-disable no-template-curly-in-string */
 import { setLocale } from 'yup'
 
 export const localeValues = {

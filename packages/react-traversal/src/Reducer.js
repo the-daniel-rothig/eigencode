@@ -1,8 +1,5 @@
 import React from 'react';
 import Substituting from './Substituting';
-import debounce from 'lodash/debounce';
-import isEqual from 'lodash/isEqual';
-import { logOnce } from 'eigencode-shared-utils';
 
 const mapElement = (initialReducerFunction, onFinish) => ({element, memo, getContext, siblingIndex, siblingCount: _siblingCount}) => {
   const idx = siblingIndex || 0;
@@ -35,7 +32,7 @@ const mapElement = (initialReducerFunction, onFinish) => ({element, memo, getCon
         resolveCb = args[0]
         break;
       case 2:
-        reducerFunction = args[0];
+        newReducerFunction = args[0];
         resolveCb = args[1];
         break;
       default: //do nothing
@@ -80,30 +77,11 @@ const mapElement = (initialReducerFunction, onFinish) => ({element, memo, getCon
 }
 
 const Reducer = ({children, reducerFunction, onFinish}) => {
-  const debouncedOnFinish = React.useCallback(
-    debounce(onFinish, 100, {leading:false}),
-    [onFinish]
-  );
-
-  // we want to flush when Reducer has mounted, but in the next render cycle
-  // so wrap the debounce flush in a SECOND debounce, but with a shorter timeout
-  const flushDebounce = React.useCallback(
-    debounce(() => debouncedOnFinish.flush(), 0, {leading: false})
-  )
-
-  React.useEffect(() => {
-    flushDebounce();
-  })
-
-  const map = mapElement(reducerFunction, debouncedOnFinish);
-
-  // ensure there is a root-level element to be reduced to.
-  const c = React.Children.toArray(children).length === 1 ?
-    children : <>{children}</>;
+  const map = mapElement(reducerFunction, onFinish);
 
   return (
     <Substituting mapElement={map}>
-      {c}
+      {children}
     </Substituting>
   )
 }

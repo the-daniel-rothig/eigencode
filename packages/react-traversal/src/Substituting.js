@@ -14,11 +14,22 @@ const PropagationStopper = React.memo(({children}) => children, (p,n) => {
 const makeDerivedClass = (type) => {
   class DerivedClass extends React.Component {
     constructor(propsAndPayload, ...args) {
-      super(propsAndPayload, ...args);
-
-      const { ___eigencode_memo, ___eigencode_elementMapper, ...props } = propsAndPayload;
-
-      this.___eigencode_elementMapper = ___eigencode_elementMapper;
+      const { ___eigencode_memo, ___eigencode_elementmapper, ...props } = propsAndPayload;
+      
+      const realConsoleError = console.error;
+      console.error = (...args) => {
+        if (args[0].indexOf("make sure to pass up the same props that your component's constructor was passed.") === -1) {
+          realConsoleError(...args);
+        }
+      }
+      try {
+        super(props, ...args);
+      } finally {
+        setTimeout(() => console.error = realConsoleError, 0)
+        //console.error = realConsoleError;
+      }
+      
+      this.___eigencode_elementmapper = ___eigencode_elementmapper;
       this.___eigencode_memo = ___eigencode_memo;
 
       this.instance = new type(props, ...args);
@@ -59,10 +70,12 @@ const makeDerivedClass = (type) => {
       }
 
       this.UNSAFE_componentWillUpdate = (nextProps, nextState, nextContext) => {
+        const { ___eigencode_memo, ___eigencode_elementmapper, ...saneNextProps } = nextProps;
+      
         if (typeof this.instance.UNSAFE_componentWillUpdate === "function") {
-          this.instance.UNSAFE_componentWillUpdate(nextProps, nextState, nextContext)
+          this.instance.UNSAFE_componentWillUpdate(saneNextProps, nextState, nextContext)
         }
-        this.instance.props = nextProps;
+        this.instance.props = saneNextProps;
         this.instance.context = nextContext;
         this.instance.state = nextState;
       }
@@ -78,7 +91,7 @@ const makeDerivedClass = (type) => {
         const children = this.instance.render();
         return Recursor({
           children,
-          elementMapper: this.___eigencode_elementMapper,
+          elementMapper: this.___eigencode_elementmapper,
           memo: this.___eigencode_memo
         });
       }
@@ -92,11 +105,11 @@ const makeDerivedClass = (type) => {
 
 const makeDerivedFunction = (type) => {
   let Derived = (propsAndPayload, ...args) => {
-    const { ___eigencode_memo, ___eigencode_elementMapper, ...props } = propsAndPayload;
+    const { ___eigencode_memo, ___eigencode_elementmapper, ...props } = propsAndPayload;
     const res = type(props, ...args);
     return Recursor({
       children: res,
-      elementMapper: ___eigencode_elementMapper,
+      elementMapper: ___eigencode_elementmapper,
       memo: ___eigencode_memo,
       siblingIndex: 0,
       siblingCount: 1
@@ -137,7 +150,7 @@ const shouldConstruct = (Component) => {
 }
 
 const REACT___shouldSetTextContent = (type, props) => {
-  return type === 'textarea' || type === 'option' || type === 'noscript' || typeof props.children === 'string' || typeof props.children === 'number' || typeof props.dangerouslySetInnerHTML === 'object' && props.dangerouslySetInnerHTML !== null && props.dangerouslySetInnerHTML.__html != null;
+  return type === 'textarea' || type === 'option' || type === 'noscript' || typeof props.children === 'string' || typeof props.children === 'number' || (typeof props.dangerouslySetInnerHTML === 'object' && props.dangerouslySetInnerHTML !== null && props.dangerouslySetInnerHTML.__html != null);
 }
 
 const getSymbol = element => {
@@ -158,7 +171,7 @@ const doMapElement = (mapElement, element, memo, siblingIndex, siblingCount) => 
     siblingCount: siblingCount,
     getContext: ctx => typeof ctx === 'object' ? ctx._currentValue : undefined, 
     type: element ? element.type || typeof element : undefined,
-    props: element && element.props || {}
+    props: (element && element.props) || {}
   })
 
   let res = result, newMemo = memo;
@@ -195,7 +208,7 @@ const makeElementMapper = mapElement => {
         const resultTwo = mapElementTwo({memo: memo.memoTwo, element, type, props, ...rest});
         const intermediateElement = Array.isArray(resultTwo) ? resultTwo[0] : resultTwo; 
         const intermediateType = intermediateElement ? intermediateElement.type || typeof intermediateElement : undefined;
-        const intermediateProps = intermediateElement && intermediateElement.props || {};
+        const intermediateProps = (intermediateElement && intermediateElement.props) || {};
         const resultOne = mapElementOne({memo: memo.memoOne, element: intermediateElement, type: intermediateType, props: intermediateProps, ...rest});
         const finalElement = Array.isArray(resultOne) ? resultOne[0] : resultOne;
         const finalMemo = {
@@ -343,7 +356,7 @@ const makeElementMapper = mapElement => {
     if (shouldConstruct(mapped.type)) {
       const Derived = getDerivedClass(mapped.type);
       //console.log('derived class', Derived.displayName);
-      const res = <Derived ___eigencode_memo={mappedMemo} ___eigencode_elementMapper={elementMapper} {...mapped.props} />
+      const res = <Derived ___eigencode_memo={mappedMemo} ___eigencode_elementmapper={elementMapper} {...mapped.props} />
       return res;
       // return {
       //   ...res,
@@ -355,7 +368,7 @@ const makeElementMapper = mapElement => {
     if (typeof mapped.type === "function") {
       const Derived = getDerivedFunction(mapped.type);
       //console.log('derived', Derived.displayName);
-      const res = <Derived ___eigencode_memo={mappedMemo} ___eigencode_elementMapper={elementMapper} {...mapped.props} />;
+      const res = <Derived ___eigencode_memo={mappedMemo} ___eigencode_elementmapper={elementMapper} {...mapped.props} />;
       return res;
       // return {
       //   ...res,
@@ -365,7 +378,7 @@ const makeElementMapper = mapElement => {
       //return mappedElement;
     }
 
-    throw "This shouldn't happen";
+    throw new Error("This shouldn't happen");
   };
   return elementMapper;
 };
@@ -394,22 +407,9 @@ const Recursor = ({children, elementMapper, memo, siblingIndex, siblingCount}) =
   return newChildren; 
 }
 
-class PropagationStopper2 extends React.Component {
-  constructor(props) {
-    super(props)
-  }
-
-  shouldComponentUpdate() {
-    return false;
-  }
-
-  render() {
-    return this.props.children;
-  }
-}
 const Substituting = ({children, mapElement}) => {
   if (!mapElement) {
-    throw 'Substituting has no mapElement function specified'
+    throw new Error('Substituting has no mapElement function specified')
   }
   const elementMapper = makeElementMapper(mapElement);
   return Recursor({

@@ -6,7 +6,7 @@ import usingFakeDispatcher, { getContextFromStack } from './usingFakeDispatcher'
 import ReducerFunction from './ReducerFunction';
 
 const notSupported = (name) => {
-  throw `${name} is not currently supported`
+  throw new Error(`${name} is not currently supported`);
 }
 
 const shouldConstruct = (Component) => {
@@ -57,9 +57,9 @@ function processChild({child, contextStack, getContents, traverse}) {
     return resolvedChildren;
   }
   if (typeof child === 'string' || typeof child === 'number') {
-    throw 'this shouldnt happen!'
+    throw new Error('this shouldnt happen!');
   } 
-  if (child.type && opaqueTypes.current.includes(child.type) || typeof child.type === 'string') {
+  if ((child.type && opaqueTypes.current.includes(child.type)) || typeof child.type === 'string') {
     const resolvedChildren = mapToResult(child.props.children, contextStack)
     return resolvedChildren;
   }

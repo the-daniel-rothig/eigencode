@@ -1,9 +1,9 @@
 import React, { useContext } from 'react';
 import './App.css';
-import { string, number } from 'yup';
 
 import 'yup-extensions';
 
+/* eslint-disable no-unused-vars */
 import {
   Button,
   Checkbox,
@@ -23,6 +23,7 @@ import {
   TextInput,
   YesNo,
  } from 'eigenform/styled'
+/* eslint-enable */
 
 const Debug = () => {
   const { getValue } = useContext(FormContext);

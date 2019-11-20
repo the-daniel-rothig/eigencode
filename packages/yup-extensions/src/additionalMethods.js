@@ -52,9 +52,10 @@ addMethod(mixed, 'unique', function(selector = x=>x, message) {
       const array = deepGet(this.options.context, this.path.substring(0, match.index));
 
       if (!Array.isArray(array)) {
-        throw "yup error: unique() validation requires value to be supplied as the context.\n" +
+        throw new Error(
+              "yup error: unique() validation requires value to be supplied as the context.\n" +
               "   you can do so by calling e.g. schema.validate(value, {context: value})\n" +
-              "   instead of schema.validate(value)";
+              "   instead of schema.validate(value)");
       }
 
       const thisIndex = parseInt(match[1])

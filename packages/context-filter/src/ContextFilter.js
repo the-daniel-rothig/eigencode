@@ -16,10 +16,6 @@ const propTypes = {
 }
 
 class ContextFilterInner extends React.Component {
-  constructor(props) {
-    super(props)
-  }
-
   shouldComponentUpdate(nextProps) {
     const equals = nextProps.isUnchanged || isEqual;
     return nextProps.contextType !== this.props.contextType ||
