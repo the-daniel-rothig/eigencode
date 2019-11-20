@@ -14,25 +14,27 @@ import Multiple from '../form/Multiple';
 const findWithin = (
   selector, 
   andThenReduce = ({element}) => element
-) => ReducerFunction.single(
-  ({element, isLeaf, unbox}) => {
-    if (!isLeaf && selector(element)) {
-      return unbox(andThenReduce, r => r);
-    }
-    return unbox();
-  }
-);
+) => new ReducerFunction({
+    reduce: ({element, isLeaf, unbox}) => {
+      if (!isLeaf && selector(element)) {
+        return unbox(andThenReduce, r => r);
+      }
+      return unbox();
+    },
+    finalTransform: x => x[0]
+  });
 
-const getSectionHeading = ({isSection, isHeading}) => ReducerFunction.single(
-  ({element, isRoot, unbox}) => {
+const getSectionHeading = ({isSection, isHeading}) => new ReducerFunction({
+  reduce: ({element, isRoot, unbox}) => {
     if (isRoot && isSection(element)) {
       return unbox(findWithin(isHeading, extractText), h1 => {
         return h1 || "";
       })
     }
     return unbox();
-  }
-);
+  },
+  finalTransform: x => x[0]
+});
 
 
 const getFormSummary = async (element, values, identifySection) => {

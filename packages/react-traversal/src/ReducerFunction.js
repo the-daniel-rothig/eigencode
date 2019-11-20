@@ -1,16 +1,29 @@
 import { logOnce } from "eigencode-shared-utils";
 
 const defaultShouldUpdate = (one, two) => one !== two;
+const defaultFinalTransform = x => x;
 
 export default class ReducerFunction {
-  constructor(reduce, shouldUpdate = defaultShouldUpdate, getContents, finalTransform = x => x) {
-    if (typeof reduce !== 'function') {
-      throw `ReducerFunction error: ${reduce} is not a function`
+  constructor(options) {
+    const saneOptions = typeof options === "function" ? {reduce: options} : options;
+
+    this.reduce = saneOptions.reduce;
+    this.finalTransform = saneOptions.finalTransform || defaultFinalTransform;
+    this.shouldUpdate = saneOptions.shouldUpdate || defaultShouldUpdate;
+    this.getContents = saneOptions.getContents;
+
+    if (typeof this.reduce !== 'function') {
+      throw `ReducerFunction error: reduce is not a function`
     }
-    this.reduce = reduce;
-    this.finalTransform = finalTransform;
-    this.shouldUpdate = shouldUpdate;
-    this.getContents = getContents;
+    if (typeof this.finalTransform !== 'function') {
+      throw `ReducerFunction error: finalTransform is not a function`
+    }
+    if (typeof this.shouldUpdate !== 'function') {
+      throw `ReducerFunction error: shouldUpdate is not a function`
+    }
+    if (!!this.getContents && typeof this.getContents !== 'function') {
+      throw `ReducerFunction error: getContents is not a function`
+    }
   }
 
   static cast = obj => {
@@ -19,14 +32,4 @@ export default class ReducerFunction {
     }
     return new ReducerFunction(obj);
   }
-
-  static single = (obj, shouldUpdate = defaultShouldUpdate, getContents) => new ReducerFunction(obj, shouldUpdate, getContents, x => {
-    if (Array.isArray(x)) {
-      if (x.length > 1) {
-        logOnce("ReducerFunction.single returned multiple results; only the first will be returned");
-      }
-      return x[0]
-    }
-    return x;
-  });
 } 

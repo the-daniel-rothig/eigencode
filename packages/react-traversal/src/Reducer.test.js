@@ -3,6 +3,7 @@ import { render } from '@testing-library/react'
 import Reducer from './Reducer'
 import extractText from './reducers/extractText'
 import { ReducerFunction } from '.'
+import { writeFileSync } from 'jest-serializer'
 
 it('doesnt explode', () => {
   render(
@@ -79,16 +80,19 @@ World.`);
 
 it('passes though getContext', done => {
   const Ctx = React.createContext();
-  const contextIntoSpan = new ReducerFunction(({element, getContext, unbox}) => {
-    if (element.type === 'span') {
-      return {
-        wantsSpacing: false,
-        value: getContext(Ctx)
+  const contextIntoSpan = new ReducerFunction({
+    reduce: ({element, getContext, unbox}) => {
+      if (element.type === 'span') {
+        return {
+          wantsSpacing: false,
+          value: getContext(Ctx)
+        }
       }
-    }
-    else return extractText.reduce({element, unbox})
-  }, undefined, undefined, extractText.finalTransform);
-
+      else return extractText.reduce({element, unbox})
+    },
+    finalTransform: extractText.finalTransform
+  })
+  
   render(
     <Ctx.Provider value={'success!'}>
       <Reducer reducerFunction={contextIntoSpan} onFinish={assertResult}>

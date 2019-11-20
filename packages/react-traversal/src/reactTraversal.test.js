@@ -373,18 +373,20 @@ it('supports custom eval of children', () => {
   )
 
   const res = traverseDepthFirst(element, 
-    ReducerFunction.single(({element, unbox}) => {
-      if (!element || !element.type) {
-        return element;
-      }
-      return unbox();
-    }, 
-    undefined, 
-    ({element, defaultReturn}) => {
-      if(element.type === Hidden) {
-        return element.props.children;
-      }
-      return defaultReturn
+    new ReducerFunction({
+      reduce: ({element, unbox}) => {
+        if (!element || !element.type) {
+          return element;
+        }
+        return unbox();
+      }, 
+      getContents: ({element, defaultReturn}) => {
+        if(element.type === Hidden) {
+          return element.props.children;
+        }
+        return defaultReturn
+      },
+      finalTransform: x => x[0]
     })
   );
 

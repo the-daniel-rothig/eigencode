@@ -122,4 +122,7 @@ const getContents = ({element, defaultReturn}) => {
   return [Conditional, Multiple].includes(element.type) ? element.props.children : defaultReturn;
 };
 
-export default (...args) => new ReducerFunction(makeReduce(...args), undefined, getContents);
+export default (...args) => new ReducerFunction({
+  reduce: makeReduce(...args),
+  getContents
+});

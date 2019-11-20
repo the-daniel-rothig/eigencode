@@ -43,4 +43,7 @@ const reduce = ({unbox, element}) => {
   }))
 }
 
-export default new ReducerFunction(reduce, undefined, undefined, combinePartialResults);
+export default new ReducerFunction({
+  reduce, 
+  finalTransform: combinePartialResults
+});

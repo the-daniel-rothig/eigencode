@@ -119,6 +119,6 @@ const reduce = ({element, unbox, isLeaf}) => {
   }
 };
 
-const finalise = x => toSchema(x[0]);
+const finalTransform = x => toSchema(x[0]);
 
-export default new ReducerFunction(reduce, shouldUpdate, getContents, finalise);
+export default new ReducerFunction({reduce, shouldUpdate, getContents, finalTransform});
