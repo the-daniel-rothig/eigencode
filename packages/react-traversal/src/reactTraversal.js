@@ -110,7 +110,7 @@ const makeTraverseFunction = (reduce, isRoot) => {
     if (!element || typeof element !== "object" || (Array.isArray(element) && element.length === 0)) {
       // users can pass in non-renderables such as empty arrays or booleans. Sanitise those away 
       const saneElement = ['number', 'string'].includes(typeof element) ? element : undefined;
-      const unbox = () => undefined;
+      const unbox = () => unbox;
       let reduceResult = reduce.reduce({unbox, element: saneElement, getContext, isRoot: isRoot(element), isLeaf: true});
       if (reduceResult === unbox) reduceResult = undefined;
       return reduceResult && typeof reduceResult.then === "function"
@@ -118,7 +118,19 @@ const makeTraverseFunction = (reduce, isRoot) => {
         : ReduceResult.cast(reduceResult);
     }
 
-    const unbox = (child, reduceOverride, callback) => {
+    const unbox = (...args) => {
+      let callback = null, reduceOverride = null;
+      switch (args.length) {
+        case 1:
+          callback = args[0];
+          break;
+        case 2:
+          reduceOverride = args[0];
+          callback = args[1];
+          break;
+        default: // do nothing
+      }
+      
       if (reduceOverride) {
         /*  
           a little wrapper to ensure `element` gets 

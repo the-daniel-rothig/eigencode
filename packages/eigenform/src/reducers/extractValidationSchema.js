@@ -69,7 +69,7 @@ const reduce = ({element, unbox, isLeaf}) => {
     const allowedValues = [(props.value || props.children || "").toString()]
     return oneOf(allowedValues);
   } else if (type === Field) {
-    return unbox(null, null, res => {      
+    return unbox(res => {      
       const combined = mergeYupFragments(res);
       const fragmentWithThis = mergeYupFragments([
         !props.optional && new YupFragment('requiredStrict'),
@@ -82,7 +82,7 @@ const reduce = ({element, unbox, isLeaf}) => {
         : fragmentWithThis;
     })
   } else if (type === Conditional && props.when && props.is) {
-    return unbox(null, null, res => {
+    return unbox(res => {
       const combined = mergeYupFragments(res);
       const whenWithDots = Array.isArray(props.when)
         ? props.when.map(dottify) 
@@ -93,7 +93,7 @@ const reduce = ({element, unbox, isLeaf}) => {
       });
     })
   } else if (type === Multiple) {
-    return unbox(null, null, res => {
+    return unbox(res => {
       const combined = mergeYupFragments(res);
       let multiSchemaFragments = [
         !props.optional && new YupFragment('requiredStrict'),
@@ -112,7 +112,7 @@ const reduce = ({element, unbox, isLeaf}) => {
         : multiSchema;
     })
   } else {
-    return unbox(null, null, res => {
+    return unbox(res => {
       return mergeYupFragments(res);
     })
   }

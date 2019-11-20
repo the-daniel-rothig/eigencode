@@ -1,12 +1,12 @@
 import React, { useState, useContext } from 'react'
 import { render } from '@testing-library/react'
-import Reducer2 from './Reducer2'
+import Reducer from './Reducer'
 import extractText from './reducers/extractText'
 import { ReducerFunction } from '.'
 
 it('doesnt explode', () => {
   render(
-  <Reducer2 reducerFunction={extractText} onFinish={() => {}}>
+  <Reducer reducerFunction={extractText} onFinish={() => {}}>
     <div>
         One
       <div>
@@ -21,7 +21,7 @@ it('doesnt explode', () => {
           </div>
         </div>
       </div>
-    </Reducer2>)
+    </Reducer>)
 })
 
 it('lets me extract text', (done) => {
@@ -34,7 +34,7 @@ Eight
 .`;
 
   render(
-    <Reducer2 reducerFunction={extractText} onFinish={assertResult}>
+    <Reducer reducerFunction={extractText} onFinish={assertResult}>
       <div>
         One <span>two</span>.
         Three
@@ -49,7 +49,7 @@ Eight
         <div>Eight</div>
         .
       </div>
-    </Reducer2>
+    </Reducer>
   )
 
 
@@ -61,13 +61,13 @@ Eight
 
 it('resolves with empty tags', (done) => {
   render(
-    <Reducer2 reducerFunction={extractText} onFinish={assertResult}>
+    <Reducer reducerFunction={extractText} onFinish={assertResult}>
       <div>
         <span>Hello</span>
         <br />
         <span>World.</span>
       </div>
-    </Reducer2>
+    </Reducer>
   )
   function assertResult(res) {
     expect(res).toBe(
@@ -91,12 +91,12 @@ it('passes though getContext', done => {
 
   render(
     <Ctx.Provider value={'success!'}>
-      <Reducer2 reducerFunction={contextIntoSpan} onFinish={assertResult}>
+      <Reducer reducerFunction={contextIntoSpan} onFinish={assertResult}>
         <div>
           <div>Hello</div>
           <span>World.</span>
         </div>
-      </Reducer2>
+      </Reducer>
     </Ctx.Provider>
   )
   function assertResult(res) {
@@ -129,7 +129,7 @@ it('manages provider children correctly', async () => {
   }
   const WithReducer = ({children}) => {
     const ctx = Ctx._currentValue;//useContext(Ctx);
-    return <Reducer2 reducerFunction={extractText} onFinish={() => {ctx.setValue('after')}}>{children}</Reducer2>
+    return <Reducer reducerFunction={extractText} onFinish={() => {ctx.setValue('after')}}>{children}</Reducer>
   }
   
   const {getByTestId} = render (

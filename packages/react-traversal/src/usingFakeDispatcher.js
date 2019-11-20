@@ -29,7 +29,7 @@ export const getContextFromStack = (contextStack, ctx) => {
   return null;
 }
 
-const unbox = x => x
+const identity = x => x
 
 const makeFakeDispatcher = (contextStack) => {
   const rebuild = { rebuild: false };
@@ -68,12 +68,12 @@ const makeFakeDispatcher = (contextStack) => {
 
   return {
     readContext: ctx => getContextFromStack(contextStack, ctx),
-    useCallback: unbox,
+    useCallback: identity,
     useContext: ctx => getContextFromStack(contextStack, ctx),
     useEffect: () => notImplemented('useEffect'),
     useImperativeHandle: () => notImplemented('useImperativeHandle'),
     useLayoutEffect: () => notImplemented('useLayoutEffect'),
-    useMemo: unbox,
+    useMemo: identity,
     useReducer: (reducer, initialState) => registerState(initialState, reducer),
     useRef: (initial) => {
       const ref = {current: initial};

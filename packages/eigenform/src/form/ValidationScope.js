@@ -1,5 +1,5 @@
 import React, { useState, useRef, useContext, useCallback } from 'react';
-import { Reducer2 }  from 'react-traversal';
+import { Reducer }  from 'react-traversal';
 import extractValidationSchema from '../reducers/extractValidationSchema';
 import ValidationScopeContext from './ValidationScopeContext';
 import FieldContext from './FieldContext';
@@ -52,9 +52,9 @@ const ValidationScopeInner = ({children}) => {
   // big ol' hack... don't do this at home
   const ctx = ValidationScopeContext._currentValue;
   return (
-  <Reducer2 reducerFunction={extractValidationSchema} onFinish={ctx.setSchema}>
+  <Reducer reducerFunction={extractValidationSchema} onFinish={ctx.setSchema}>
     {children}
-  </Reducer2> 
+  </Reducer> 
   )
 }
 

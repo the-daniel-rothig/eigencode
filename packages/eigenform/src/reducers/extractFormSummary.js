@@ -26,7 +26,7 @@ const makeReduce = (values, identifySection = () => false) => ({element, getCont
   }
 
   if (element.type === Field) {
-    return unbox(null, null, children => {
+    return unbox(children => {
       const options = allOfType(children, 'option');
       const fields = allOfType(children, 'field', 'group');
       const dataName = fullyQualifiedName(element.props.name);
@@ -51,7 +51,7 @@ const makeReduce = (values, identifySection = () => false) => ({element, getCont
   if (element.type === Conditional) {
     const outerFieldContext = getContext(FieldContext);
     const shouldShow = isConditionalShowing(element.props.when, element.props.is, outerFieldContext && outerFieldContext.name, x => deepGet(values, x));
-    return unbox(null, null, c2 => {
+    return unbox(c2 => {
       return c2.map(x => !shouldShow && ['field', 'group'].includes(x.type) ? {...x, concealed: true} : x);
     })
   }
@@ -61,7 +61,7 @@ const makeReduce = (values, identifySection = () => false) => ({element, getCont
     const value = deepGet(values, dataName);
     const valueArray = Array.isArray(value) ? value : [];
 
-    return unbox(null, null, children => {
+    return unbox(children => {
       const fields = allOfType(children, 'field');
       const multi = {
         type: 'multiple',
@@ -80,7 +80,7 @@ const makeReduce = (values, identifySection = () => false) => ({element, getCont
   }
 
   if (element.type === Label) {
-    return unbox(null, extractText, textContent => {
+    return unbox(extractText, textContent => {
       return {
         type: 'label',
         val: textContent
@@ -89,7 +89,7 @@ const makeReduce = (values, identifySection = () => false) => ({element, getCont
   }
   
   if (element.type === Radio) {
-    return unbox(null, extractText, label => ({
+    return unbox(extractText, label => ({
       type: 'option',
       label,
       value: element.props.value
@@ -104,8 +104,8 @@ const makeReduce = (values, identifySection = () => false) => ({element, getCont
     }
   }
   
-  return unbox(null, null, contents => {
-    return unbox(null, identifySection, section => {
+  return unbox(contents => {
+    return unbox(identifySection, section => {
       if (typeof section === "string") {
         return {
           type: 'section',

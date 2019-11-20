@@ -1,71 +1,85 @@
 import React from 'react';
 import Substituting from './Substituting';
 import debounce from 'lodash/debounce';
+import isEqual from 'lodash/isEqual';
 import { logOnce } from 'eigencode-shared-utils';
 
-const ensurePromise = obj => obj && typeof obj.then === "function"
-  ? obj
-  : Promise.resolve(obj)
-
-const mapElement = (initialReduce, onFinish) => ({element, memo, getContext, siblingIndex, siblingCount: _siblingCount}) => {
+const mapElement = (initialReducerFunction, onFinish) => ({element, memo, getContext, siblingIndex, siblingCount: _siblingCount}) => {
   const idx = siblingIndex || 0;
   const siblingCount = _siblingCount || 1;
   const root = memo ? memo.root : element;
-  const reduce = (memo && memo.reduce) || initialReduce;  
+  const reducerFunction = (memo && memo.reducerFunction) || initialReducerFunction;  
     
   if (!element || typeof element !== "object" || (Array.isArray(element) && element.length === 0)) {  
-    const promise = reduce({unbox: () => undefined, element, getContext, isRoot: root === element, isLeaf: true})
-    ensurePromise(promise).then(res => {
-      if (memo) {
-        memo.returnValue(res, idx, siblingCount)
-      } else {
-        onFinish(res)
-      }
-    })
+    const unbox = () => unbox;
+    let res = reducerFunction.reduce({unbox , element, getContext, isRoot: root === element, isLeaf: true})
+    
+    if (res === unbox) res = [];
+
+    if (memo) {
+      memo.returnValue(res, idx, siblingCount)
+    } else {
+      onFinish(reducerFunction.finalTransform(res))
+    }
     return [element, {root}];
   }    
   
   const childrenValues = {}
 
-  let newReduce = reduce;
+  let newReducerFunction = reducerFunction;
   let newElement = element;
-  const resolveUnboxPromises = [];
-  const unbox = (el, reduceOverride) => {
-    if (!!el) {
-      logOnce('substituting elements via unbox in Reducer is not currently supported.\n' +
-              '     The element will be left unaltered. If you do want to change the UI,\n' +
-              '     use a Substituting element within the Reducer element', 'info');
+  let resolveCb = null;
+  const unbox = (...args) => {
+    switch (args.length) {
+      case 1:
+        resolveCb = args[0]
+        break;
+      case 2:
+        reducerFunction = args[0];
+        resolveCb = args[1];
+        break;
+      default: //do nothing
     }
-    newReduce = reduceOverride || newReduce;
-    return new Promise(ok => {
-      resolveUnboxPromises.push(ok);
-    })
+    
+    return unbox;
   }
   
-  const reducePromise = reduce({unbox, element, getContext, isRoot: element === root, isLeaf: false});
-
-  ensurePromise(reducePromise).then(res => {
-    if (memo) {
-      memo.returnValue(res, idx, siblingCount);
-    } else {
-      onFinish(res)
-    }
-  });
+  const reduceResult = reducerFunction.reduce({unbox, element, getContext, isRoot: element === root, isLeaf: false});
   
   const returnValue = (val, index, childrenCount) => {
+    const hasOldValue = Object.keys(childrenValues).includes(`${index}`);
+    const oldValue = childrenValues[index];
+    
     childrenValues[index] = val
-    // todo: what if a child disappears, eg. becomes null? is that possible w/o parent re-evaluation?
-    //if (Object.keys(childrenValues).length === childrenCount) {
-    setTimeout(() => {
-      const res = Object.values(childrenValues);
-      resolveUnboxPromises.forEach(resolve => resolve(res));
-    },1000);
-    //}
+    if (Object.keys(childrenValues).length < childrenCount) {
+      return;
+    }
+
+    const res = Object.values(childrenValues);
+    let rtnValue = reduceResult;
+    if (reduceResult === unbox) {
+      rtnValue = resolveCb ? resolveCb(res) : res //todo: flatten
+    }
+
+    if (
+      hasOldValue && 
+      typeof reducerFunction.shouldUpdate === "function" && 
+      !reducerFunction.shouldUpdate(oldValue, rtnValue)
+    ) {
+      // stop bubbling up
+      return;
+    }
+    
+    if (memo) {
+      memo.returnValue(rtnValue, idx, siblingCount);
+    } else {
+      onFinish(reducerFunction.finalTransform(rtnValue))
+    }
   }
-  return [newElement, {returnValue, reduce: newReduce, root}]
+  return [newElement, {returnValue, reducerFunction: newReducerFunction, root}]
 }
 
-const Reducer = ({children, reduce, onFinish}) => {
+const Reducer = ({children, reducerFunction, onFinish}) => {
   const debouncedOnFinish = React.useCallback(
     debounce(onFinish, 100, {leading:false}),
     [onFinish]
@@ -81,10 +95,10 @@ const Reducer = ({children, reduce, onFinish}) => {
     flushDebounce();
   })
 
-  const map = mapElement(reduce, debouncedOnFinish);
+  const map = mapElement(reducerFunction, debouncedOnFinish);
 
   // ensure there is a root-level element to be reduced to.
-  const c = React.Children.count(children) === 1 ?
+  const c = React.Children.toArray(children).length === 1 ?
     children : <>{children}</>;
 
   return (

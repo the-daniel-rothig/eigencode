@@ -37,7 +37,7 @@ const reduce = ({unbox, element}) => {
   const wantsSpacing = typeof element.type === "string" &&
      !["span", "em", "strong", "b", "small", "u", "a", "abbr", "acronym", "big", "q", "s", "sub", "sup", "time"].includes(element.type);
 
-  return unbox(null, null, subStrings => ({
+  return unbox(subStrings => ({
     value: combinePartialResults(subStrings),
     wantsSpacing: wantsSpacing,
   }))
