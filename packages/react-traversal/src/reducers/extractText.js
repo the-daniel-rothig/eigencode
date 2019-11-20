@@ -22,12 +22,12 @@ const combinePartialResults = (array) => {
       res.push("\n")
     }
   }
-
+  
   return res.join("");
 }
 
-const reduce = async ({unbox, element}) => {
-  if (!element || !element.type) {
+const reduce = ({unbox, element}) => {
+  if (!element || !element.type) {  
     return {
       value: element || "",
       wantsSpacing: false
@@ -37,12 +37,10 @@ const reduce = async ({unbox, element}) => {
   const wantsSpacing = typeof element.type === "string" &&
      !["span", "em", "strong", "b", "small", "u", "a", "abbr", "acronym", "big", "q", "s", "sub", "sup", "time"].includes(element.type);
 
-  const subStrings = await unbox();
-
-  return {
+  return unbox(null, null, subStrings => ({
     value: combinePartialResults(subStrings),
     wantsSpacing: wantsSpacing,
-  }
+  }))
 }
 
-export default new ReducerFunction(reduce, combinePartialResults);
+export default new ReducerFunction(reduce, undefined, undefined, x => combinePartialResults(Array.isArray(x) ? x : [x]));

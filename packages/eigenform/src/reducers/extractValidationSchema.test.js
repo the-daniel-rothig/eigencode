@@ -5,7 +5,7 @@ import { traverseDepthFirst } from "react-traversal"
 import { toSchema } from 'yup-fragment';
 
 import extractValidationSchema from './extractValidationSchema';
-import Field from "../form/Field"
+import Field from "../form/Field";
 import Conditional from '../form/Conditional';
 import Multiple from '../form/Multiple';
 import Select from '../form/Select';

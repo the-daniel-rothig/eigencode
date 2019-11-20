@@ -1,13 +1,16 @@
 import { logOnce } from "eigencode-shared-utils";
 
+const defaultShouldUpdate = (one, two) => one !== two;
+
 export default class ReducerFunction {
-  constructor(reduce, shouldUpdate = () => true, finalTransform = x => x) {
+  constructor(reduce, shouldUpdate = defaultShouldUpdate, getContents, finalTransform = x => x) {
     if (typeof reduce !== 'function') {
       throw `ReducerFunction error: ${reduce} is not a function`
     }
     this.reduce = reduce;
     this.finalTransform = finalTransform;
     this.shouldUpdate = shouldUpdate;
+    this.getContents = getContents;
   }
 
   static cast = obj => {
@@ -17,7 +20,7 @@ export default class ReducerFunction {
     return new ReducerFunction(obj);
   }
 
-  static single = (obj, shouldUpdate = () => true) => new ReducerFunction(obj, shouldUpdate, x => {
+  static single = (obj, shouldUpdate = defaultShouldUpdate, getContents) => new ReducerFunction(obj, shouldUpdate, getContents, x => {
     if (Array.isArray(x)) {
       if (x.length > 1) {
         logOnce("ReducerFunction.single returned multiple results; only the first will be returned");

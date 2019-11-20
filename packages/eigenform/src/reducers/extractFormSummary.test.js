@@ -17,8 +17,8 @@ const findWithin = (
 ) => ReducerFunction.single(
   ({element, isLeaf, unbox}) => {
     if (!isLeaf && selector(element)) {
-      const reduced = unbox(element, andThenReduce); 
-      return reduced;
+      return unbox(element, andThenReduce, r => r); 
+      //return reduced;
     }
     return unbox();
   }
@@ -27,8 +27,9 @@ const findWithin = (
 const getSectionHeading = ({isSection, isHeading}) => ReducerFunction.single(
   ({element, isRoot, unbox}) => {
     if (isRoot && isSection(element)) {
-      const h1 = unbox(element, findWithin(isHeading, extractText))
-      return h1 || "";
+      return unbox(null, findWithin(isHeading, extractText), h1 => {
+        return h1 || "";
+      })
     }
     return unbox();
   }

@@ -48,9 +48,9 @@ const ConditionalOuter = ({when, children}) => {
   const map = (formContext) =>  ({
     whenValues: Object.assign({}, ...saneWhen.map(x => {
       const key = x.startsWith("$") ? x.substring(1) : saneOuterName + x;
-      return  {[key]: formContext.getValue(key)}
+      return  {[key]: formContext ? formContext.getValue(key) : undefined}
     })),
-    deleteValue: formContext.deleteValue
+    deleteValue: formContext ? formContext.deleteValue : () => {}
   });
 
   const isUnchanged = (one, two) => {

@@ -43,6 +43,13 @@ const shouldUpdate = (previous, next) => {
   return res;
 }
 
+const getContents = ({element, defaultReturn}) => {
+  if (element && element.type && [Multiple, Conditional].includes(element.type)) {
+    return element.props.children;
+  }
+  return defaultReturn;
+};
+
 const reduce = ({element, unbox, isLeaf}) => {
   if (isLeaf) {
     return unbox();
@@ -111,4 +118,6 @@ const reduce = ({element, unbox, isLeaf}) => {
   }
 };
 
-export default ReducerFunction.single(reduce, shouldUpdate);
+const finalise = x => toSchema(Array.isArray(x) ? x[0] : x);
+
+export default new ReducerFunction(reduce, shouldUpdate, getContents, finalise);

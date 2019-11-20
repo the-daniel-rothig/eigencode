@@ -1,6 +1,6 @@
 import React from 'react'
 import { deepGet } from "eigencode-shared-utils";
-import { extractText } from "react-traversal";
+import { extractText, ReducerFunction } from "react-traversal";
 
 import Conditional, { isConditionalShowing } from "../form/Conditional";
 import Field, { FieldProvider } from "../form/Field";
@@ -15,7 +15,7 @@ const firstValueOfType = (array, ...type) =>
 const allOfType = (array, ...type) => 
   array.filter(x => type.includes(x.type))
 
-export default (values, identifySection = () => false) => async ({element, getContext, isLeaf, unbox}) => {
+const makeReduce = (values, identifySection = () => false) => ({element, getContext, isLeaf, unbox}) => {
   const fullyQualifiedName = (rawName) => {
     const fieldContext = getContext(FieldContext);
     return `${fieldContext && fieldContext.name ? fieldContext.name + "." : ""}${makeCamelCaseFieldName(rawName)}`;
@@ -26,33 +26,34 @@ export default (values, identifySection = () => false) => async ({element, getCo
   }
 
   if (element.type === Field) {
-    const children = await unbox();
-    const options = allOfType(children, 'option');
-    const fields = allOfType(children, 'field', 'group');
-    const dataName = fullyQualifiedName(element.props.name);
-    const valueRaw = !fields.length ? deepGet(values, dataName) : undefined; 
-    const value = valueRaw && options.find(x => x.value === valueRaw) ? options.find(x => x.value === valueRaw).label : valueRaw; 
+    return unbox(null, null, children => {
+      const options = allOfType(children, 'option');
+      const fields = allOfType(children, 'field', 'group');
+      const dataName = fullyQualifiedName(element.props.name);
+      const valueRaw = !fields.length ? deepGet(values, dataName) : undefined; 
+      const value = valueRaw && options.find(x => x.value === valueRaw) ? options.find(x => x.value === valueRaw).label : valueRaw; 
 
-    const res = {
-      name: element.props.name || '',
-      label: firstValueOfType(children, 'label'),
-      
-      ...(options.length ? {options} : {}),
-      ...(fields.length ? {fields} : {}),
-      ...(value ? {value} : {}),
+      const res = {
+        name: element.props.name || '',
+        label: firstValueOfType(children, 'label'),
+        
+        ...(options.length ? {options} : {}),
+        ...(fields.length ? {fields} : {}),
+        ...(value ? {value} : {}),
 
-      type: fields.length ? 'group' : 'field'
-    }
+        type: fields.length ? 'group' : 'field'
+      }
 
-    return res;
+      return res;
+    })
   }
 
   if (element.type === Conditional) {
     const outerFieldContext = getContext(FieldContext);
     const shouldShow = isConditionalShowing(element.props.when, element.props.is, outerFieldContext && outerFieldContext.name, x => deepGet(values, x));
-    const c2 = await unbox(element.props.children)
-
-    return c2.map(x => !shouldShow && ['field', 'group'].includes(x.type) ? {...x, concealed: true} : x);
+    return unbox(null, null, c2 => {
+      return c2.map(x => !shouldShow && ['field', 'group'].includes(x.type) ? {...x, concealed: true} : x);
+    })
   }
 
   if (element.type === Multiple) {
@@ -60,33 +61,39 @@ export default (values, identifySection = () => false) => async ({element, getCo
     const value = deepGet(values, dataName);
     const valueArray = Array.isArray(value) ? value : [];
 
-    const multi = {
-      type: 'multiple',
-      name: element.props.name,
-      entries: await Promise.all(valueArray.map(async (entry, idx) => {
-        const name = `${makeCamelCaseFieldName(element.props.name)}[${idx}]`;
-        const children = await unbox(<FieldProvider name={name}>{element.props.children}</FieldProvider>)
-        return children;
-      }))
-    }
+    return unbox(null, null, children => {
+      const fields = allOfType(children, 'field');
+      const multi = {
+        type: 'multiple',
+        name: element.props.name,
+        entries: valueArray.map(entry => {
+          // todo: unnamed fields
+          return Object.keys(entry).map(key => ({
+            ...fields.find(x => makeCamelCaseFieldName(x.name) === key),
+            value: entry[key]
+          }));
+        }),
+      }
 
-    return multi;
+      return multi;
+    });
   }
 
   if (element.type === Label) {
-    const textContent = await unbox(element.props.children, extractText); 
-    return {
-      type: 'label',
-      val: textContent
-    }
+    return unbox(null, extractText, textContent => {
+      return {
+        type: 'label',
+        val: textContent
+      }
+    })
   }
   
   if (element.type === Radio) {
-    return {
+    return unbox(null, extractText, label => ({
       type: 'option',
-      label: await unbox(element.props.children, extractText),
+      label,
       value: element.props.value
-    }
+    }));
   }
 
   if (element.type === "option") {
@@ -97,15 +104,22 @@ export default (values, identifySection = () => false) => async ({element, getCo
     }
   }
   
-  const section = await unbox(element, identifySection)
-  if (typeof section === "string") {
-    const contents = await unbox(); 
-    return {
-      type: 'section',
-      label: section,
-      contents
-    };
-  }
+  return unbox(null, null, contents => {
+    return unbox(null, identifySection, section => {
+      if (typeof section === "string") {
+        return {
+          type: 'section',
+          label: section,
+          contents
+        };
+      }
+      return contents;
+    })
+  })
+}
 
-  return unbox()
-} 
+const getContents = ({element, defaultReturn}) => {
+  return [Conditional, Multiple].includes(element.type) ? element.props.children : defaultReturn;
+};
+
+export default (...args) => new ReducerFunction(makeReduce(...args), undefined, getContents);

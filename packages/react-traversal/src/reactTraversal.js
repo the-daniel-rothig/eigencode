@@ -20,7 +20,7 @@ const opaqueTypes = {
   ]
 }
 
-function processChild({child, contextStack, traverse}) {
+function processChild({child, contextStack, getContents, traverse}) {
   const saneTraverse = traverse || ((...args) => {
     return args
   });
@@ -63,6 +63,14 @@ function processChild({child, contextStack, traverse}) {
     const resolvedChildren = mapToResult(child.props.children, contextStack)
     return resolvedChildren;
   }
+  if (typeof getContents === "function") {
+    const defaultReturn = Symbol();
+    const customMapped = getContents({element: child, defaultReturn});
+    if (customMapped !== defaultReturn) {
+      const resolvedChildren = mapToResult(child.props.children, contextStack)
+      return resolvedChildren;
+    }
+  }
   if (shouldConstruct(child.type)) {
     if (!!child.type.contextTypes) notSupported(`contextTypes properties on classes like ${child.type.name}`)
     if (!!child.type.childContextTypes) notSupported(`childContextTypes properties on classes like ${child.type.name}`)
@@ -102,29 +110,40 @@ const makeTraverseFunction = (reduce, isRoot) => {
     if (!element || typeof element !== "object" || (Array.isArray(element) && element.length === 0)) {
       // users can pass in non-renderables such as empty arrays or booleans. Sanitise those away 
       const saneElement = ['number', 'string'].includes(typeof element) ? element : undefined;
-      const reduceResult = reduce.reduce({unbox: () => undefined, element: saneElement, getContext, isRoot: false, isLeaf: true});
+      const unbox = () => undefined;
+      let reduceResult = reduce.reduce({unbox, element: saneElement, getContext, isRoot: isRoot(element), isLeaf: true});
+      if (reduceResult === unbox) reduceResult = undefined;
       return reduceResult && typeof reduceResult.then === "function"
         ? reduceResult.then(res => ReduceResult.cast(res))
         : ReduceResult.cast(reduceResult);
     }
 
-    const unbox = (child, reduceOverride) => {
-      const saneChild = child ? <>{child}</> : element;
+    const unbox = (child, reduceOverride, callback) => {
       if (reduceOverride) {
-        const newIsRoot = child ? el => !!child && (Array.isArray(child) ? child : [child]).includes(el) : isRoot
+        /*  
+          a little wrapper to ensure `element` gets 
+          re-evaluated with the override - the fragment 
+          is immediately discarded 
+        */
+        const saneChild = <>{element}</>;
+      
+        const newIsRoot = e => e === element;
         const saneOverride = ReducerFunction.cast(reduceOverride)
         const newTraverse = makeTraverseFunction(saneOverride, newIsRoot);
-        const array = processChild({child: saneChild, traverse: newTraverse, contextStack});
-
-        return array.filter(x => x && typeof x.then === "function").length > 0
+        const array = processChild({child: saneChild, traverse: newTraverse, getContents: saneOverride.getContents, contextStack});
+        
+        const childrenResult = array.filter(x => x && typeof x.then === "function").length > 0
           ? Promise.all(array).then(arr => saneOverride.finalTransform(ReduceResult.flatten(arr)))
           : saneOverride.finalTransform(ReduceResult.flatten(array));
+        return callback ? callback(childrenResult) : childrenResult;
       } else {
-        const array = processChild({child: saneChild, traverse, contextStack })
+        const array = processChild({child: element, traverse, getContents: reduce.getContents, contextStack })
         
-        return array.filter(x => x && typeof x.then === "function").length > 0
+        const childrenResult = array.filter(x => x && typeof x.then === "function").length > 0
           ? Promise.all(array).then(arr => ReduceResult.flatten(arr))
           : ReduceResult.flatten(array);
+
+        return callback ? callback(childrenResult): childrenResult;
       }
     }
 

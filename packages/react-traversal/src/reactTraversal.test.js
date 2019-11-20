@@ -1,6 +1,7 @@
 import React, { useContext, useState, useReducer } from 'react';
 import ReactDOM from 'react-dom';
 import { traverseDepthFirst } from './reactTraversal';
+import { ReducerFunction } from '.';
 
 const Ctx = React.createContext();
   
@@ -372,17 +373,22 @@ it('supports custom eval of children', () => {
   )
 
   const res = traverseDepthFirst(element, 
-    ({element, unbox}) => {
+    ReducerFunction.single(({element, unbox}) => {
       if (!element || !element.type) {
         return element;
       }
-      if(element.type === Hidden) {
-        return unbox(element.props.children);
-      }
       return unbox();
-    });
+    }, 
+    undefined, 
+    ({element, defaultReturn}) => {
+      if(element.type === Hidden) {
+        return element.props.children;
+      }
+      return defaultReturn
+    })
+  );
 
-  expect(res[0]).toBe('success');
+  expect(res).toBe('success');
 })
 
 it('passes through a context getter', () => {

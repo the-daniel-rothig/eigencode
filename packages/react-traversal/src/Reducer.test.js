@@ -1,11 +1,12 @@
 import React, { useState, useContext } from 'react'
 import { render } from '@testing-library/react'
-import Reducer from './Reducer'
+import Reducer2 from './Reducer2'
 import extractText from './reducers/extractText'
+import { ReducerFunction } from '.'
 
 it('doesnt explode', () => {
   render(
-  <Reducer reduce={extractText.reduce} onFinish={() => {}}>
+  <Reducer2 reducerFunction={extractText} onFinish={() => {}}>
     <div>
         One
       <div>
@@ -20,7 +21,7 @@ it('doesnt explode', () => {
           </div>
         </div>
       </div>
-    </Reducer>)
+    </Reducer2>)
 })
 
 it('lets me extract text', (done) => {
@@ -33,7 +34,7 @@ Eight
 .`;
 
   render(
-    <Reducer reduce={extractText.reduce} onFinish={assertResult}>
+    <Reducer2 reducerFunction={extractText} onFinish={assertResult}>
       <div>
         One <span>two</span>.
         Three
@@ -48,28 +49,28 @@ Eight
         <div>Eight</div>
         .
       </div>
-    </Reducer>
+    </Reducer2>
   )
 
 
   function assertResult(res) {
-    expect(res.value).toBe(expectedValue)
+    expect(res).toBe(expectedValue)
     done();
   }
 })
 
 it('resolves with empty tags', (done) => {
   render(
-    <Reducer reduce={extractText.reduce} onFinish={assertResult}>
+    <Reducer2 reducerFunction={extractText} onFinish={assertResult}>
       <div>
         <span>Hello</span>
         <br />
         <span>World.</span>
       </div>
-    </Reducer>
+    </Reducer2>
   )
   function assertResult(res) {
-    expect(res.value).toBe(
+    expect(res).toBe(
 `Hello
 World.`);
     done();
@@ -78,7 +79,7 @@ World.`);
 
 it('passes though getContext', done => {
   const Ctx = React.createContext();
-  const contextIntoSpan = ({element, getContext, unbox}) => {
+  const contextIntoSpan = new ReducerFunction(({element, getContext, unbox}) => {
     if (element.type === 'span') {
       return {
         wantsSpacing: false,
@@ -86,20 +87,20 @@ it('passes though getContext', done => {
       }
     }
     else return extractText.reduce({element, unbox})
-  };
+  }, undefined, undefined, extractText.finalTransform);
 
   render(
     <Ctx.Provider value={'success!'}>
-      <Reducer reduce={contextIntoSpan} onFinish={assertResult}>
+      <Reducer2 reducerFunction={contextIntoSpan} onFinish={assertResult}>
         <div>
           <div>Hello</div>
           <span>World.</span>
         </div>
-    </Reducer>
+      </Reducer2>
     </Ctx.Provider>
   )
   function assertResult(res) {
-    expect(res.value).toBe('Hello\nsuccess!');
+    expect(res).toBe('Hello\nsuccess!');
     done();
   }
 
@@ -128,7 +129,7 @@ it('manages provider children correctly', async () => {
   }
   const WithReducer = ({children}) => {
     const ctx = Ctx._currentValue;//useContext(Ctx);
-    return <Reducer reduce={extractText.reduce} onFinish={() => {ctx.setValue('after')}}>{children}</Reducer>
+    return <Reducer2 reducerFunction={extractText} onFinish={() => {ctx.setValue('after')}}>{children}</Reducer2>
   }
   
   const {getByTestId} = render (
