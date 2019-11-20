@@ -5,7 +5,7 @@ import FormContext from './FormContext';
 import Field from './Field';
 import Multiple from './Multiple';
 import makeCamelCaseFieldName from '../util/makeCamelCaseFieldName';
-import { Reducer } from 'react-traversal';
+import { Reducer, ReducerFunction } from 'react-traversal';
 import { combineObjectPaths } from 'eigencode-shared-utils';
 import isEqual from 'lodash/isEqual';
 import ContextFilter from 'context-filter';
@@ -13,15 +13,20 @@ import flatten from 'lodash/flattenDeep';
 
 const invokeCallback = cb => {cb();}
 
-const getFieldNames = ({unbox, element, isLeaf}) => {
-  if(isLeaf) return unbox();
-  if (element.type === Field || element.type === Multiple) {
-    // we can just the top level field names here - removing them
-    // will implicitly remove their descendants
-    return [makeCamelCaseFieldName(element.props.name)];
-  }
-  return unbox();
-}
+const getFieldNames = new ReducerFunction({
+  reduce: ({unbox, element, isLeaf}) => {
+    if(isLeaf) return unbox();
+    if (element.type === Field || element.type === Multiple) {
+      // we can just the top level field names here - removing them
+      // will implicitly remove their descendants
+      return [makeCamelCaseFieldName(element.props.name)];
+    }
+    return unbox();
+  },
+  shouldUpdate: (a,b) => !isEqual(a,b),
+  // todo: Reducer needs to implement unbox correctly to use resultset.
+  finalTransform: x => flatten(x).filter(Boolean)
+});
 
 export const isConditionalShowing = (when, is, outerName, getValue)  => {
   const saneWhen = Array.isArray(when) ? when : [when]
@@ -70,9 +75,7 @@ const ConditionalInner = ({when, is, preserveValues, onExpanding = invokeCallbac
   
   const { whenValues, deleteValue } = useContext(ConditionalContext)
   const [fields, doSetFields] = useState([]);
-  const setFields = f => {
-    // todo: Reducer needs to implement unbox correctly to use resultset.
-    const newFields = flatten(f).filter(Boolean);
+  const setFields = newFields => {
     if(!isEqual(newFields, fields)) doSetFields(newFields);
   };
 
@@ -103,7 +106,7 @@ const ConditionalInner = ({when, is, preserveValues, onExpanding = invokeCallbac
   }
 
   return effectiveVisibility ? (
-    <Reducer reduce={getFieldNames} onFinish={setFields}>{children}</Reducer>
+    <Reducer reducerFunction={getFieldNames} onFinish={setFields}>{children}</Reducer>
   ) : null;
 }
 

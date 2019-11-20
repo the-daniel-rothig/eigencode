@@ -41,24 +41,22 @@ const ExampleForm = () => (
           <TextInput />
           <FieldFeedback />
         </Field>
-        <Field name='if you have a middle name'>
+        <Field name='whether you have a middle name'>
           <Label>Do you have a middle name?</Label>
           <YesNo />
           <FieldFeedback />
-          {/* <Radio value='yes'>Yes</Radio>
-          <Radio value='no'>No</Radio>  */}
         </Field>
         <Conditional
-          when='ifYouHaveAMiddleName'
+          when='youHaveAMiddleName'
           is='yes'
         >
-          <Field name='middle name'>
+          <Field name='your middle name'>
             <Label>Please tell us your middle name</Label>
             <TextInput />
             <FieldFeedback />
           </Field>
         </Conditional>
-        <Field name='age'>
+        <Field name='your age'>
           <Label>How old are you?</Label>
           <NumberInput />
           <FieldFeedback />
@@ -71,14 +69,14 @@ const ExampleForm = () => (
           <FieldFeedback />
         </Field>
 
-        <Field name='likes animals'>
+        <Field name='whether you like animals'>
           <Label>Do you like animals?</Label>
           <YesNo />
           <FieldFeedback />
         </Field>
-        <Conditional when='likesAnimals' is='yes'>
+        <Conditional when='youLikeAnimals' is='yes'>
           <Multiple name='animals'>
-            <Field name='animal'>
+            <Field name="the animal's name">
               <Label>Enter an animal name</Label>
               <TextInput />
               <FieldFeedback />
@@ -86,18 +84,18 @@ const ExampleForm = () => (
             <Conditional when={['$firstName', 'animal']} is={(firstName, animal) => !!firstName && firstName === animal}>
               Hey, that's you!
             </Conditional>
-            <Field name='love'>
+            <Field name='your love for the animal'>
               <Label>How much do you love this?</Label>
               <TextInput />
               <FieldFeedback />
             </Field>
-            <Field name='hasPet'>
+            <Field name='whether you have a pet'>
               <Label>Do you have one as a pet?</Label>
               <YesNo />
               <FieldFeedback />
             </Field>
-            <Conditional when='hasPet' is='yes'>
-              <Field name='pet'>
+            <Conditional when='youHaveAPet' is='yes'>
+              <Field name='the name of your pet'>
                 <Label>What's the name of your pet?</Label>
                 <TextInput />
                 <FieldFeedback />

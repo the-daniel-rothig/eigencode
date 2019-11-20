@@ -35,7 +35,7 @@ const FormProvider = ({id, children, initialValues = {}}) => {
       type: 'delete',
       name
     })
-  }, [throttlededRunValidation, values])
+  }, [])
 
   const setValue = useCallback((name, value) => {
     //throttlededRunValidation(values)
@@ -44,7 +44,7 @@ const FormProvider = ({id, children, initialValues = {}}) => {
       name,
       value
     })
-  }, [throttlededRunValidation, values]);
+  }, []);
   
   return (
     <FormContext.Provider value={{uid, setValue, getValue, deleteValue}}>
