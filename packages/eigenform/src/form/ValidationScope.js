@@ -2,8 +2,6 @@ import React, { useState, useRef, useContext, useCallback } from 'react';
 import { Reducer2 }  from 'react-traversal';
 import extractValidationSchema from '../reducers/extractValidationSchema';
 import ValidationScopeContext from './ValidationScopeContext';
-import useDeferredCallback from '../hooks/useDeferredCallback';
-import { toSchema } from 'yup-fragment';
 import FieldContext from './FieldContext';
 import { deepGet } from 'eigencode-shared-utils';
 import isEqual from 'lodash/isEqual';

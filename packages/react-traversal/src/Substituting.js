@@ -2,7 +2,12 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 
-const PropagationStopper = React.memo(({children}) => children, (p,n) => true);
+const PropagationStopper = React.memo(({children}) => children, (p,n) => {
+  const one = React.Children.toArray(p.children);
+  const two = React.Children.toArray(n.children);
+
+  return one.length === two.length;
+});
 
 // same props as instance - to trigger same re-evals
 
@@ -261,7 +266,7 @@ const makeElementMapper = mapElement => {
         elementMapper,
         memo: mappedMemo
       });
-      return React.cloneElement(mapped, {children});
+      return React.cloneElement(mapped, {children: <PropagationStopper>{children}</PropagationStopper>});
     }
 
     if (getSymbol(mapped) === "context") {
