@@ -2,15 +2,9 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 
-const PropagationStopper = React.memo(({children}) => children, (p,n) => {
-  const one = React.Children.toArray(p.children);
-  const two = React.Children.toArray(n.children);
-
-  return one.length === two.length;
-});
+const childrenMap = new WeakMap();
 
 // same props as instance - to trigger same re-evals
-
 const makeDerivedClass = (type) => {
   class DerivedClass extends React.Component {
     constructor(propsAndPayload, ...args) {
@@ -116,7 +110,7 @@ const makeDerivedFunction = (type) => {
     })
   }
 
-  Derived.displayName = type.displayName || type.name || "foo";
+  Derived.displayName = type.displayName || type.name;
   return Derived;
 };
 
@@ -274,12 +268,20 @@ const makeElementMapper = mapElement => {
     }
 
     if (getSymbol(mapped) === "provider") {
-      const children = Recursor({
-        children: mapped.props.children,
-        elementMapper,
-        memo: mappedMemo
-      });
-      return React.cloneElement(mapped, {children: <PropagationStopper>{children}</PropagationStopper>});
+      const hasMemo = childrenMap.has(mapped.props.children);
+      const children = hasMemo
+        ? childrenMap.get(mapped.props.children)
+        : Recursor({
+          children: mapped.props.children,
+          elementMapper,
+          memo: mappedMemo
+        });
+      
+      if(!hasMemo) {
+        childrenMap.set(mapped.props.children, children);
+      }
+
+      return React.cloneElement(mapped, {children});
     }
 
     if (getSymbol(mapped) === "context") {
@@ -367,7 +369,6 @@ const makeElementMapper = mapElement => {
 
     if (typeof mapped.type === "function") {
       const Derived = getDerivedFunction(mapped.type);
-      //console.log('derived', Derived.displayName);
       const res = <Derived ___eigencode_memo={mappedMemo} ___eigencode_elementmapper={elementMapper} {...mapped.props} />;
       return res;
       // return {

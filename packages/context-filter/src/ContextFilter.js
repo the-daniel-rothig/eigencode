@@ -1,6 +1,7 @@
-import React, { useContext } from 'react'
+import React, { useContext, useRef } from 'react'
 import PropTypes from 'prop-types'
 import isEqual from 'lodash/isEqual';
+import makeUid from 'eigenform/src/util/makeUid';
 
 const propTypes = {
   of: PropTypes.shape({
@@ -17,6 +18,9 @@ const propTypes = {
 
 class ContextFilterInner extends React.Component {
   shouldComponentUpdate(nextProps) {
+    if (nextProps.isInUpdateCascade) {
+      return true;
+    }
     const equals = nextProps.isUnchanged || isEqual;
     return nextProps.contextType !== this.props.contextType ||
            !equals(this.props.value, nextProps.value);
@@ -32,11 +36,18 @@ class ContextFilterInner extends React.Component {
   }
 }
 
-const ContextFilter = ({of: ofContext, to: toContext, map, isUnchanged, children}) => {
+const ContextFilterProbe = ({of: ofContext, to: toContext, map, isUnchanged, children, fingerprint}) => {
+  const fingerprintRef = useRef();
+  const isInUpdateCascade = fingerprintRef.current !== fingerprint;
+  fingerprintRef.current = fingerprint;
+
   const context = useContext(ofContext)
   const mappedValue = map(context);
-  return <ContextFilterInner contextType={toContext || ofContext} value={mappedValue} isUnchanged={isUnchanged}>{children}</ContextFilterInner>
+  return <ContextFilterInner contextType={toContext || ofContext} value={mappedValue} isUnchanged={isUnchanged} isInUpdateCascade={isInUpdateCascade}>{children}</ContextFilterInner>
+}
 
+const ContextFilter = (props) => {
+  return <ContextFilterProbe {...props} fingerprint={makeUid()} />;
 }
 
 ContextFilter.propTypes = propTypes;

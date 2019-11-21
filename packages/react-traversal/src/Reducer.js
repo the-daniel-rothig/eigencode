@@ -79,9 +79,13 @@ const mapElement = (initialReducerFunction, onFinish) => ({element, memo, getCon
 const Reducer = ({children, reducerFunction, onFinish}) => {
   const map = mapElement(reducerFunction, onFinish);
 
+  // ensure there is a root-level element to reduce to
+  const childrenArray = React.Children.toArray(children)
+  const c = childrenArray.length === 1 ? childrenArray[0] : <>{children}</>
+
   return (
     <Substituting mapElement={map}>
-      {children}
+      <>{c}</>
     </Substituting>
   )
 }

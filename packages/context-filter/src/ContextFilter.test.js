@@ -1,6 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { render } from '@testing-library/react';
 import ContextFilter from './ContextFilter';
+import { act } from 'react-dom/test-utils';
 
 const Context = React.createContext()
 
@@ -20,7 +21,6 @@ it('converts context', () => {
       </>
     )
   }
-
   
   const Probe = () => {
     const ctx = useContext(Context);
@@ -47,3 +47,61 @@ it('converts context', () => {
   expect(probe).toHaveBeenCalledTimes(2)
   expect(getByTestId("probe").innerHTML).toBe("1")
 });
+
+const Provider = ({children}) => {
+  const [state, setState] = useState('before');
+  return <Context.Provider value={{state, setState}}>{children}</Context.Provider>
+}
+
+it('stops propagation if the context changes insufficiently', async () => {
+  let hitCount = 0;
+  const Probe = () => {
+    hitCount += 1;
+    return null;
+  }
+
+  const Component = () => {
+    return (
+      <Provider>
+        <ContextFilter of={Context} map={x => x} isUnchanged={() => false}>
+          <Probe />
+          <Context.Consumer>
+            {ctx => ctx.state === 'before' && <button onClick={() => ctx.setState('after')}>click me</button>}
+          </Context.Consumer>
+        </ContextFilter>
+      </Provider>
+    )
+  }
+
+  const {queryByText} = render(<Component />);
+  expect(hitCount).toBe(1)
+  await act(() => queryByText('click me').click());
+  expect(hitCount).toBe(1);
+  expect(queryByText('click me')).not.toBeTruthy();
+})
+
+it('permits propagation if there is an update not purely motivated by Context changes', async () => {
+  let hitCount = 0;
+  const Probe = () => {
+    hitCount += 1;
+    return null;
+  }
+
+  const Component = () => {
+    const [state, setState] = useState('before');
+    return (
+      <Provider>
+        <ContextFilter of={Context} map={x => x}>
+          <Probe />
+          {state === 'before' && <button onClick={() => setState('after')}>click me</button>}
+        </ContextFilter>
+      </Provider>
+    )
+  }
+
+  const { queryByText } = render(<Component />)
+  expect(hitCount).toBe(1)
+  await act(() => queryByText('click me').click());
+  expect(hitCount).toBe(2);
+  expect(queryByText('click me')).not.toBeTruthy();
+})

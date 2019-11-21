@@ -76,13 +76,13 @@ const ExampleForm = () => (
           <FieldFeedback />
         </Field>
         <Conditional when='youLikeAnimals' is='yes'>
-          <Multiple name='animals'>
+          <Multiple name='animals' max={3}>
             <Field name="the animal's name">
               <Label>Enter an animal name</Label>
               <TextInput />
               <FieldFeedback />
             </Field>
-            <Conditional when={['$firstName', 'animal']} is={(firstName, animal) => !!firstName && firstName === animal}>
+            <Conditional when={['$firstName', 'animalsName']} is={(firstName, animal) => !!firstName && firstName === animal}>
               Hey, that's you!
             </Conditional>
             <Field name='your love for the animal'>
