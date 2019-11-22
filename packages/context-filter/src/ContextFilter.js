@@ -1,6 +1,5 @@
 import React, { useContext, useRef } from 'react'
 import PropTypes from 'prop-types'
-import isEqual from 'lodash/isEqual';
 import makeUid from 'eigenform/src/util/makeUid';
 
 const propTypes = {
@@ -21,7 +20,7 @@ class ContextFilterInner extends React.Component {
     if (nextProps.isInUpdateCascade) {
       return true;
     }
-    const equals = nextProps.isUnchanged || isEqual;
+    const equals = nextProps.isUnchanged || ((a,b) => a === b);
     return nextProps.contextType !== this.props.contextType ||
            !equals(this.props.value, nextProps.value);
   }

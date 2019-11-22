@@ -4,7 +4,6 @@ import FieldContext from './FieldContext'
 import makeCamelCaseFieldName from '../util/makeCamelCaseFieldName';
 import ContextFilter from 'context-filter';
 import FormContext from './FormContext';
-import isEqual from 'lodash/isEqual';
 
 export const FieldProvider = ({name= "", children}) => {
   const outer = useContext(FieldContext);
@@ -18,7 +17,7 @@ export const FieldProvider = ({name= "", children}) => {
   });
 
   const isUnchanged = (before, after) => {
-    return before.name === after.name && before.uid === after.uid && isEqual(before.fieldValue, after.fieldValue);
+    return before.name === after.name && before.uid === after.uid && before.fieldValue === after.fieldValue;
   }
 
   return (

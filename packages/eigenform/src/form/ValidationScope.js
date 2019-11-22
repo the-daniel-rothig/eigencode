@@ -1,6 +1,6 @@
 import React, { useState, useContext, useCallback } from 'react';
 import { Reducer }  from 'react-traversal';
-import extractValidationSchema from '../reducers/extractValidationSchema';
+import extractValidationSchema, { shemasAreEqual } from '../reducers/extractValidationSchema';
 import ValidationScopeContext from './ValidationScopeContext';
 import FieldContext from './FieldContext';
 import { deepGet } from 'eigencode-shared-utils';
@@ -32,7 +32,7 @@ const ValidationScopeOuter = ({children, isComplete}) => {
   }, [schemaState, isComplete, fieldContext]);
 
   const setSchema = newSchema => setSchemaState(oldSchema => 
-    extractValidationSchema.shouldUpdate(oldSchema, newSchema) ? newSchema : oldSchema  
+    shemasAreEqual(oldSchema, newSchema) ? oldSchema : newSchema  
   );
 
   return (

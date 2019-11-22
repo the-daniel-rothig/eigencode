@@ -76,7 +76,7 @@ const ExampleForm = () => (
           <FieldFeedback />
         </Field>
         <Conditional when='youLikeAnimals' is='yes'>
-          <Multiple name='animals' max={3}>
+          <Multiple name='animals' max={4}>
             <Field name="the animal's name">
               <Label>Enter an animal name</Label>
               <TextInput />

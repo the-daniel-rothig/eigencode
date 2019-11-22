@@ -1,8 +1,6 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { combineObjectPaths } from 'eigencode-shared-utils';
+import React, { useContext, useState } from 'react';
 import { FieldProvider } from './Field';
 import FieldContext from './FieldContext';
-import FormContext from './FormContext';
 import makeUid from '../util/makeUid';
 
 const SingleItem = ({remove, children}) => {
@@ -16,43 +14,32 @@ const SingleItem = ({remove, children}) => {
   )
 }
 
-const NEW_ITEM_VALUE = () => ({});
+const NEW_ITEM_VALUE = () => ({})
 
-const Multiple = ({children, className, name, min=1, max, renderItem = SingleItem}) => {
-  const outer = useContext(FormContext);
-  const setValue = outer ? outer.setValue : () => {};
-
-  const arr = (outer ? outer.getValue(name) : []) || [];
+const MultipleInner = ({children, className, min=1, max, renderItem = SingleItem}) => {
+  const {setValue, fieldValue} = useContext(FieldContext);
+  
+  const arr = fieldValue || [];
   const [uids, setUids] = useState(arr.map(() => makeUid()));
   
-  const fieldContext = useContext(FieldContext);
-  const fullyQualifiedName = combineObjectPaths(fieldContext && fieldContext.name, name);
-
-  useEffect(() => {
-    if (min && arr.length < min) {
-      setUids([...(new Array(min))].map(() => makeUid()));
-      setValue(
-        fullyQualifiedName,
-        [...(new Array(min))].map((v, i) => arr[i] || NEW_ITEM_VALUE())
-      )
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  if (min && uids.length < min) {
+    const newUids = [...uids, ...(new Array(min - uids.length))].map(() => makeUid());
+    setUids(newUids);
+    setValue(
+      [...(new Array(min))].map((v, i) => arr[i] || NEW_ITEM_VALUE())
+    )
+  }
 
   const add = (e) => {
     setUids(oldUids => [...oldUids, makeUid()]);
-    if (outer) {
-      const arrx = outer.getValue(name);
-      outer.setValue(fullyQualifiedName, [...arrx, NEW_ITEM_VALUE()]);
-    }
+    const arrx = fieldValue;
+    setValue([...arrx, NEW_ITEM_VALUE()]);
   }
 
   const removeAt = idx => e => {
     setUids(oldUids => oldUids.filter((_, i) => i !== idx));
-    if (outer) {
-      const arrx = outer.getValue(name);
-      setValue(fullyQualifiedName, [...arrx.filter((x, i) => i !== idx)]);
-    }
+    const arrx = fieldValue;
+    setValue([...arrx.filter((x, i) => i !== idx)]);
   }
 
   const RenderItem = renderItem;
@@ -61,7 +48,7 @@ const Multiple = ({children, className, name, min=1, max, renderItem = SingleIte
   const canRemove = !min || uids.length > min;
 
   return (
-    <FieldProvider name={name}>
+    <>
       {uids.map((v, i) => (
         <FieldProvider name={`[${i}]`} key={v}>
           <RenderItem 
@@ -74,6 +61,14 @@ const Multiple = ({children, className, name, min=1, max, renderItem = SingleIte
       {canAdd && (
         <button type='button' onClick={add}>Add another</button>
       )}
+    </>
+  )
+}
+
+const Multiple = (props) => {
+  return (
+    <FieldProvider name={props.name}>
+      <MultipleInner {...props} />
     </FieldProvider>
   )
 }

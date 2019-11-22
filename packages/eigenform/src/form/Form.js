@@ -5,7 +5,6 @@ import makeUid from '../util/makeUid';
 import ValidationScope from './ValidationScope';
 import ValidationScopeContext from './ValidationScopeContext';
 import debounce from 'lodash/debounce';
-import cloneDeep from 'lodash/cloneDeep';
 
 const FormProvider = ({id, children, initialValues = {}}) => {
   const uid = useRef(id || makeUid()).current;
@@ -28,9 +27,8 @@ const FormProvider = ({id, children, initialValues = {}}) => {
 
   throttledRunValidation(values)
     
-  const getValue = useCallback(name => cloneDeep(deepGet(values, name)), [values]);
+  const getValue = useCallback(name => deepGet(values, name), [values]);
   const deleteValue = useCallback((name) => {
-    //throttlededRunValidation(values)
     dispatch({
       type: 'delete',
       name
@@ -38,7 +36,6 @@ const FormProvider = ({id, children, initialValues = {}}) => {
   }, [])
 
   const setValue = useCallback((name, value) => {
-    //throttlededRunValidation(values)
     dispatch({
       type: 'set',
       name,

@@ -37,11 +37,23 @@ const describeSchema = schemaOrFragment => {
     conditions
   };
 }
+
+export const shemasAreEqual = (previous, next) => {
+  const s1 = describeSchema(previous);
+  const s2 = describeSchema(next);
+  
+  const res = isEqual(s1, s2);
+  return res;
+
+  // return isEqual(
+  //   describeSchema(previous),
+  //   describeSchema(next)
+  // );
+}
+
 const shouldUpdate = (previous, next) => {
-  return !isEqual(
-    describeSchema(previous),
-    describeSchema(next)
-  );
+  return (!next.simpleDescriptor || previous.simpleDescriptor !== next.simpleDescriptor) && 
+    (!next._meta || !next._meta.simpleDescriptor || !previous._meta || previous._meta.simpleDescriptor !== next._meta.simpleDescriptor);
 }
 
 const getContents = ({element, defaultReturn}) => {
@@ -57,11 +69,11 @@ const reduce = ({element, unbox, isLeaf}) => {
   }
   const {props, type} = element;
   if (type === TextInput) {
-    return yup.string();
+    return yup.string().meta({simpleDescriptor: 'yup_string'});
   } else if (type === EmailInput) {
-    return yup.string().email();
+    return yup.string().email().meta({simpleDescriptor: 'yup_string_email'});
   } else if (type === NumberInput) {
-    return yup.string().matches(/^[0-9]*$/);
+    return yup.string().matches(/^[0-9]*$/).meta({simpleDescriptor: 'yup_string_numberlike'});
   } else if (type === Select) {
     const allowedValues = (props.options || []).map(opt => 
       typeof opt.value === "string" ? opt.value : typeof opt.label === "string" ? opt.label : opt);
@@ -70,7 +82,7 @@ const reduce = ({element, unbox, isLeaf}) => {
     const allowedValues = [(props.value || props.children || "").toString()]
     return oneOf(allowedValues);
   } else if (type === Field) {
-    return unbox(res => {      
+    return unbox(res => {
       const combined = mergeYupFragments(res);
       const fragmentWithThis = mergeYupFragments([
         !props.optional && new YupFragment('requiredStrict'),
