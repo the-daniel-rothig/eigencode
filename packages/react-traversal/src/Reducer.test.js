@@ -1,9 +1,10 @@
 import React, { useState, useContext } from 'react'
-import { render } from '@testing-library/react'
+import { render, wait } from '@testing-library/react'
 import Reducer from './Reducer'
 import extractText from './reducers/extractText'
 import { ReducerFunction } from '.'
 import { writeFileSync } from 'jest-serializer'
+import { act } from 'react-dom/test-utils'
 
 it('doesnt explode', () => {
   render(
@@ -153,4 +154,32 @@ it('manages provider children correctly', async () => {
   //manipulateProvider('after');
   expect(getByTestId('consumer').innerHTML).toBe('after');
   expect(hitCount).toBe(2);
+})
+
+it('updates correctly when arrays change', () => {
+  let externalSetState
+  const Component = () => {
+    const [items, setItems] = useState(['one', 'two'])
+    externalSetState = setItems;
+
+    return (
+      <>
+        {items.map(x => <div>{x}</div>)}
+        <button onClick={() => setItems(x => [...x, 'three'])}>click me</button>
+      </>
+    );
+  }
+
+  let result = "";
+  const { getByText } = render(
+    <Reducer reducerFunction={extractText} onFinish={x => result = x}>
+      <Component />
+    </Reducer>
+  )
+
+  expect(result).toBe('one\ntwo\nclick me');
+  act(() => getByText('click me').click());
+  wait(() => expect(result).toBe('one\ntwo\nthree\nclick me'));
+  act(() => externalSetState(x => [...x, 'four']));
+  wait(() => expect(result).toBe('one\ntwo\nthree\nfour\nclick me'));
 })

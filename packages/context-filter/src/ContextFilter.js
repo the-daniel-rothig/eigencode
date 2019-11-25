@@ -1,6 +1,5 @@
 import React, { useContext, useRef } from 'react'
 import PropTypes from 'prop-types'
-import makeUid from 'eigenform/src/util/makeUid';
 
 const propTypes = {
   of: PropTypes.shape({
@@ -46,7 +45,7 @@ const ContextFilterProbe = ({of: ofContext, to: toContext, map, isUnchanged, chi
 }
 
 const ContextFilter = (props) => {
-  return <ContextFilterProbe {...props} fingerprint={makeUid()} />;
+  return <ContextFilterProbe {...props} fingerprint={Symbol()} />;
 }
 
 ContextFilter.propTypes = propTypes;

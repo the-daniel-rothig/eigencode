@@ -14,7 +14,7 @@ const combinePartialResults = (array) => {
     res.push(array[i].value)
 
     const shouldAddSpace = i !== array.length - 1 && // there is a next sibling
-      (array[i].wantsSpacing || array[i+1].wantsSpacing) && // and one of us wants spacing
+      (array[i].wantsSpacing.end || array[i+1].wantsSpacing.start) && // and one of us wants spacing
       !/\s$/.test(array[i].value) && // and I have no space at the end
       !/^\s/.test(array[i+1].value); // and the sibling has no space at the start
 
@@ -22,24 +22,34 @@ const combinePartialResults = (array) => {
       res.push("\n")
     }
   }
-  
+
   return res.join("");
+}
+
+const combineSpacingRequirements = (wantsSpacing, array) => {
+  
+  return {
+    start: wantsSpacing.start || (array.length && array[0].wantsSpacing.start),
+    end: wantsSpacing.end || (array.length && array[array.length - 1].wantsSpacing.end)
+  };
 }
 
 const reduce = ({unbox, element}) => {
   if (!element || !element.type) {  
     return {
       value: element || "",
-      wantsSpacing: false
+      wantsSpacing: {start: false, end: false}
     }
   }
 
-  const wantsSpacing = typeof element.type === "string" &&
+  const wantsSpacingFlag = typeof element.type === "string" &&
      !["span", "em", "strong", "b", "small", "u", "a", "abbr", "acronym", "big", "q", "s", "sub", "sup", "time"].includes(element.type);
+    
+  const wantsSpacing = {start: wantsSpacingFlag, end: wantsSpacingFlag};
 
   return unbox(subStrings => ({
     value: combinePartialResults(subStrings),
-    wantsSpacing: wantsSpacing,
+    wantsSpacing: combineSpacingRequirements(wantsSpacing, subStrings),
   }))
 }
 

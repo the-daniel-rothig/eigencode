@@ -3,6 +3,21 @@ import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 
 const childrenMap = new WeakMap();
+const getMappedChildren = ({children, elementMapper, memo}) => {
+  const hasMemo = childrenMap.has(children);
+  const newChildren = hasMemo
+    ? childrenMap.get(children)
+    : Recursor({
+      children: children,
+      elementMapper,
+      memo: memo
+    });
+  
+  if(!hasMemo && ['object', 'array', 'function'].includes(typeof children) && children !== null) {
+    childrenMap.set(children, newChildren);
+  }
+  return newChildren;
+}
 
 // same props as instance - to trigger same re-evals
 const makeDerivedClass = (type) => {
@@ -83,7 +98,7 @@ const makeDerivedClass = (type) => {
 
       this.render = function() {
         const children = this.instance.render();
-        return Recursor({
+        return getMappedChildren({
           children,
           elementMapper: this.___eigencode_elementmapper,
           memo: this.___eigencode_memo
@@ -101,7 +116,7 @@ const makeDerivedFunction = (type) => {
   let Derived = (propsAndPayload, ...args) => {
     const { ___eigencode_memo, ___eigencode_elementmapper, ...props } = propsAndPayload;
     const res = type(props, ...args);
-    return Recursor({
+    return getMappedChildren({
       children: res,
       elementMapper: ___eigencode_elementmapper,
       memo: ___eigencode_memo,
@@ -221,7 +236,7 @@ const makeElementMapper = mapElement => {
     if (typeof childElement === "function") {
       return (...args) => {
         const children = mapped.props.children(...args)
-        return Recursor({
+        return getMappedChildren({
           children,
           memo,
           elementMapper
@@ -249,7 +264,7 @@ const makeElementMapper = mapElement => {
         return React.cloneElement(mapped, {children: child});
       }
 
-      const children = Recursor({
+      const children = getMappedChildren({
         children: mapped.props.children,
         memo: mappedMemo,
         elementMapper
@@ -259,7 +274,7 @@ const makeElementMapper = mapElement => {
     }
 
     if (getSymbol(mapped) === "memo") {
-      const children = Recursor({
+      const children = getMappedChildren({
         children: mapped.props.children,
         elementMapper,
         memo: mappedMemo
@@ -268,19 +283,7 @@ const makeElementMapper = mapElement => {
     }
 
     if (getSymbol(mapped) === "provider") {
-      const hasMemo = childrenMap.has(mapped.props.children);
-      const children = hasMemo
-        ? childrenMap.get(mapped.props.children)
-        : Recursor({
-          children: mapped.props.children,
-          elementMapper,
-          memo: mappedMemo
-        });
-      
-      if(!hasMemo) {
-        childrenMap.set(mapped.props.children, children);
-      }
-
+      const children = getMappedChildren({children: mapped.props.children, elementMapper, memo: mappedMemo});
       return React.cloneElement(mapped, {children});
     }
 
@@ -288,7 +291,7 @@ const makeElementMapper = mapElement => {
       const LegacyContextAdapter = () => {
         const context = React.useContext(mapped.type._context);
         const children = mapped.props.children(context);
-        return Recursor({
+        return getMappedChildren({
           children,
           elementMapper,
           memo: mappedMemo
@@ -300,7 +303,7 @@ const makeElementMapper = mapElement => {
 
     if (getSymbol(mapped) === "portal") {
       const element = ReactDOM.createPortal(
-        Recursor({
+        getMappedChildren({
           children: mapped.children,
           memo: mappedMemo,
           elementMapper
@@ -321,7 +324,7 @@ const makeElementMapper = mapElement => {
           .then(module => ({
             default: (...args) => {
               const children = module.default(...args);
-              return Recursor({
+              return getMappedChildren({
                 children,
                 memo:mappedMemo,
                 elementMapper
@@ -340,7 +343,7 @@ const makeElementMapper = mapElement => {
     if (getSymbol(mapped) === "forward_ref") {
       const MappedForwardRef = React.forwardRef((props, ref) => {
         const children = mapped.type.render(props, ref);
-        return Recursor({
+        return getMappedChildren({
           children,
           memo: mappedMemo,
           elementMapper
@@ -398,7 +401,7 @@ const Recursor = ({children, elementMapper, memo, siblingIndex, siblingCount}) =
     // }
     return [true, false, undefined].includes(res) ? null : res;
   } 
-  const newChildren = React.Children.map(children, (c, i) => Recursor({
+  const newChildren = React.Children.toArray(children).map((c, i) => Recursor({
     elementMapper,
     memo,
     siblingIndex: i,

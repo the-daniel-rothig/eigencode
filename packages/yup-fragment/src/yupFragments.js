@@ -61,6 +61,9 @@ export default class YupFragment {
       this.f = prior
     }
     this.__isYupFragment__ = true;
+    this.simpleDescriptor = !prior && !name ? "blank" :
+      !!name && args.filter(x => !['string', 'number', 'boolean'].includes(x)) === 0 ? [name, ...args].join("_") :
+      undefined;
   }
 
   applyToSchema = schema => this.f 
@@ -128,6 +131,12 @@ export const snakeCase = yupFragment.snakeCase;
 
 const isFragment = fragment => fragment && fragment.__isYupFragment__;
 
+const concatSchemasWithConditions = (a, b) => {
+  const next = a.concat(b);
+  next._conditions = [...a._conditions, ...b._conditions];
+  return next;
+}
+
 /*
 A       B       rtn
 Frag    Frag    Frag    // ok
@@ -148,11 +157,11 @@ export const mergeYupFragments = (arrayOfFragments) => {
       return new YupFragment(null, null, b.f && a.f ? schema => b.f(a.f(schema)) : a.f || b.f)
     } else if (isFragment(a)) {
       //todo: test effect of re-concat
-      return a.applyToSchema(b).concat(b);
+      return concatSchemasWithConditions(a.applyToSchema(b), b);
     } else if (isFragment(b)) {
       return b.applyToSchema(a);
     } else {
-      return a.concat(b);
+      return concatSchemasWithConditions(a,b);
     }
   }, fragments[0]);
 };
