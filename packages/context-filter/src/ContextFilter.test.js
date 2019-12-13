@@ -25,12 +25,12 @@ it('converts context', () => {
   const Probe = () => {
     const ctx = useContext(Context);
     probe();
-    return <div data-testid='probe'>{ctx.foo}</div>
+    return <div data-testid='probe'>{ctx}</div>
   }
 
   const { getByText, getByTestId } = render(
     <Surrounding>
-      <ContextFilter of={Context} map={one => ({foo: one.foo})}>
+      <ContextFilter of={Context} map={one => one.foo}>
         <Probe />
       </ContextFilter>
     </Surrounding>

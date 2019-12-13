@@ -22,7 +22,8 @@ const FormProvider = ({id, children, initialValues = {}}) => {
     }
   }, initialValues);
 
-  const { runValidation } = useContext(ValidationScopeContext);
+  const validationContext = useContext(ValidationScopeContext);
+  const runValidation = validationContext ? validationContext.runValidation : () => {}
   const throttledRunValidation = useCallback(debounce(runValidation, 40, {leading: false}), [runValidation]);
 
   throttledRunValidation(values)

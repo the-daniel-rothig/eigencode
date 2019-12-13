@@ -133,7 +133,7 @@ const isFragment = fragment => fragment && fragment.__isYupFragment__;
 
 const concatSchemasWithConditions = (a, b) => {
   const next = a.concat(b);
-  next._conditions = [...a._conditions, ...b._conditions];
+  //next._conditions = [...a._conditions, ...b._conditions];
   return next;
 }
 
@@ -145,9 +145,13 @@ Schema  Frag    Schema  // toYupSchema and concat (may error because of yup's sc
 Frag    Schema  Schema  // Apply A to B, but then re-concat B to offset any overrides
 */
 export const mergeYupFragments = (arrayOfFragments) => {
-  const fragments = arrayOfFragments.filter(Boolean).filter(x => yup.isSchema(x) || isFragment(x));
+  const fragments = arrayOfFragments
+    .filter(Boolean)
+    .filter(x => x !== yupFragment) // filter out blank fragments
+    .filter(x => yup.isSchema(x) || isFragment(x));
+
   if (fragments.length === 0) {
-    return yupFragment;
+    return undefined;
   }
   if (fragments.length === 1) {
     return fragments[0];

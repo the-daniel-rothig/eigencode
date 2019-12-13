@@ -26,7 +26,9 @@ export const getContextFromStack = (contextStack, ctx) => {
       return contextStack[i].value;
     }
   }
-  return null;
+
+  // todo: test this
+  return ctx._currentValue || null;
 }
 
 const identity = x => x

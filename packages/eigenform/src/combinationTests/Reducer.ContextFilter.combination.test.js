@@ -2,7 +2,6 @@ import React, {useState} from 'react';
 import { Reducer, extractText as extractTextHacked } from "react-traversal";
 import { render, wait } from "@testing-library/react";
 import { act } from "react-dom/test-utils";
-import ContextFilter from 'context-filter';
 
 const Ctx = React.createContext();
 

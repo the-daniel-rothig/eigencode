@@ -2,6 +2,20 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 
+const childArrayMap = new WeakMap();
+const getArray = (children) => {
+  const hasMemo = childArrayMap.has(children);
+  if (hasMemo) {
+    return childArrayMap.get(children);
+  }
+  const res = React.Children.toArray(children);
+  
+  if(['object', 'array', 'function'].includes(typeof children) && children !== null) {
+    childArrayMap.set(children, res);
+  }
+  return res;
+}
+
 const childrenMap = new WeakMap();
 const getMappedChildren = ({children, elementMapper, memo}) => {
   const hasMemo = childrenMap.has(children);
@@ -13,9 +27,7 @@ const getMappedChildren = ({children, elementMapper, memo}) => {
       memo: memo
     });
   
-  if(!hasMemo && ['object', 'array', 'function'].includes(typeof children) && children !== null) {
-    childrenMap.set(children, newChildren);
-  }
+  childrenMap.set(children, newChildren);
   return newChildren;
 }
 
@@ -23,7 +35,7 @@ const getMappedChildren = ({children, elementMapper, memo}) => {
 const makeDerivedClass = (type) => {
   class DerivedClass extends React.Component {
     constructor(propsAndPayload, ...args) {
-      const { ___eigencode_memo, ___eigencode_elementmapper, ...props } = propsAndPayload;
+      const { ___eigencode_memo, ___eigencode_elementmapper, ___eigencode_onChildren, ...props } = propsAndPayload;
       
       const realConsoleError = console.error;
       console.error = (...args) => {
@@ -40,6 +52,7 @@ const makeDerivedClass = (type) => {
       
       this.___eigencode_elementmapper = ___eigencode_elementmapper;
       this.___eigencode_memo = ___eigencode_memo;
+      this.___eigencode_onChildren = ___eigencode_onChildren;
 
       this.instance = new type(props, ...args);
       this.state = this.instance.state;
@@ -97,8 +110,9 @@ const makeDerivedClass = (type) => {
       }
 
       this.render = function() {
-        const children = this.instance.render();
-        return getMappedChildren({
+        const children = getArray(this.instance.render());
+        this.___eigencode_onChildren(children);
+        return Recursor({
           children,
           elementMapper: this.___eigencode_elementmapper,
           memo: this.___eigencode_memo
@@ -111,12 +125,18 @@ const makeDerivedClass = (type) => {
   return DerivedClass;
 }
 
+const saneToArray = (children) => {
+  const res = [];
+  React.Children.map(children, c => res.push(c));
+  return res;
+}
 
 const makeDerivedFunction = (type) => {
   let Derived = (propsAndPayload, ...args) => {
-    const { ___eigencode_memo, ___eigencode_elementmapper, ...props } = propsAndPayload;
-    const res = type(props, ...args);
-    return getMappedChildren({
+    const { ___eigencode_memo, ___eigencode_elementmapper, ___eigencode_onChildren, ...props } = propsAndPayload;
+    const res = getArray(type(props, ...args));
+    ___eigencode_onChildren(res);
+    return Recursor({
       children: res,
       elementMapper: ___eigencode_elementmapper,
       memo: ___eigencode_memo,
@@ -183,18 +203,19 @@ const doMapElement = (mapElement, element, memo, siblingIndex, siblingCount) => 
     props: (element && element.props) || {}
   })
 
-  let res = result, newMemo = memo;
+  let res = result, newMemo = memo, hooks = {};
 
   if (Array.isArray(result)) {
     res = result[0];
     newMemo = result[1];
+    hooks = result[2] || {};
   }
 
   return [res && typeof res === "object" ? {
     ...res,
     key: res.key || element.key,
     ref: res.ref || element.ref,
-  } : res, newMemo];
+  } : res, newMemo, hooks];
 }
 
 const makeElementMapper = mapElement => {
@@ -224,7 +245,18 @@ const makeElementMapper = mapElement => {
           memoOne: Array.isArray(resultOne) ? resultOne[1] : memo.memoOne,
           memoTwo: Array.isArray(resultTwo) ? resultTwo[1] : memo.memoTwo,
         }
-        return [finalElement, finalMemo];
+
+        const onCarTwo = Array.isArray(resultTwo) && resultTwo[2] && resultTwo[2].onChildrenArrayResolved;
+        const onCarOne = Array.isArray(resultOne) && resultOne[2] && resultOne[2].onChildrenArrayResolved;
+        const finalCar = onCarOne || onCarTwo ? car => {
+          if (onCarTwo) onCarTwo(car)
+          if (onCarOne) onCarOne(car)
+        } : undefined;
+        const finalHooks = {
+          onChildrenArrayResolved: finalCar
+        }
+
+        return [finalElement, finalMemo, finalHooks];
       }
 
       return Recursor({
@@ -236,21 +268,26 @@ const makeElementMapper = mapElement => {
     if (typeof childElement === "function") {
       return (...args) => {
         const children = mapped.props.children(...args)
-        return getMappedChildren({
+        return Recursor({
           children,
           memo,
           elementMapper
         })
       }
     }
-    const [mapped, mappedMemo] = doMapElement(mapElement, childElement, memo, siblingIndex, siblingCount)
+    const [mapped, mappedMemo, hooks] = doMapElement(mapElement, childElement, memo, siblingIndex, siblingCount);
+    const onChildren = hooks.onChildrenArrayResolved ? 
+      c => hooks.onChildrenArrayResolved(saneToArray(c)) :
+      () => {};
 
     if (!mapped || typeof mapped === "string" || typeof mapped === "number") {
       return mapped;
     }
 
     if (typeof mapped.type === "string" || mapped.type === React.Suspense || mapped.type === React.Fragment) {
-      if (React.Children.toArray(mapped.props.children).length === 0) {
+      const childrenAsArray = getArray(mapped.props.children);
+      onChildren(childrenAsArray);
+      if (childrenAsArray.length === 0) {
         // special case to avoid errors with void tags
         // still invoke mapElement to flush side effects but don't render
         doMapElement(mapElement, null, mappedMemo)
@@ -260,12 +297,12 @@ const makeElementMapper = mapElement => {
         // react will not actually evaluate children of some nodes (as an optimisation),
         // so Recursor would not drill to the text contents of these.
         // This is why, when we encounter such nodes, we call mapElement on the children directly 
-        const [child] = doMapElement(mapElement, mapped.props.children, mappedMemo);
+        const [child] = doMapElement(mapElement, childrenAsArray[0], mappedMemo);
         return React.cloneElement(mapped, {children: child});
       }
 
-      const children = getMappedChildren({
-        children: mapped.props.children,
+      const children = Recursor({
+        children: childrenAsArray,
         memo: mappedMemo,
         elementMapper
       })
@@ -274,8 +311,10 @@ const makeElementMapper = mapElement => {
     }
 
     if (getSymbol(mapped) === "memo") {
-      const children = getMappedChildren({
-        children: mapped.props.children,
+      const childrenArray = getArray(mapped.props.children);
+      onChildren(childrenArray);
+      const children = Recursor({
+        children: childrenArray,
         elementMapper,
         memo: mappedMemo
       });
@@ -283,16 +322,19 @@ const makeElementMapper = mapElement => {
     }
 
     if (getSymbol(mapped) === "provider") {
-      const children = getMappedChildren({children: mapped.props.children, elementMapper, memo: mappedMemo});
+      const childrenArray = getArray(mapped.props.children);
+      onChildren(childrenArray);
+      const children = getMappedChildren({children: childrenArray, elementMapper, memo: mappedMemo});
       return React.cloneElement(mapped, {children});
     }
 
     if (getSymbol(mapped) === "context") {
       const LegacyContextAdapter = () => {
         const context = React.useContext(mapped.type._context);
-        const children = mapped.props.children(context);
-        return getMappedChildren({
-          children,
+        const childrenArray = getArray(mapped.props.children(context));
+        onChildren(childrenArray);
+        return Recursor({
+          children: childrenArray,
           elementMapper,
           memo: mappedMemo
         })
@@ -302,9 +344,11 @@ const makeElementMapper = mapElement => {
     }
 
     if (getSymbol(mapped) === "portal") {
+      const childrenArray = getArray(mapped.children);
+      onChildren(childrenArray);
       const element = ReactDOM.createPortal(
-        getMappedChildren({
-          children: mapped.children,
+        Recursor({
+          children: childrenArray,
           memo: mappedMemo,
           elementMapper
         }),
@@ -323,9 +367,10 @@ const makeElementMapper = mapElement => {
         () => mapped.type._ctor()
           .then(module => ({
             default: (...args) => {
-              const children = module.default(...args);
-              return getMappedChildren({
-                children,
+              const childrenArray = getArray(module.default(...args));
+              onChildren(childrenArray);
+              return Recursor({
+                children: childrenArray,
                 memo:mappedMemo,
                 elementMapper
               });
@@ -342,9 +387,10 @@ const makeElementMapper = mapElement => {
 
     if (getSymbol(mapped) === "forward_ref") {
       const MappedForwardRef = React.forwardRef((props, ref) => {
-        const children = mapped.type.render(props, ref);
-        return getMappedChildren({
-          children,
+        const childrenArray = getArray(mapped.type.render(props, ref));
+        onChildren(childrenArray);
+        return Recursor({
+          children: childrenArray,
           memo: mappedMemo,
           elementMapper
         })
@@ -361,7 +407,7 @@ const makeElementMapper = mapElement => {
     if (shouldConstruct(mapped.type)) {
       const Derived = getDerivedClass(mapped.type);
       //console.log('derived class', Derived.displayName);
-      const res = <Derived ___eigencode_memo={mappedMemo} ___eigencode_elementmapper={elementMapper} {...mapped.props} />
+      const res = <Derived ___eigencode_memo={mappedMemo} ___eigencode_elementmapper={elementMapper} ___eigencode_onChildren={onChildren} {...mapped.props} />
       return res;
       // return {
       //   ...res,
@@ -372,7 +418,7 @@ const makeElementMapper = mapElement => {
 
     if (typeof mapped.type === "function") {
       const Derived = getDerivedFunction(mapped.type);
-      const res = <Derived ___eigencode_memo={mappedMemo} ___eigencode_elementmapper={elementMapper} {...mapped.props} />;
+      const res = <Derived ___eigencode_memo={mappedMemo} ___eigencode_elementmapper={elementMapper} ___eigencode_onChildren={onChildren} {...mapped.props} />;
       return res;
       // return {
       //   ...res,
@@ -394,14 +440,19 @@ const Recursor = ({children, elementMapper, memo, siblingIndex, siblingCount}) =
     const res = elementMapper(null, memo, siblingIndex, siblingCount);
     return [true, false, undefined].includes(res) ? null : res;
   } else if (childrenCount === 1) {
-    const c = React.Children.toArray(children)[0];
+    let c = saneToArray(children)[0];
+    if (!c.key) {
+      // this happens when Substituting itself only has a single child element
+      // todo: refactor to handle this edge case more nicely.
+      c = React.Children.toArray(children)[0];
+    }
     const res = elementMapper(c, memo, siblingIndex, siblingCount);
     // if (getSymbol(res) === "provider") {
     //   return <Memoed element={res} original={c} />
     // }
     return [true, false, undefined].includes(res) ? null : res;
   } 
-  const newChildren = React.Children.toArray(children).map((c, i) => Recursor({
+  const newChildren = saneToArray(children).map((c, i) => Recursor({
     elementMapper,
     memo,
     siblingIndex: i,
@@ -415,6 +466,7 @@ const Substituting = ({children, mapElement}) => {
   if (!mapElement) {
     throw new Error('Substituting has no mapElement function specified')
   }
+  
   const elementMapper = makeElementMapper(mapElement);
   return Recursor({
     elementMapper,

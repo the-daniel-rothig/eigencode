@@ -109,10 +109,6 @@ const ExampleForm = () => (
 )
 
 function App() {
-  // const valSchema = getValidationSchema(
-  //   <ExampleForm />
-  // );
-  // debugger;
   return (
     <div className="App">
       <ExampleForm />

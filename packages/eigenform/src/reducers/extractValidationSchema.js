@@ -52,8 +52,15 @@ export const shemasAreEqual = (previous, next) => {
 }
 
 const shouldUpdate = (previous, next) => {
-  return (!next.simpleDescriptor || previous.simpleDescriptor !== next.simpleDescriptor) && 
-    (!next._meta || !next._meta.simpleDescriptor || !previous._meta || previous._meta.simpleDescriptor !== next._meta.simpleDescriptor);
+  if (!!previous !== !!next) {
+    return true;
+  }
+  
+  return (
+    (previous !== next) &&
+    (!next.simpleDescriptor || previous.simpleDescriptor !== next.simpleDescriptor) && 
+    (!next._meta || !next._meta.simpleDescriptor || !previous._meta || previous._meta.simpleDescriptor !== next._meta.simpleDescriptor)
+  );
 }
 
 const getContents = ({element, defaultReturn}) => {
@@ -65,7 +72,7 @@ const getContents = ({element, defaultReturn}) => {
 
 const reduce = ({element, unbox, isLeaf}) => {
   if (isLeaf) {
-    return unbox();
+    return undefined;
   }
   const {props, type} = element;
   if (type === TextInput) {
@@ -97,6 +104,9 @@ const reduce = ({element, unbox, isLeaf}) => {
   } else if (type === Conditional && props.when && props.is) {
     return unbox(res => {
       const combined = mergeYupFragments(res);
+      if (!combined) {
+        return undefined;
+      }
       const whenWithDots = Array.isArray(props.when)
         ? props.when.map(dottify) 
         : dottify(props.when);
@@ -108,6 +118,9 @@ const reduce = ({element, unbox, isLeaf}) => {
   } else if (type === Multiple) {
     return unbox(res => {
       const combined = mergeYupFragments(res);
+      if (!combined) {
+        return undefined;
+      }
       let multiSchemaFragments = [
         !props.optional && new YupFragment('requiredStrict'),
         props.min !== 0 && min(props.min || 1),

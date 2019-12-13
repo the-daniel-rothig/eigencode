@@ -4,6 +4,7 @@ import { logOnce } from 'eigencode-shared-utils';
 import ReduceResult from './ReduceResult';
 import usingFakeDispatcher, { getContextFromStack } from './usingFakeDispatcher';
 import ReducerFunction from './ReducerFunction';
+import flattenDeep from 'lodash/flattenDeep';
 
 const notSupported = (name) => {
   throw new Error(`${name} is not currently supported`);
@@ -26,7 +27,7 @@ function processChild({child, contextStack, getContents, traverse}) {
   });
 
   const mapToResult = (children, mappingContextStack) => {
-    const array = Array.isArray(children) ? children : [children] //React.Children.toArray(children);
+    const array = flattenDeep(Array.isArray(children) ? children : [children]) //React.Children.toArray(children);
     const res = array.map((innerChild, i) => saneTraverse(innerChild, mappingContextStack, i));
     return res;
   }
@@ -41,16 +42,16 @@ function processChild({child, contextStack, getContents, traverse}) {
   }
   if (child.type && child.type.$$typeof && child.type.$$typeof.toString() === "Symbol(react.context)") {
     const inner = child.props.children(getContextFromStack(contextStack, child.type));
-    return [saneTraverse(inner, contextStack)];
+    return mapToResult(inner, contextStack);
   }
   if (child.type && child.type.$$typeof && child.type.$$typeof.toString() === "Symbol(react.lazy)") {
-    return [child.type._ctor()
+    return child.type._ctor()
       .then(mod => {
         const resolvedElement = React.createElement(
           mod.default,
           Object.assign({ref: child.ref}, child.props));
-        return saneTraverse(resolvedElement, contextStack);
-      })];
+        return mapToResult(resolvedElement, contextStack);
+      });
   }
   if (child.$$typeof && child.$$typeof.toString() === "Symbol(react.portal)") {
     const resolvedChildren = mapToResult(child.children, contextStack)
@@ -83,23 +84,25 @@ function processChild({child, contextStack, getContents, traverse}) {
     do {
       doUpdate();
       const inner = inst.render();
-      traversed = saneTraverse(inner, contextStack)
+      traversed = mapToResult(inner, contextStack)
     } while (isUpdateRequired())
     
-    return [traversed];
-  } else {
+    return traversed;
+  } else if (typeof child.type === "function") {
     let res = usingFakeDispatcher(contextStack, (dispatcher) => {
       let traversed = undefined;
       do {
         dispatcher._rewind();
         const inner = child.type(child.props)
-        traversed = saneTraverse(inner, contextStack)
+        traversed = mapToResult(inner, contextStack)
       } while(dispatcher._rebuild())
       // bug: traversed could already be an array
-      return [traversed];
+      return traversed;
     });
     return res;
   }
+  
+  throw `This shouldn't happen: reactTraversal encountered element ${child}`;
 }
 
 const makeTraverseFunction = (reduce, isRoot) => {

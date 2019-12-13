@@ -1,7 +1,36 @@
 import React from 'react';
 import Substituting from './Substituting';
 
-const mapElement = (initialReducerFunction, onFinish) => ({element, memo, getContext, siblingIndex, siblingCount: _siblingCount}) => {
+const makeValueMap = () => {
+  const map = new Map()
+  const toKey = indexOrElement => {
+    return (indexOrElement && indexOrElement.key) || indexOrElement;
+  }
+  const notSet = Symbol("eigencode.notSet");
+
+  const get = key => {
+    return map.has(key) ? map.get(key) : notSet;
+  }
+
+  const setOrGet = (key, value) => {
+    const existing = get(key);
+    if (existing === notSet) {
+      map.set(key, value);
+      return value;
+    }
+    return existing;
+  }
+
+  return {
+    has: indexOrElement => map.has(toKey(indexOrElement)),
+    get: indexOrElement => get(toKey(indexOrElement)),
+    set: (indexOrElement, value) => map.set(toKey(indexOrElement), value),
+    setOrGet: (indexOrElement, value) => setOrGet(toKey(indexOrElement), value),
+    notSet
+  };
+}
+
+const mapElement = (initialReducerFunction, onFinish, rootMemo) => ({element, memo, getContext, siblingIndex, siblingCount: _siblingCount}) => {
   const idx = siblingIndex || 0;
   const siblingCount = _siblingCount || 1;
   const root = memo ? memo.root : element;
@@ -14,14 +43,23 @@ const mapElement = (initialReducerFunction, onFinish) => ({element, memo, getCon
     if (res === unbox) res = [];
 
     if (memo) {
-      memo.returnValue(res, idx, siblingCount)
+      memo.returnValue(res, idx)
     } else {
       onFinish(reducerFunction.finalTransform([res]))
     }
     return [element, {root}];
-  }    
+  }
+
+  const freshMap = {
+    values: makeValueMap(),
+    children: makeValueMap()
+  };
   
-  const childrenValues = {}
+  const childMap = memo 
+    ? memo.childrenMaps.setOrGet(element, freshMap) 
+    : freshMap;
+
+  const childrenValues = childMap.values;
 
   let newReducerFunction = reducerFunction;
   let newElement = element;
@@ -43,49 +81,73 @@ const mapElement = (initialReducerFunction, onFinish) => ({element, memo, getCon
   
   const reduceResult = reducerFunction.reduce({unbox, element, getContext, isRoot: element === root, isLeaf: false});
   
-  const returnValue = (val, index, childrenCount) => {
-    const hasOldValue = Object.keys(childrenValues).includes(`${index}`);
-    const oldValue = childrenValues[index];
+  const returnValue = (val, indexOrElement) => {
+    const oldValue = childrenValues.get(indexOrElement);
+    const hasOldValue = oldValue !== childrenValues.notSet;
     
-    childrenValues[index] = val
-    if (Object.keys(childrenValues).length < childrenCount) {
+    childrenValues.set(indexOrElement, val)
+    
+    if (
+      !hasOldValue || 
+      typeof reducerFunction.shouldUpdate !== "function" || 
+      reducerFunction.shouldUpdate(oldValue, val)
+    ) {
+      resolveIfComplete();
+    }
+  }
+
+  let childrenArray = undefined;
+
+  const onChildrenArrayResolved = newChildrenArray => {
+    const newKeys = newChildrenArray.filter(x => x && x.key).map(x => x.key);
+    const oldKeys = childrenArray ? childrenArray.filter(x => x && x.key).map(x => x.key) : [];
+    const keysMatch = newKeys.length == oldKeys.length && !oldKeys.find((k, i) => k !== newKeys[i]);
+
+    const hasChanged = (
+      childrenArray !== undefined && 
+      ( childrenArray.length !== newChildrenArray.length || !keysMatch )
+    );
+
+    childrenArray = newChildrenArray;
+    if (hasChanged) {
+      resolveIfComplete()
+    }
+  }
+
+  const resolveIfComplete = () => {
+    const res = childrenArray.map((c, i) => {
+      const indexOrElement = typeof c === "object" && c !== null ? c : i;
+      return childrenValues.get(indexOrElement)
+    });
+
+    if (res.includes(childrenValues.notSet)) {
+      // incomplete, so don't return yet
       return;
     }
 
-    const res = Object.values(childrenValues);
     let rtnValue = reduceResult;
     if (reduceResult === unbox) {
       rtnValue = resolveCb ? resolveCb(res) : res //todo: flatten
     }
-
-    if (
-      hasOldValue && 
-      typeof reducerFunction.shouldUpdate === "function" && 
-      !reducerFunction.shouldUpdate(oldValue, rtnValue)
-    ) {
-      // stop bubbling up
-      return;
-    }
     
     if (memo) {
-      memo.returnValue(rtnValue, idx, siblingCount);
+      memo.returnValue(rtnValue, element);
     } else {
       onFinish(reducerFunction.finalTransform([rtnValue]))
     }
   }
-  return [newElement, {returnValue, reducerFunction: newReducerFunction, root}]
+
+  const childrenMaps = childMap.children;
+
+  return [newElement, {returnValue, reducerFunction: newReducerFunction, root, childrenMaps}, {onChildrenArrayResolved}];
 }
 
 const Reducer = ({children, reducerFunction, onFinish}) => {
-  const map = mapElement(reducerFunction, onFinish);
-
-  // ensure there is a root-level element to reduce to
-  const childrenArray = React.Children.toArray(children)
-  const c = childrenArray.length === 1 ? childrenArray[0] : <>{children}</>
+  const map = React.useMemo(() => mapElement(reducerFunction, onFinish, {}), [reducerFunction, onFinish]);
 
   return (
     <Substituting mapElement={map}>
-      <>{c}</>
+      <>{children}</>
     </Substituting>
   )
 }

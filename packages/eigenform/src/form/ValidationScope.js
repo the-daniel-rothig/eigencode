@@ -1,5 +1,5 @@
 import React, { useState, useContext, useCallback } from 'react';
-import { Reducer }  from 'react-traversal';
+import { Reducer, traverseDepthFirst }  from 'react-traversal';
 import extractValidationSchema, { shemasAreEqual } from '../reducers/extractValidationSchema';
 import ValidationScopeContext from './ValidationScopeContext';
 import FieldContext from './FieldContext';
@@ -42,19 +42,29 @@ const ValidationScopeOuter = ({children, isComplete}) => {
   );
 }
 
-const ValidationScopeInner = ({children}) => {
+const ValidationScopeInner = ({children, dynamicUpdate}) => {
   // big ol' hack... don't do this at home
   const ctx = ValidationScopeContext._currentValue;
-  return (
-  <Reducer reducerFunction={extractValidationSchema} onFinish={ctx.setSchema}>
-    {children}
-  </Reducer> 
-  )
+  
+  if (!dynamicUpdate) {
+    const validationSchema = traverseDepthFirst(
+      <>{children}</>, 
+      extractValidationSchema);
+    ctx.setSchema(validationSchema);
+
+    return children;
+  } else {
+    return (
+      <Reducer reducerFunction={extractValidationSchema} onFinish={ctx.setSchema}>
+        {children}
+      </Reducer> 
+    )
+  }
 }
 
-const ValidationScope = ({children, isComplete}) => (
+const ValidationScope = ({children, isComplete, dynamicUpdate}) => (
   <ValidationScopeOuter isComplete={isComplete}>
-    <ValidationScopeInner>
+    <ValidationScopeInner dynamicUpdate={dynamicUpdate}>
       {children}
     </ValidationScopeInner>
   </ValidationScopeOuter>
