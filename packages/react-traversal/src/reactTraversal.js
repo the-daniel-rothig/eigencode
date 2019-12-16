@@ -21,7 +21,7 @@ const opaqueTypes = {
   ]
 }
 
-function processChild({child, contextStack, getContents, traverse}) {
+function processChild({child, contextStack, getContents, traverse, suppressWarnings}) {
   const saneTraverse = traverse || ((...args) => {
     return args
   });
@@ -77,7 +77,7 @@ function processChild({child, contextStack, getContents, traverse}) {
     if (!!child.type.childContextTypes) notSupported(`childContextTypes properties on classes like ${child.type.name}`)
 
     const { inst, isUpdateRequired, doUpdate } = makeClassInstance(child, getContextFromStack(contextStack, child.type.contextType));
-    if (inst.shouldComponentUpdate) {
+    if (inst.shouldComponentUpdate && !suppressWarnings) {
       logOnce('WARNING: use of shouldComponentUpdate is not supported for static traversal, and its effects will be ignored.');
     }
     let traversed = undefined;
@@ -98,14 +98,14 @@ function processChild({child, contextStack, getContents, traverse}) {
       } while(dispatcher._rebuild())
       // bug: traversed could already be an array
       return traversed;
-    });
+    }, suppressWarnings);
     return res;
   }
   
-  throw `This shouldn't happen: reactTraversal encountered element ${child}`;
+  throw new Error(`This shouldn't happen: reactTraversal encountered element ${child}`);
 }
 
-const makeTraverseFunction = (reduce, isRoot) => {
+const makeTraverseFunction = (reduce, isRoot, suppressWarnings) => {
   
   const traverse = (element, contextStack) => {
     const getContext = ctx => getContextFromStack(contextStack, ctx)
@@ -144,15 +144,15 @@ const makeTraverseFunction = (reduce, isRoot) => {
       
         const newIsRoot = e => e === element;
         const saneOverride = ReducerFunction.cast(reduceOverride)
-        const newTraverse = makeTraverseFunction(saneOverride, newIsRoot);
-        const array = processChild({child: saneChild, traverse: newTraverse, getContents: saneOverride.getContents, contextStack});
+        const newTraverse = makeTraverseFunction(saneOverride, newIsRoot, suppressWarnings);
+        const array = processChild({child: saneChild, traverse: newTraverse, getContents: saneOverride.getContents, contextStack, suppressWarnings});
         
         const childrenResult = array.filter(x => x && typeof x.then === "function").length > 0
           ? Promise.all(array).then(arr => saneOverride.finalTransform(ReduceResult.flatten(arr)))
           : saneOverride.finalTransform(ReduceResult.flatten(array));
         return callback ? callback(childrenResult) : childrenResult;
       } else {
-        const array = processChild({child: element, traverse, getContents: reduce.getContents, contextStack })
+        const array = processChild({child: element, traverse, getContents: reduce.getContents, contextStack, suppressWarnings })
         
         const childrenResult = array.filter(x => x && typeof x.then === "function").length > 0
           ? Promise.all(array).then(arr => ReduceResult.flatten(arr))
@@ -174,10 +174,11 @@ const makeTraverseFunction = (reduce, isRoot) => {
 
 export const traverseDepthFirst = (
   child, 
-  reduceChildrenArray
+  reduceChildrenArray,
+  suppressWarnings
 ) => {
   const saneReduceChildrenArray = ReducerFunction.cast(reduceChildrenArray || (({array}) => array));
-  const traverse = makeTraverseFunction(saneReduceChildrenArray, e => e === child);
+  const traverse = makeTraverseFunction(saneReduceChildrenArray, e => e === child, suppressWarnings);
   const res = traverse(child, []);
   return res && typeof res.then === "function"
     ? res.then(arr => saneReduceChildrenArray.finalTransform(ReduceResult.flatten(arr)))

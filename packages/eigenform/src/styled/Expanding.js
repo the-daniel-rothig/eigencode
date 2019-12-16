@@ -42,7 +42,9 @@ const Expanding = ({render, className, children, bounce = true}) => {
       }}
       onAnimationEnd={() => {
         if (!isStale() && state.cb) {
-          state.cb();
+          // the timeout ensures the callback is invoked
+          // after AnimateHeight has unmounted the contents
+          setTimeout(state.cb, 0);
         }
         setAnimating(false)
       }}

@@ -35,24 +35,13 @@ const getMappedChildren = ({children, elementMapper, memo}) => {
 const makeDerivedClass = (type) => {
   class DerivedClass extends React.Component {
     constructor(propsAndPayload, ...args) {
-      const { ___eigencode_memo, ___eigencode_elementmapper, ___eigencode_onChildren, ...props } = propsAndPayload;
+      const { ___EIGENCODE_MEMO, ___EIGENCODE_ELEMENTMAPPER, ___EIGENCODE_ONCHILDREN, ...props } = propsAndPayload;
       
-      const realConsoleError = console.error;
-      console.error = (...args) => {
-        if (args[0].indexOf("make sure to pass up the same props that your component's constructor was passed.") === -1) {
-          realConsoleError(...args);
-        }
-      }
-      try {
-        super(props, ...args);
-      } finally {
-        setTimeout(() => console.error = realConsoleError, 0)
-        //console.error = realConsoleError;
-      }
+      super(propsAndPayload, ...args);
       
-      this.___eigencode_elementmapper = ___eigencode_elementmapper;
-      this.___eigencode_memo = ___eigencode_memo;
-      this.___eigencode_onChildren = ___eigencode_onChildren;
+      this.___EIGENCODE_ELEMENTMAPPER = ___EIGENCODE_ELEMENTMAPPER;
+      this.___EIGENCODE_MEMO = ___EIGENCODE_MEMO;
+      this.___EIGENCODE_ONCHILDREN = ___EIGENCODE_ONCHILDREN;
 
       this.instance = new type(props, ...args);
       this.state = this.instance.state;
@@ -92,7 +81,7 @@ const makeDerivedClass = (type) => {
       }
 
       this.UNSAFE_componentWillUpdate = (nextProps, nextState, nextContext) => {
-        const { ___eigencode_memo, ___eigencode_elementmapper, ...saneNextProps } = nextProps;
+        const { ___EIGENCODE_MEMO, ___EIGENCODE_ELEMENTMAPPER, ___EIGENCODE_ONCHILDREN, ...saneNextProps } = nextProps;
       
         if (typeof this.instance.UNSAFE_componentWillUpdate === "function") {
           this.instance.UNSAFE_componentWillUpdate(saneNextProps, nextState, nextContext)
@@ -111,11 +100,11 @@ const makeDerivedClass = (type) => {
 
       this.render = function() {
         const children = getArray(this.instance.render());
-        this.___eigencode_onChildren(children);
+        this.___EIGENCODE_ONCHILDREN(children);
         return Recursor({
           children,
-          elementMapper: this.___eigencode_elementmapper,
-          memo: this.___eigencode_memo
+          elementMapper: this.___EIGENCODE_ELEMENTMAPPER,
+          memo: this.___EIGENCODE_MEMO
         });
       }
     }
@@ -133,13 +122,13 @@ const saneToArray = (children) => {
 
 const makeDerivedFunction = (type) => {
   let Derived = (propsAndPayload, ...args) => {
-    const { ___eigencode_memo, ___eigencode_elementmapper, ___eigencode_onChildren, ...props } = propsAndPayload;
+    const { ___EIGENCODE_MEMO, ___EIGENCODE_ELEMENTMAPPER, ___EIGENCODE_ONCHILDREN, ...props } = propsAndPayload;
     const res = getArray(type(props, ...args));
-    ___eigencode_onChildren(res);
+    ___EIGENCODE_ONCHILDREN(res);
     return Recursor({
       children: res,
-      elementMapper: ___eigencode_elementmapper,
-      memo: ___eigencode_memo,
+      elementMapper: ___EIGENCODE_ELEMENTMAPPER,
+      memo: ___EIGENCODE_MEMO,
       siblingIndex: 0,
       siblingCount: 1
     })
@@ -407,25 +396,23 @@ const makeElementMapper = mapElement => {
     if (shouldConstruct(mapped.type)) {
       const Derived = getDerivedClass(mapped.type);
       //console.log('derived class', Derived.displayName);
-      const res = <Derived ___eigencode_memo={mappedMemo} ___eigencode_elementmapper={elementMapper} ___eigencode_onChildren={onChildren} {...mapped.props} />
-      return res;
-      // return {
-      //   ...res,
-      //   key: mapped.key,
-      //   ref: mapped.ref
-      // }
+      const res = <Derived ___EIGENCODE_MEMO={mappedMemo} ___EIGENCODE_ELEMENTMAPPER={elementMapper} ___EIGENCODE_ONCHILDREN={onChildren} {...mapped.props} />
+      
+      return {
+        ...res,
+        key: mapped.key,
+        ref: mapped.ref
+      }
     }
 
     if (typeof mapped.type === "function") {
       const Derived = getDerivedFunction(mapped.type);
-      const res = <Derived ___eigencode_memo={mappedMemo} ___eigencode_elementmapper={elementMapper} ___eigencode_onChildren={onChildren} {...mapped.props} />;
-      return res;
-      // return {
-      //   ...res,
-      //   key: mapped.key,
-      //   ref: mapped.ref
-      // };
-      //return mappedElement;
+      const res = <Derived ___EIGENCODE_MEMO={mappedMemo} ___EIGENCODE_ELEMENTMAPPER={elementMapper} ___EIGENCODE_ONCHILDREN={onChildren} {...mapped.props} />;
+      return {
+        ...res,
+        key: mapped.key,
+        ref: mapped.ref
+      };
     }
 
     throw new Error("This shouldn't happen");

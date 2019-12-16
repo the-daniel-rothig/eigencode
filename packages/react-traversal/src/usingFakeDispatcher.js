@@ -4,8 +4,10 @@ import { logOnce } from 'eigencode-shared-utils';
 // cooking with gas!
 const { ReactCurrentDispatcher } = React.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
 
-const notImplemented = (name) => {
-  logOnce(`WARNING: use of ${name} is not supported for static traversal, and its effects will be ignored.`)
+const notImplemented = (suppressWarnings, name) => {
+  if(!suppressWarnings) {
+    logOnce(`WARNING: use of ${name} is not supported for static traversal, and its effects will be ignored.`)
+  }
 }
 
 export const getContextFromStack = (contextStack, ctx) => {
@@ -33,7 +35,7 @@ export const getContextFromStack = (contextStack, ctx) => {
 
 const identity = x => x
 
-const makeFakeDispatcher = (contextStack) => {
+const makeFakeDispatcher = (contextStack, suppressWarnings) => {
   const rebuild = { rebuild: false };
   const _rebuild = (r) => {
     if (r !== undefined) {
@@ -72,9 +74,9 @@ const makeFakeDispatcher = (contextStack) => {
     readContext: ctx => getContextFromStack(contextStack, ctx),
     useCallback: identity,
     useContext: ctx => getContextFromStack(contextStack, ctx),
-    useEffect: () => notImplemented('useEffect'),
-    useImperativeHandle: () => notImplemented('useImperativeHandle'),
-    useLayoutEffect: () => notImplemented('useLayoutEffect'),
+    useEffect: () => notImplemented(suppressWarnings, 'useEffect'),
+    useImperativeHandle: () => notImplemented(suppressWarnings, 'useImperativeHandle'),
+    useLayoutEffect: () => notImplemented(suppressWarnings, 'useLayoutEffect'),
     useMemo: identity,
     useReducer: (reducer, initialState) => registerState(initialState, reducer),
     useRef: (initial) => {
@@ -82,18 +84,18 @@ const makeFakeDispatcher = (contextStack) => {
       return ref;
     },
     useState: x => registerState(x, (oldState, newState) => newState),
-    useDebugValue: () => notImplemented('useDebugValue'),
-    useResponder: () => notImplemented('useResponder'),
-    useDeferredValue: () => notImplemented('useDeferredValue'),
-    useTransition: () => notImplemented('useTransition'),
+    useDebugValue: () => notImplemented(suppressWarnings, 'useDebugValue'),
+    useResponder: () => notImplemented(suppressWarnings, 'useResponder'),
+    useDeferredValue: () => notImplemented(suppressWarnings, 'useDeferredValue'),
+    useTransition: () => notImplemented(suppressWarnings, 'useTransition'),
     _rebuild,
     _rewind
   };
 }
 
 // SYNC ONLY!
-export default (contextStack, cb) => {
-  const fake = makeFakeDispatcher(contextStack)
+export default (contextStack, cb, suppressWarnings) => {
+  const fake = makeFakeDispatcher(contextStack, suppressWarnings)
   const original = ReactCurrentDispatcher.current;
   ReactCurrentDispatcher.current = fake;
   try {

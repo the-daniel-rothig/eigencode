@@ -30,9 +30,8 @@ const makeValueMap = () => {
   };
 }
 
-const mapElement = (initialReducerFunction, onFinish, rootMemo) => ({element, memo, getContext, siblingIndex, siblingCount: _siblingCount}) => {
+const mapElement = (initialReducerFunction, onFinish) => ({element, memo, getContext, siblingIndex}) => {
   const idx = siblingIndex || 0;
-  const siblingCount = _siblingCount || 1;
   const root = memo ? memo.root : element;
   const reducerFunction = (memo && memo.reducerFunction) || initialReducerFunction;  
     
@@ -101,7 +100,7 @@ const mapElement = (initialReducerFunction, onFinish, rootMemo) => ({element, me
   const onChildrenArrayResolved = newChildrenArray => {
     const newKeys = newChildrenArray.filter(x => x && x.key).map(x => x.key);
     const oldKeys = childrenArray ? childrenArray.filter(x => x && x.key).map(x => x.key) : [];
-    const keysMatch = newKeys.length == oldKeys.length && !oldKeys.find((k, i) => k !== newKeys[i]);
+    const keysMatch = newKeys.length === oldKeys.length && !oldKeys.find((k, i) => k !== newKeys[i]);
 
     const hasChanged = (
       childrenArray !== undefined && 
@@ -143,7 +142,7 @@ const mapElement = (initialReducerFunction, onFinish, rootMemo) => ({element, me
 }
 
 const Reducer = ({children, reducerFunction, onFinish}) => {
-  const map = React.useMemo(() => mapElement(reducerFunction, onFinish, {}), [reducerFunction, onFinish]);
+  const map = React.useMemo(() => mapElement(reducerFunction, onFinish), [reducerFunction, onFinish]);
 
   return (
     <Substituting mapElement={map}>

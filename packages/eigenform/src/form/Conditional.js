@@ -104,7 +104,7 @@ const ConditionalInner = ({when, is, preserveValues, onExpanding = invokeCallbac
     })
   }
 
-  return effectiveVisibility ? (
+  return effectiveVisibility || shouldShow ? (
     <Reducer reducerFunction={getFieldNames} onFinish={setFields}>{children}</Reducer>
   ) : null;
 }
