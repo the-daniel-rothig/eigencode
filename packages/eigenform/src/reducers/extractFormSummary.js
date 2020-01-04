@@ -1,14 +1,12 @@
-import React from 'react'
 import { deepGet } from "eigencode-shared-utils";
 import { extractText, ReducerFunction } from "react-traversal";
 
 import Conditional, { isConditionalShowing } from "../form/Conditional";
-import Field, { FieldProvider } from "../form/Field";
+import Field, { getSaneName } from "../form/Field";
 import FieldContext from "../form/FieldContext";
 import Label from "../form/Label";
 import Multiple from "../form/Multiple";
 import Radio from "../form/Radio";
-import makeCamelCaseFieldName from "../util/makeCamelCaseFieldName";
 
 const firstValueOfType = (array, ...type) => 
   allOfType(array, ...type).map(x=>x.val)[0]
@@ -16,9 +14,9 @@ const allOfType = (array, ...type) =>
   array.filter(x => type.includes(x.type))
 
 const makeReduce = (values, identifySection = () => false) => ({element, getContext, isLeaf, unbox}) => {
-  const fullyQualifiedName = (rawName) => {
+  const fullyQualifiedName = (rawName, rawLabel) => {
     const fieldContext = getContext(FieldContext);
-    return `${fieldContext && fieldContext.name ? fieldContext.name + "." : ""}${makeCamelCaseFieldName(rawName)}`;
+    return `${fieldContext && fieldContext.name ? fieldContext.name + "." : ""}${getSaneName(rawName, rawLabel)}`;
   } 
 
   if (isLeaf) {
@@ -29,12 +27,14 @@ const makeReduce = (values, identifySection = () => false) => ({element, getCont
     return unbox(children => {
       const options = allOfType(children, 'option');
       const fields = allOfType(children, 'field', 'group');
-      const dataName = fullyQualifiedName(element.props.name);
+      const dataName = fullyQualifiedName(element.props.name, element.props.label);
       const valueRaw = !fields.length ? deepGet(values, dataName) : undefined; 
-      const value = valueRaw && options.find(x => x.value === valueRaw) ? options.find(x => x.value === valueRaw).label : valueRaw; 
+      const value = valueRaw && options.find(x => x.value === valueRaw) 
+        ? options.find(x => x.value === valueRaw).label 
+        : valueRaw; 
 
       const res = {
-        name: element.props.name || '',
+        name: getSaneName(element.props.name, element.props.label) || '',
         label: firstValueOfType(children, 'label'),
         
         ...(options.length ? {options} : {}),
@@ -50,14 +50,14 @@ const makeReduce = (values, identifySection = () => false) => ({element, getCont
 
   if (element.type === Conditional) {
     const outerFieldContext = getContext(FieldContext);
-    const shouldShow = isConditionalShowing(element.props.when, element.props.is, outerFieldContext && outerFieldContext.name, x => deepGet(values, x));
+    const shouldShow = isConditionalShowing(element.props.when, element.props.is, element.props.includes, outerFieldContext && outerFieldContext.name, x => deepGet(values, x));
     return unbox(c2 => {
       return c2.map(x => !shouldShow && ['field', 'group'].includes(x.type) ? {...x, concealed: true} : x);
     })
   }
 
   if (element.type === Multiple) {
-    const dataName = fullyQualifiedName(element.props.name);
+    const dataName = fullyQualifiedName(element.props.name, element.props.label);
     const value = deepGet(values, dataName);
     const valueArray = Array.isArray(value) ? value : [];
 
@@ -65,11 +65,11 @@ const makeReduce = (values, identifySection = () => false) => ({element, getCont
       const fields = allOfType(children, 'field');
       const multi = {
         type: 'multiple',
-        name: element.props.name,
+        name: getSaneName(element.props.name, element.props.label),
         entries: valueArray.map(entry => {
           // todo: unnamed fields
           return Object.keys(entry).map(key => ({
-            ...fields.find(x => makeCamelCaseFieldName(x.name) === key),
+            ...fields.find(x => x.name === key),
             value: entry[key]
           }));
         }),

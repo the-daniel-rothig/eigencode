@@ -2,16 +2,19 @@
   "private": true,
   "workspaces": [
     "packages/context-filter",
+    "packages/destructure-probe",
     "packages/eigencode-shared-utils",
     "packages/eigenform",
     "packages/eigenform-demo",
     "packages/react-traversal",
-    "packages/yup-extensions",
-    "packages/yup-fragment"
+    "packages/yup-extensions"
   ],
   "scripts": {
     "test": "jest --watch",
     "demo": "cd packages/eigenform-demo && yarn start"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
   },
   "jest": {
     "setupFiles": [

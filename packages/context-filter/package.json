@@ -2,8 +2,8 @@
   "name": "context-filter",
   "version": "0.1.0",
   "private": true,
-  "main": "src/ContextFilter.js",
-  "main:src": "src/ContextFilter.js",
+  "main": "src/index.js",
+  "main:src": "src/index.js",
   "dependencies": {
     "lodash": "^4.17.15",
     "react": "^16.11.0"

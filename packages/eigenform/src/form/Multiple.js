@@ -14,12 +14,13 @@ const SingleItem = ({remove, children}) => {
   )
 }
 
+// TODO: do properly
 const NEW_ITEM_VALUE = () => ({})
 
 const MultipleInner = ({children, className, min=1, max, renderItem = SingleItem}) => {
   const {setValue, fieldValue} = useContext(FieldContext);
   
-  const arr = fieldValue || [];
+  const arr = Array.isArray(fieldValue) ? fieldValue : [];
   const [uids, setUids] = useState(arr.map(() => makeUid()));
   
   if (min && uids.length < min) {
@@ -30,13 +31,13 @@ const MultipleInner = ({children, className, min=1, max, renderItem = SingleItem
     )
   }
 
-  const add = (e) => {
+  const add = () => {
     setUids(oldUids => [...oldUids, makeUid()]);
     const arrx = fieldValue;
     setValue([...arrx, NEW_ITEM_VALUE()]);
   }
 
-  const removeAt = idx => e => {
+  const removeAt = idx => () => {
     setUids(oldUids => oldUids.filter((_, i) => i !== idx));
     const arrx = fieldValue;
     setValue([...arrx.filter((x, i) => i !== idx)]);

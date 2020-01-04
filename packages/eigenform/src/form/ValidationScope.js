@@ -49,8 +49,7 @@ const ValidationScopeInner = ({children, dynamicUpdate}) => {
   if (!dynamicUpdate) {
     const validationSchema = traverseDepthFirst(
       <>{children}</>, 
-      extractValidationSchema,
-      true);
+      extractValidationSchema);
     ctx.setSchema(validationSchema);
 
     return children;

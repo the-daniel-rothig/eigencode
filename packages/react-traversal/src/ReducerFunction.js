@@ -9,6 +9,7 @@ export default class ReducerFunction {
     this.finalTransform = saneOptions.finalTransform || defaultFinalTransform;
     this.shouldUpdate = saneOptions.shouldUpdate || defaultShouldUpdate;
     this.getContents = saneOptions.getContents;
+    this.suppressWarnings = !!saneOptions.suppressWarnings;
 
     if (typeof this.reduce !== 'function') {
       throw new Error('ReducerFunction error: reduce is not a function')

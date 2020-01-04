@@ -44,32 +44,32 @@ const getFormSummary = async (element, values, identifySection) => {
 describe('extractFormSummary', () => {
   it('gets the Field label', async () => {
     const res = await getFormSummary(  
-    <Field name="your first name">
+    <Field label="your first name">
       <Label>Enter your first name</Label>
     </Field>, 
-    {firstName: 'Daniel'});
+    {yourFirstName: 'Daniel'});
 
     expect(res).toStrictEqual([{
         type: 'field',
         label: 'Enter your first name',
-        name: 'your first name',
+        name: 'yourFirstName',
         value: 'Daniel'
       }])
   })
 
   it('gets options from radios', async() => {
     const res = await getFormSummary(      
-    <Field name="your preferred animal">
+    <Field label="your preferred animal">
       <Label>Cats or dogs?</Label>
       <Radio value='cats'>Cats!</Radio>
       <Radio value='dogs'>Dogs!!</Radio>
     </Field>, 
-    {preferredAnimal: 'dogs'});
+    {yourPreferredAnimal: 'dogs'});
 
     expect(res).toStrictEqual([{
       type: 'field',
       label: 'Cats or dogs?',
-      name: 'your preferred animal',
+      name: 'yourPreferredAnimal',
       value: 'Dogs!!',
       options: [
         {
@@ -88,20 +88,20 @@ describe('extractFormSummary', () => {
 
   it('gets options from select', async() => {
     const res = await getFormSummary (
-      <Field name="your preferred animal">
+      <Field label="your preferred animal">
         <Label>Cats or dogs?</Label>
         <Select options={[
           {label: 'Cats!', value: 'cats'},
           {label: 'Dogs!!', value: 'dogs'}
         ]} />
       </Field>,
-      {preferredAnimal: 'dogs'}
+      {yourPreferredAnimal: 'dogs'}
     );
 
     expect(res).toStrictEqual([{
       type: 'field',
       label: 'Cats or dogs?',
-      name: 'your preferred animal',
+      name: 'yourPreferredAnimal',
       value: 'Dogs!!',
       options: [
         {
@@ -120,36 +120,36 @@ describe('extractFormSummary', () => {
 
   it('understands nested fields', async () => {
     const res = await getFormSummary(
-      <Field name='your full name'>
+      <Field label='your full name'>
         <Label>Please state your name as it appears on your passport</Label>
-        <Field name='your first name'>
+        <Field label='your first name'>
           <Label>Tell us your first name</Label>
           <TextInput /> 
         </Field>
-        <Field name='your last name'>
+        <Field label='your last name'>
           <Label>Tell us your last name</Label>
           <TextInput />
         </Field>
       </Field>,
-      {fullName: {firstName: 'Daniel', lastName: 'Rothig'}}
+      {yourFullName: {yourFirstName: 'Daniel', yourLastName: 'Rothig'}}
     )
 
     expect(res).toStrictEqual([
       {
         type: 'group',
         label: 'Please state your name as it appears on your passport',
-        name: 'your full name',
+        name: 'yourFullName',
         fields: [
           {
             type: 'field',
             label: 'Tell us your first name',
-            name: 'your first name',
+            name: 'yourFirstName',
             value: 'Daniel'
           },
           {
             type: 'field',
             label: 'Tell us your last name',
-            name: 'your last name',
+            name: 'yourLastName',
             value: 'Rothig',
           }
         ]
@@ -160,27 +160,27 @@ describe('extractFormSummary', () => {
   it('gives field information for conditionals even if the condition is not met', async () => {
     const res = await getFormSummary(
       <>
-        <Field name='your name'><TextInput /></Field>
+        <Field label='your name'><TextInput /></Field>
         <Conditional when='name' is='Krizia'>
-          <Field name='your favourite dog breed'>
+          <Field label='your favourite dog breed'>
             <Label>What is your favourite dog breed?</Label>
             <TextInput />
           </Field>
         </Conditional>
       </>,
-      {name: 'Daniel'});
+      {yourName: 'Daniel'});
 
     expect(res).toStrictEqual([
       {
         type: 'field',
         label: undefined,
-        name: 'your name',
+        name: 'yourName',
         value: 'Daniel'
       },
       {
         type: 'field',
         label: 'What is your favourite dog breed?',
-        name: 'your favourite dog breed',
+        name: 'yourFavouriteDogBreed',
         concealed: true
       }
     ])
@@ -188,32 +188,32 @@ describe('extractFormSummary', () => {
 
   it('supports Multiple', async () => {
     const res = await getFormSummary(
-      <Multiple name='favourite pets'>
-        <Field name='the sort of animal' />
-        <Field name='the name of your pet' />
+      <Multiple label='favourite pets'>
+        <Field label='the sort of animal' />
+        <Field label='the name of your pet' />
       </Multiple>,
       {favouritePets: [
-        {sortOfAnimal: 'black dog', nameOfYourPet: 'Muffin'},
-        {sortOfAnimal: 'white dog', nameOfYourPet: 'Cloud'},
+        {theSortOfAnimal: 'black dog', theNameOfYourPet: 'Muffin'},
+        {theSortOfAnimal: 'white dog', theNameOfYourPet: 'Cloud'},
       ]}
     )
 
     expect(res).toStrictEqual([
       {
         type: 'multiple',
-        name: 'favourite pets',
+        name: 'favouritePets',
         entries: [
           [
             {
               type: 'field',
               label: undefined,
-              name: 'the sort of animal',
+              name: 'theSortOfAnimal',
               value: 'black dog'
             },
             {
               type: 'field',
               label: undefined,
-              name: 'the name of your pet',
+              name: 'theNameOfYourPet',
               value: 'Muffin'
             },
           ],
@@ -221,13 +221,13 @@ describe('extractFormSummary', () => {
             {
               type: 'field',
               label: undefined,
-              name: 'the sort of animal',
+              name: 'theSortOfAnimal',
               value: 'white dog'
             },
             {
               type: 'field',
               label: undefined,
-              name: 'the name of your pet',
+              name: 'theNameOfYourPet',
               value: 'Cloud'
             },
           ],
@@ -241,12 +241,12 @@ describe('extractFormSummary', () => {
       <div>
         <div className="section">
           <h1>section one</h1>
-          <Field name='the first field' />
-          <Field name='the second field' />
+          <Field label='the first field' />
+          <Field label='the second field' />
         </div>
         <div className="section">
           <h2>section two</h2> {/* this is a h2 and shouldn't be matched - but the section should! */}
-          <Field name='the third field' />
+          <Field label='the third field' />
         </div>
       </div>,
       {},
@@ -264,12 +264,12 @@ describe('extractFormSummary', () => {
         contents: [
           {
             type: 'field',
-            name: 'the first field',
+            name: 'theFirstField',
             label: undefined
           },
           {
             type: 'field',
-            name: 'the second field',
+            name: 'theSecondField',
             label: undefined
           }
         ]
@@ -280,7 +280,7 @@ describe('extractFormSummary', () => {
         contents: [
           {
             type: 'field',
-            name: 'the third field',
+            name: 'theThirdField',
             label: undefined
           }
         ]

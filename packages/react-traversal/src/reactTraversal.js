@@ -45,13 +45,13 @@ function processChild({child, contextStack, getContents, traverse, suppressWarni
     return mapToResult(inner, contextStack);
   }
   if (child.type && child.type.$$typeof && child.type.$$typeof.toString() === "Symbol(react.lazy)") {
-    return child.type._ctor()
+    return [child.type._ctor()
       .then(mod => {
         const resolvedElement = React.createElement(
           mod.default,
           Object.assign({ref: child.ref}, child.props));
-        return mapToResult(resolvedElement, contextStack);
-      });
+        return mapToResult(resolvedElement, contextStack)[0];
+      })];
   }
   if (child.$$typeof && child.$$typeof.toString() === "Symbol(react.portal)") {
     const resolvedChildren = mapToResult(child.children, contextStack)
@@ -105,7 +105,7 @@ function processChild({child, contextStack, getContents, traverse, suppressWarni
   throw new Error(`This shouldn't happen: reactTraversal encountered element ${child}`);
 }
 
-const makeTraverseFunction = (reduce, isRoot, suppressWarnings) => {
+const makeTraverseFunction = (reduce, isRoot) => {
   
   const traverse = (element, contextStack) => {
     const getContext = ctx => getContextFromStack(contextStack, ctx)
@@ -144,16 +144,16 @@ const makeTraverseFunction = (reduce, isRoot, suppressWarnings) => {
       
         const newIsRoot = e => e === element;
         const saneOverride = ReducerFunction.cast(reduceOverride)
-        const newTraverse = makeTraverseFunction(saneOverride, newIsRoot, suppressWarnings);
-        const array = processChild({child: saneChild, traverse: newTraverse, getContents: saneOverride.getContents, contextStack, suppressWarnings});
+        const newTraverse = makeTraverseFunction(saneOverride, newIsRoot);
+        const array = processChild({child: saneChild, traverse: newTraverse, getContents: saneOverride.getContents, contextStack, suppressWarnings: saneOverride.suppressWarnings});
         
         const childrenResult = array.filter(x => x && typeof x.then === "function").length > 0
           ? Promise.all(array).then(arr => saneOverride.finalTransform(ReduceResult.flatten(arr)))
           : saneOverride.finalTransform(ReduceResult.flatten(array));
         return callback ? callback(childrenResult) : childrenResult;
       } else {
-        const array = processChild({child: element, traverse, getContents: reduce.getContents, contextStack, suppressWarnings })
-        
+        const array = processChild({child: element, traverse, getContents: reduce.getContents, contextStack, suppressWarnings: reduce.suppressWarnings })
+
         const childrenResult = array.filter(x => x && typeof x.then === "function").length > 0
           ? Promise.all(array).then(arr => ReduceResult.flatten(arr))
           : ReduceResult.flatten(array);
@@ -174,11 +174,10 @@ const makeTraverseFunction = (reduce, isRoot, suppressWarnings) => {
 
 export const traverseDepthFirst = (
   child, 
-  reduceChildrenArray,
-  suppressWarnings
+  reduceChildrenArray
 ) => {
   const saneReduceChildrenArray = ReducerFunction.cast(reduceChildrenArray || (({array}) => array));
-  const traverse = makeTraverseFunction(saneReduceChildrenArray, e => e === child, suppressWarnings);
+  const traverse = makeTraverseFunction(saneReduceChildrenArray, e => e === child);
   const res = traverse(child, []);
   return res && typeof res.then === "function"
     ? res.then(arr => saneReduceChildrenArray.finalTransform(ReduceResult.flatten(arr)))

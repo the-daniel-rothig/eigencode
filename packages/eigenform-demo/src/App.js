@@ -32,71 +32,75 @@ const Debug = () => {
 
 const ExampleForm = () => (
       <Form>
-        <Field name='your first name'>
+        <Field label='your first name'>
           <Label>First name</Label>
           <TextInput />
           <FieldFeedback />
         </Field>
-        <Field name='your last name'>
+        <Field label='your last name'>
           <Label>Last name</Label>
           <TextInput />
           <FieldFeedback />
         </Field>
-        <Field name='whether you have a middle name'>
+        <Field label='whether you have a middle name'>
           <Label>Do you have a middle name?</Label>
           <YesNo />
           <FieldFeedback />
         </Field>
         <Conditional
-          when='youHaveAMiddleName'
+          when='whetherYouHaveAMiddleName'
           is='yes'
         >
-          <Field name='your middle name'>
+          <Field label='your middle name'>
             <Label>Please tell us your middle name</Label>
             <TextInput />
             <FieldFeedback />
           </Field>
-        </Conditional>
-        <Field name='your age'>
+        </Conditional> 
+        <Field label='your age'>
           <Label>How old are you?</Label>
           <NumberInput />
           <FieldFeedback />
         </Field>
-        <Field name='the ice cream flavours'>
+        <Field label='the ice cream flavours'>
           <Label>What are your favourite ice cream flavours?</Label>
           <Checkbox value='vanilla'>Vanilla</Checkbox>
+          <Conditional includes='vanilla'>
+            <Field embedded label='if you like it with chocolate chips'>
+              <Label>Oooh, with chocolate chips?</Label>
+              <YesNo />
+              <FieldFeedback />
+            </Field>
+          </Conditional>
           <Checkbox value='chocolate'>Chocolate</Checkbox>
           <Checkbox value='strawberry'>Strawberry</Checkbox>
           <FieldFeedback />
         </Field>
 
-        <Field name='whether you like animals'>
+        <Field label='whether you like animals'>
           <Label>Do you like animals?</Label>
           <YesNo />
           <FieldFeedback />
         </Field>
-        <Conditional when='youLikeAnimals' is='yes'>
+        <Conditional when='whetherYouLikeAnimals' is='yes'>
           <Multiple name='animals' max={4}>
-            <Field name="the animal's name">
+            <Field label="the animal's name" validator={s => s.unique()}>
               <Label>Enter an animal name</Label>
               <TextInput />
               <FieldFeedback />
             </Field>
-            <Conditional when={['$firstName', 'animalsName']} is={(firstName, animal) => !!firstName && firstName === animal}>
-              Hey, that's you!
-            </Conditional>
-            <Field name='your love for the animal'>
+            <Field label='your love for the animal'>
               <Label>How much do you love this?</Label>
               <TextInput />
               <FieldFeedback />
             </Field>
-            <Field name='whether you have a pet'>
+            <Field label='whether you have a pet'>
               <Label>Do you have one as a pet?</Label>
               <YesNo />
               <FieldFeedback />
             </Field>
-            <Conditional when='youHaveAPet' is='yes'>
-              <Field name='the name of your pet'>
+            <Conditional when='whetherYouHaveAPet' is='yes'>
+              <Field label='the name of your pet'>
                 <Label>What's the name of your pet?</Label>
                 <TextInput />
                 <FieldFeedback />

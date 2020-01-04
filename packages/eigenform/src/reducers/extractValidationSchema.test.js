@@ -2,7 +2,7 @@ import React from 'react';
 import * as yup from 'yup';
 
 import { traverseDepthFirst } from "react-traversal"
-import { toSchema } from 'yup-fragment';
+import { toSchema } from './yupHelpers';
 
 import extractValidationSchema from './extractValidationSchema';
 import Field from "../form/Field";
@@ -58,6 +58,36 @@ it('works with named Field in Conditional', async () => {
   expectPasses(schema, {one: 'foobar', two: 'foo', three: 'foo'})
 })
 
+it('works with a conditional without "when" prop', async () => {
+  const schema = await getValidationSchema(
+    <>
+      <Field name='one' />
+      <Conditional is={x => x.one === 'foo'}>
+        <Field name='two' />
+      </Conditional>
+    </>
+  );
+
+  expectPasses(schema, {one: 'bar'})
+  expectFails(schema, {one: 'foo'})
+  expectPasses(schema, {one: 'foo', two: 'bar'})
+})
+
+it('works with a Conditional that uses an "includes" value', async () => {
+  const schema = await getValidationSchema(
+    <>
+      <Field name='one' />
+      <Conditional when='one' includes='foo'>
+        <Field name='two' />
+      </Conditional>
+    </>
+  );
+  
+
+  expectPasses(schema, {one: 'foo'})
+  expectFails(schema, {one: ['foo']})
+  expectPasses(schema, {one: ['foo'], two: 'bar'})
+})
 it('works with Multiple', async () => {
   const schema = await getValidationSchema(
     <>
@@ -291,4 +321,58 @@ it('enforces requiredStrict by default: named Field', async () => {
   expectFails(schema, {one: ''});
   expectFails(schema, {one: undefined});
   expectFails(schema, {});
+})
+
+it('it extracts the schema of fields that are structurally "embedded"', async () => {
+  const schema = await getValidationSchema(
+    <Field name='one'>
+      <Field embedded name='two' />
+      <div>
+        <Field embedded name='three' />
+      </div>
+    </Field>
+  );
+  expectPasses(schema, {one: 'foo', two: 'bar', three: 'baz'});
+})
+
+
+it('it works with "embedded" fields within conditionals', async () => {
+  const schema = await getValidationSchema(
+    <Field name='one'>
+      <Conditional is='foo'>
+        <Field embedded name='two' />
+      </Conditional>
+    </Field>
+  );
+  expectPasses(schema, {one: 'bar'});
+  expectFails(schema, {one: 'foo'});
+  expectPasses(schema, {one: 'foo', two: 'bar'});
+})
+
+it('works with "embedded" fields within "embedded" fields', async () => {
+  const schema = await getValidationSchema(
+    <Field name='one'>
+      <Field embedded name='two'>
+        <Field embedded name='three' />
+      </Field>
+    </Field>
+  )
+
+  expectPasses(schema, {one: 'foo', two: 'bar', three: 'baz'});
+});
+
+it('throws when there\'s "embedded" on top-level fields', async () => {
+  await expect(getValidationSchema(
+    <Field embedded name='one' />
+  )).rejects.toThrow(/embedded must be nested/);
+});
+
+it('throws on "embedded" fields that are direct children of Multiple', async () => {
+  await expect(getValidationSchema(
+    <Field name='outer'>
+      <Multiple name='multi'>
+        <Field embedded name='one' />
+      </Multiple>
+    </Field>
+  )).rejects.toThrow(/embedded must be nested/);
 })

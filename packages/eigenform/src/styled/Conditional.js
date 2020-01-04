@@ -1,19 +1,19 @@
 import React from 'react';
 
-import BaseConditional from '../form/Conditional';
 import Expanding from './Expanding';
+import { asConditional } from '../form/Conditional';
+import { withResetFields } from '../form/withResetFields';
 
-const Conditional = ({flat, ...props}) => {
+const Conditional = withResetFields(asConditional(({shouldShow, resetFields, flat, preserveValues, children}) => {
   return (
     <Expanding 
+      when={shouldShow}
+      onCollapsed={!preserveValues && resetFields}
       className={flat ? 'conditional--flat' : 'conditional'}
-      render={({show, hide}) => (
-      <BaseConditional 
-          onCollapsing={hide}
-          onExpanding={show}
-          {...props} />
-    )} />
+    >
+      {children}
+    </Expanding>
   );
-}
+}));
 
 export default Conditional;

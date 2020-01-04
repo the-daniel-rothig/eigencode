@@ -1,13 +1,32 @@
 import React, { useContext } from 'react'
 import { combineObjectPaths } from 'eigencode-shared-utils';
 import FieldContext from './FieldContext'
-import makeCamelCaseFieldName from '../util/makeCamelCaseFieldName';
 import ContextFilter from 'context-filter';
 import FormContext from './FormContext';
 
-export const FieldProvider = ({name= "", children}) => {
+export const sanitiseOuterName = (outerName, embedded) => {
+  if (!outerName && embedded) {
+    throw new Error("Fields marked embedded must be nested within another Field");
+  }
+  if (outerName && embedded) {
+    const saneOuterName = outerName || '';
+    const endIdx = Math.max(0, saneOuterName.lastIndexOf("."));
+    return saneOuterName.substring(0, endIdx);
+  }
+  return outerName || '';
+}
+
+export const getSaneName = (name, label) => {
+  if (name !== undefined) {
+    return name;
+  }
+  return (label || '').replace(/\s+(.)/g, match => match[1].toUpperCase()).replace(/[^a-z0-9]/gi, "");
+}
+
+export const FieldProvider = ({name= "", embedded, children}) => {
   const outer = useContext(FieldContext);
-  const fullyQualifiedName = combineObjectPaths(outer && outer.name, name);
+
+  const fullyQualifiedName = combineObjectPaths(sanitiseOuterName(outer && outer.name, embedded), name);
   const map = formContext => ({
     name: fullyQualifiedName,
     uid: formContext ? formContext.uid : 'form',
@@ -38,8 +57,8 @@ const FieldTag = ({className, tag, children}) => {
   );
 }
 
-const Field = ({className, tag, children, name, ...rest}) => (
-  <FieldProvider name={makeCamelCaseFieldName(name)} {...rest}>
+const Field = ({className, tag, children, name, label, ...rest}) => (
+  <FieldProvider name={getSaneName(name, label)} {...rest}>
     <FieldTag tag={tag} className={className}>{children}</FieldTag>
   </FieldProvider>
 )

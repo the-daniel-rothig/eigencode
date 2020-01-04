@@ -1,10 +1,13 @@
 import React, { useRef, useLayoutEffect, useState} from 'react';
 import AnimateHeight from 'react-animate-height';
-import { useExpiringState } from 'eigencode-shared-utils';
 
-const Expanding = ({render, className, children, bounce = true}) => {
+const Expanding = ({when, onCollapsed, onExpanding, children, className, bounce = true}) => {
   const divRef = useRef();
-  const [state, setState, isStale] = useExpiringState({collapsed: !!bounce});
+  const [childrenMemo, setChildrenMemo] = useState();
+  if (when && children !== childrenMemo) {
+    setChildrenMemo(children);
+  }
+  const [state, setState] = useState({collapsed: !!bounce});
   const [animating, setAnimating] = useState(false);
 
   useLayoutEffect(() => {
@@ -16,20 +19,18 @@ const Expanding = ({render, className, children, bounce = true}) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  
-  const hide = next => {
-    setState({collapsed: true, cb: next});
+  if(className === "multiple__item") {
+    debugger;
   }
 
-  const show = next => {
+  if (when && state.collapsed) {
     if (animating) {
-      setState({cb: next, collapsed: false, multipleAnimations: true})
+      setTimeout(() => setState({collapsed: false, multipleAnimations: true}))
     } else {
-      setState({collapsed: false})
-      if (next) {
-        next();
-      }
+      setTimeout(() => setState({collapsed: false}));
     }
+  } else if (!when && !state.collapsed) {
+    setTimeout(() => setState({collapsed: true}));
   }
 
   return (
@@ -37,21 +38,25 @@ const Expanding = ({render, className, children, bounce = true}) => {
       className='expanding'
       duration={state.multipleAnimations ? 5 : 200}
       height={state.collapsed ? 0 : 'auto'}
-      onAnimationStart={() => {
+      onAnimationStart={({newHeight}) => {
+        if (onExpanding && newHeight !== 0) {
+          onExpanding();
+        }
         setAnimating(true)
       }}
-      onAnimationEnd={() => {
-        if (!isStale() && state.cb) {
-          // the timeout ensures the callback is invoked
-          // after AnimateHeight has unmounted the contents
-          setTimeout(state.cb, 0);
+      onAnimationEnd={({newHeight}) => {
+        if (newHeight === 0) {
+          setChildrenMemo(null);
+        }
+        if (onCollapsed && newHeight === 0) {
+          onCollapsed();
         }
         setAnimating(false)
       }}
     >
       <div className='expanding-layout-reset'/>
       <div ref={divRef} className={className}>
-        {render ? render({show, hide}) : children}
+        {childrenMemo}
       </div>
     </AnimateHeight> 
   );

@@ -209,8 +209,6 @@ const doMapElement = (mapElement, element, memo, siblingIndex, siblingCount) => 
 
 const makeElementMapper = mapElement => {
   const elementMapper = (childElement, memo, siblingIndex, siblingCount) => {
-    //console.log('render recursor for', childElement && childElement.type ? childElement.type.name || childElement.type : childElement)
-  
     if (childElement && childElement.type === Substituting) {
       const mapElementOne = mapElement;
       const memoOne = memo;
@@ -385,24 +383,25 @@ const makeElementMapper = mapElement => {
         })
       });
 
-      const element = <MappedForwardRef {...mapped.props} />
-      return {
-        ...element,
-        key: mapped.key,
-        ref: mapped.ref,
-      }
+      const element = <MappedForwardRef {...mapped.props} key={mapped.key} ref={mapped.ref} />
+      return element;
+      // return {
+      //   ...element,
+      //   key: mapped.key,
+      //   ref: mapped.ref,
+      // }
     }
 
     if (shouldConstruct(mapped.type)) {
       const Derived = getDerivedClass(mapped.type);
-      //console.log('derived class', Derived.displayName);
-      const res = <Derived ___EIGENCODE_MEMO={mappedMemo} ___EIGENCODE_ELEMENTMAPPER={elementMapper} ___EIGENCODE_ONCHILDREN={onChildren} {...mapped.props} />
-      
-      return {
-        ...res,
-        key: mapped.key,
-        ref: mapped.ref
-      }
+      const res = <Derived ___EIGENCODE_MEMO={mappedMemo} ___EIGENCODE_ELEMENTMAPPER={elementMapper} ___EIGENCODE_ONCHILDREN={onChildren} key={mapped.key} ref={mapped.ref} {...mapped.props} />
+      return res;
+
+      // return {
+      //   ...res,
+      //   key: mapped.key,
+      //   ref: mapped.ref
+      // }
     }
 
     if (typeof mapped.type === "function") {
