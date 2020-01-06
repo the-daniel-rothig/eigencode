@@ -10,8 +10,6 @@ const FieldFeedback = () => {
       <FieldFeedbackBase>{errorMessage}</FieldFeedbackBase>
     </Expanding>
   );
-   
-  
 }
 
 export default FieldFeedback;

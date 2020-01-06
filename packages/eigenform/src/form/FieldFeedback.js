@@ -9,6 +9,7 @@ export const useFieldFeedback = () => {
   const validation = useContext(ValidationScopeContext);
   
   const error = field && validation && validation.errors && validation.errors.find(x => x.path === field.name);
+  console.log('errormsg', field.name, validation.errors);
   const errorMessage = sentenceCase(error ? error.message : "");
   
   return errorMessage;

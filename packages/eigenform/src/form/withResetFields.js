@@ -3,8 +3,8 @@ import { withFilteredContext } from 'context-filter';
 
 import FieldContext from './FieldContext';
 import FormContext from './FormContext';
-import Field, { sanitiseOuterName, getSaneName } from './Field';
-import Multiple from './Multiple';
+import { sanitiseOuterName, getSaneName, $isField } from './Field';
+import { $isMultiple } from './Multiple';
 import { ReducerFunction, traverseDepthFirst } from 'react-traversal';
 import { combineObjectPaths } from 'eigencode-shared-utils';
 import isEqual from 'lodash/isEqual';
@@ -13,7 +13,7 @@ import flatten from 'lodash/flattenDeep';
 const makeGetFieldNames = outerName => new ReducerFunction({
   reduce: ({unbox, element, isLeaf}) => {
     if(isLeaf) return unbox();
-    if (element.type === Field || element.type === Multiple) {
+    if (element.type && (element.type[$isField] ||element.type[$isMultiple])) {
       // we can just capture the top level field names here - removing them
       // will implicitly remove their descendants. no need to unbox.
       const name = combineObjectPaths(

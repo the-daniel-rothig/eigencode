@@ -5,9 +5,9 @@ import { ReducerFunction } from 'react-traversal';
 
 import isEqual from 'lodash/isEqual';
 
-import Field, { getSaneName } from '../form/Field';
-import Multiple from '../form/Multiple';
-import Conditional, { getSaneIs } from '../form/Conditional';
+import { getSaneName, $isField } from '../form/Field';
+import { $isMultiple } from '../form/Multiple';
+import { getSaneIs } from '../form/Conditional';
 import NumberInput from '../form/NumberInput';
 import EmailInput from '../form/EmailInput';
 import Select from '../form/Select';
@@ -97,7 +97,7 @@ const shouldUpdate = (previous, next) => {
 }
 
 const getContents = ({element, defaultReturn}) => {
-  if (element && element.type && ([Multiple, Conditional].includes(element.type) || element.type[$isConditional])) {
+  if (element && element.type && (element.type[$isConditional] || element.type[$isMultiple])) {
     return element.props.children;
   }
   return defaultReturn;
@@ -121,7 +121,7 @@ const reduce = ({element, unbox, isLeaf}) => {
   } else if (type === Radio) {
     const allowedValues = [(props.value || props.children || "").toString()]
     return s => s.oneOf(allowedValues);
-  } else if (type === Field) {
+  } else if (type && type[$isField]) {
     return unbox(res => {
       const combined = mergeYupFragments(res);
       const fragmentWithThis = mergeYupFragments([
@@ -135,7 +135,7 @@ const reduce = ({element, unbox, isLeaf}) => {
         ? appendToEmbeddedFields(() => resultSchema)
         : resultSchema;
     })
-  } else if (type === Conditional || type[$isConditional]) {
+  } else if (type && type[$isConditional]) {
     const saneIs = getSaneIs(props.is, props.includes, props.when);
     return unbox(res => {
       let combined = mergeYupFragments(res);
@@ -165,7 +165,7 @@ const reduce = ({element, unbox, isLeaf}) => {
       return resultSchema;
 
     })
-  } else if (type === Multiple) {
+  } else if (type && type[$isMultiple]) {
     return unbox(res => {
       const combined = mergeYupFragments(res);
       if (!combined) {

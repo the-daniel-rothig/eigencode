@@ -7,30 +7,31 @@ const Expanding = ({when, onCollapsed, onExpanding, children, className, bounce 
   if (when && children !== childrenMemo) {
     setChildrenMemo(children);
   }
-  const [state, setState] = useState({collapsed: !!bounce});
+  const [state, setState] = useState({collapsed: !!bounce, bounce});
   const [animating, setAnimating] = useState(false);
 
   useLayoutEffect(() => {
     if (!divRef.current || divRef.current.innerHTML.length === 0) {
       setState({collapsed: true})
     } else {
-      setState({})
+      setState({collapsed: false})
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  if(className === "multiple__item") {
-    debugger;
-  }
-
-  if (when && state.collapsed) {
+  if (when && state.bounce) {
+    // edge case: on initial render, we may want for the contents to "bounce up",
+    // ie. animate into place. For this to work, AnimateHeight needs to complete one
+    // render cycle in the collapsed state, hence the need to set a timeout.
+    setTimeout(() => setState({collapsed: false}))
+  } else if (when && state.collapsed) {
     if (animating) {
-      setTimeout(() => setState({collapsed: false, multipleAnimations: true}))
+      setState({collapsed: false, multipleAnimations: true});
     } else {
-      setTimeout(() => setState({collapsed: false}));
+      setState({collapsed: false});
     }
   } else if (!when && !state.collapsed) {
-    setTimeout(() => setState({collapsed: true}));
+    setState({collapsed: true});
   }
 
   return (
