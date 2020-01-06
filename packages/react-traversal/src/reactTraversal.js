@@ -145,14 +145,14 @@ const makeTraverseFunction = (reduce, isRoot) => {
         const newIsRoot = e => e === element;
         const saneOverride = ReducerFunction.cast(reduceOverride)
         const newTraverse = makeTraverseFunction(saneOverride, newIsRoot);
-        const array = processChild({child: saneChild, traverse: newTraverse, getContents: saneOverride.getContents, contextStack, suppressWarnings: saneOverride.suppressWarnings});
+        const array = processChild({child: saneChild, traverse: newTraverse, getContents: (...args) => saneOverride.getContents(...args), contextStack, suppressWarnings: saneOverride.suppressWarnings});
         
         const childrenResult = array.filter(x => x && typeof x.then === "function").length > 0
           ? Promise.all(array).then(arr => saneOverride.finalTransform(ReduceResult.flatten(arr)))
           : saneOverride.finalTransform(ReduceResult.flatten(array));
         return callback ? callback(childrenResult) : childrenResult;
       } else {
-        const array = processChild({child: element, traverse, getContents: reduce.getContents, contextStack, suppressWarnings: reduce.suppressWarnings })
+        const array = processChild({child: element, traverse, getContents: (...args) => reduce.getContents(...args), contextStack, suppressWarnings: reduce.suppressWarnings })
 
         const childrenResult = array.filter(x => x && typeof x.then === "function").length > 0
           ? Promise.all(array).then(arr => ReduceResult.flatten(arr))

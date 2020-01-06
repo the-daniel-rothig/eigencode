@@ -96,109 +96,126 @@ const shouldUpdate = (previous, next) => {
   );
 }
 
-const getContents = ({element, defaultReturn}) => {
-  if (element && element.type && (element.type[$isConditional] || element.type[$isMultiple])) {
-    return element.props.children;
-  }
-  return defaultReturn;
-};
-
-const reduce = ({element, unbox, isLeaf}) => {
+const reduce = ({unbox, isLeaf}) => {
   if (isLeaf) {
     return undefined;
   }
-  const {props, type} = element;
-  if (type === TextInput) {
-    return yup.string().meta({simpleDescriptor: 'yup_string'});
-  } else if (type === EmailInput) {
-    return yup.string().email().meta({simpleDescriptor: 'yup_string_email'});
-  } else if (type === NumberInput) {
-    return yup.string().matches(/^[0-9]*$/).meta({simpleDescriptor: 'yup_string_numberlike'});
-  } else if (type === Select) {
-    const allowedValues = (props.options || []).map(opt => 
-      typeof opt.value === "string" ? opt.value : typeof opt.label === "string" ? opt.label : opt);
-    return s => s.oneOf(allowedValues)
-  } else if (type === Radio) {
-    const allowedValues = [(props.value || props.children || "").toString()]
-    return s => s.oneOf(allowedValues);
-  } else if (type && type[$isField]) {
-    return unbox(res => {
-      const combined = mergeYupFragments(res);
-      const fragmentWithThis = mergeYupFragments([
-        !props.optional && (s => s.requiredStrict()),
-        (s => s.label(getSaneLabel(props.name, props.label))),
-        props.validator, 
-        combined])
-      const name = getSaneName(props.name, props.label);
-      const resultSchema = toNamedFieldSchema(fragmentWithThis, name)
-      return props.embedded
-        ? appendToEmbeddedFields(() => resultSchema)
-        : resultSchema;
-    })
-  } else if (type && type[$isConditional]) {
-    const saneIs = getSaneIs(props.is, props.includes, props.when);
-    return unbox(res => {
-      let combined = mergeYupFragments(res);
-      if (!combined) {
-        return undefined;
-      }
-
-      const whenWithDots = Array.isArray(props.when)
-        ? props.when.map(dottify) 
-        : dottify(props.when || '');
-        
-      let resultSchema = s => s.when(whenWithDots, {
-        is: saneIs,
-        then: s => toSchema(mergeYupFragments([s, combined]))
-      });
-
-      const combinedSchema = toSchema(combined);
-
-      if (combinedSchema._meta && combinedSchema._meta[embeddedFieldsKey]) {
-        const conditionalEmbedded = name => yup.object().when(dottify(name), {
-          is: saneIs,
-          then: combinedSchema._meta[embeddedFieldsKey](name)
-        });
-        const oldResultSchema = resultSchema;
-        resultSchema = s => oldResultSchema(s).meta({ [embeddedFieldsKey]: conditionalEmbedded });
-      }
-      return resultSchema;
-
-    })
-  } else if (type && type[$isMultiple]) {
-    return unbox(res => {
-      const combined = mergeYupFragments(res);
-      if (!combined) {
-        return undefined;
-      }
-      let multiSchemaFragments = [
-        !props.optional && (s => s.requiredStrict()),
-        props.min !== 0 && (s => s.min(props.min || 1)),
-        props.max && (s => s.max(props.max)),
-        (s => s.label(getSaneLabel(props.name, props.label))),
-        props.validator,
-        yup.array(toSchema(combined) || undefined),
-      ];
-
-      if (toSchema(combined)._meta && toSchema(combined)._meta[embeddedFieldsKey]) {
-        // note: this is a bit of a feature gap. It may sometimes make sense to include
-        // a top-level field into the Multiple structure - not within a single item but
-        // e.g. between the item list and the AddAnother button.
-        throw new Error('Fields marked embedded must be nested within another Field');
-      }
-      
-      const multiSchema = toSchema(mergeYupFragments(multiSchemaFragments));
-      const name = getSaneName(props.name, props.label);    
-
-      return toNamedFieldSchema(multiSchema, name);
-    })
-  } else {
-    return unbox(res => {
-      return mergeYupFragments(res);
-    })
-  }
+  
+  return unbox(res => {
+    return mergeYupFragments(res);
+  })
 };
 
 const finalTransform = x => toSchema(x[0]);
 
-export default new ReducerFunction({reduce, shouldUpdate, getContents, finalTransform, suppressWarnings: true});
+const extractValidationSchema = new ReducerFunction({reduce, shouldUpdate, finalTransform, suppressWarnings: true});
+
+extractValidationSchema.addReducerRule($isMultiple, ({element, unbox}) => {
+  const { props } = element;
+  return unbox(res => {
+    const combined = mergeYupFragments(res);
+    if (!combined) {
+      return undefined;
+    }
+    let multiSchemaFragments = [
+      !props.optional && (s => s.requiredStrict()),
+      props.min !== 0 && (s => s.min(props.min || 1)),
+      props.max && (s => s.max(props.max)),
+      (s => s.label(getSaneLabel(props.name, props.label))),
+      props.validator,
+      yup.array(toSchema(combined) || undefined),
+    ];
+
+    if (toSchema(combined)._meta && toSchema(combined)._meta[embeddedFieldsKey]) {
+      // note: this is a bit of a feature gap. It may sometimes make sense to include
+      // a top-level field into the Multiple structure - not within a single item but
+      // e.g. between the item list and the AddAnother button.
+      throw new Error('Fields marked embedded must be nested within another Field');
+    }
+    
+    const multiSchema = toSchema(mergeYupFragments(multiSchemaFragments));
+    const name = getSaneName(props.name, props.label);    
+
+    return toNamedFieldSchema(multiSchema, name);
+  })
+})
+
+extractValidationSchema.addReducerRule($isConditional, ({element, unbox}) => {
+  const { props } = element;
+  const saneIs = getSaneIs(props.is, props.includes, props.when);
+  return unbox(res => {
+    let combined = mergeYupFragments(res);
+    if (!combined) {
+      return undefined;
+    }
+
+    const whenWithDots = Array.isArray(props.when)
+      ? props.when.map(dottify) 
+      : dottify(props.when || '');
+      
+    let resultSchema = s => s.when(whenWithDots, {
+      is: saneIs,
+      then: s => toSchema(mergeYupFragments([s, combined]))
+    });
+
+    const combinedSchema = toSchema(combined);
+
+    if (combinedSchema._meta && combinedSchema._meta[embeddedFieldsKey]) {
+      const conditionalEmbedded = name => yup.object().when(dottify(name), {
+        is: saneIs,
+        then: combinedSchema._meta[embeddedFieldsKey](name)
+      });
+      const oldResultSchema = resultSchema;
+      resultSchema = s => oldResultSchema(s).meta({ [embeddedFieldsKey]: conditionalEmbedded });
+    }
+    return resultSchema;
+
+  })
+})
+
+extractValidationSchema.addReducerRule($isField, ({element, unbox}) => {
+  const { props } = element; 
+  return unbox(res => {
+    const combined = mergeYupFragments(res);
+    const fragmentWithThis = mergeYupFragments([
+      !props.optional && (s => s.requiredStrict()),
+      (s => s.label(getSaneLabel(props.name, props.label))),
+      props.validator, 
+      combined])
+    const name = getSaneName(props.name, props.label);
+    const resultSchema = toNamedFieldSchema(fragmentWithThis, name)
+    return props.embedded
+      ? appendToEmbeddedFields(() => resultSchema)
+      : resultSchema;
+  })
+})
+
+extractValidationSchema.addReducerRule(TextInput, () => {
+  return yup.string().meta({simpleDescriptor: 'yup_string'});
+})
+
+extractValidationSchema.addReducerRule(EmailInput, () => {
+  return yup.string().email().meta({simpleDescriptor: 'yup_string_email'});
+})
+
+extractValidationSchema.addReducerRule(NumberInput, () => {
+  return yup.string().matches(/^[0-9]*$/).meta({simpleDescriptor: 'yup_string_numberlike'});
+})
+
+extractValidationSchema.addReducerRule(Select, ({element}) => {
+  const { props } = element;
+  const allowedValues = (props.options || []).map(opt => 
+    typeof opt.value === "string" ? opt.value : typeof opt.label === "string" ? opt.label : opt);
+  return s => s.oneOf(allowedValues)
+})
+
+extractValidationSchema.addReducerRule(Radio, ({element}) => {
+  const { props } = element;
+  const allowedValues = [(props.value || props.children || "").toString()]
+  return s => s.oneOf(allowedValues);
+});
+
+extractValidationSchema.addGetContentsRule($isConditional, ({element}) => element.props.children)
+extractValidationSchema.addGetContentsRule($isMultiple, ({element}) => element.props.children)
+
+export default extractValidationSchema;

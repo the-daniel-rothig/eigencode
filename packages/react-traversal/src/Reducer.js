@@ -37,7 +37,7 @@ const mapElement = (initialReducerFunction, onFinish) => ({element, memo, getCon
     
   if (!element || typeof element !== "object" || (Array.isArray(element) && element.length === 0)) {  
     const unbox = () => unbox;
-    let res = reducerFunction.reduce({unbox , element, getContext, isRoot: root === element, isLeaf: true})
+    let res = reducerFunction.reduce({unbox, element, getContext, isRoot: root === element, isLeaf: true})
     
     if (res === unbox) res = [];
 

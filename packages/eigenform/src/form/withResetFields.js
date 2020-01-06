@@ -10,24 +10,27 @@ import { combineObjectPaths } from 'eigencode-shared-utils';
 import isEqual from 'lodash/isEqual';
 import flatten from 'lodash/flattenDeep';
 
-const makeGetFieldNames = outerName => new ReducerFunction({
-  reduce: ({unbox, element, isLeaf}) => {
-    if(isLeaf) return unbox();
-    if (element.type && (element.type[$isField] ||element.type[$isMultiple])) {
-      // we can just capture the top level field names here - removing them
-      // will implicitly remove their descendants. no need to unbox.
-      const name = combineObjectPaths(
-        sanitiseOuterName(outerName, element.props.embedded),
-        getSaneName(element.props.name, element.props.label)
-      );
-      return [name];
-    }
-    return unbox();
-  },
+const determineName = ({element, getContext}) => {
+  // we can just capture the top level field names here - removing them
+  // will implicitly remove their descendants. no need to unbox.
+  const outer = getContext(FieldContext);
+  const name = combineObjectPaths(
+    sanitiseOuterName(outer && outer.name, element.props.embedded),
+    getSaneName(element.props.name, element.props.label)
+  );
+  return [name];
+}
+
+export const getFieldNames = new ReducerFunction({
+  reduce: ({unbox}) => unbox(),
   shouldUpdate: (a,b) => !isEqual(a,b),
   // todo: Reducer needs to implement unbox correctly to use resultset.
   finalTransform: x => flatten(x).filter(Boolean)
 });
+
+getFieldNames.addReducerRule($isField, determineName);
+
+getFieldNames.addReducerRule($isMultiple, determineName);
 
 export const withResetFields = (Component) => {
   return withFilteredContext({
@@ -40,7 +43,6 @@ export const withResetFields = (Component) => {
       }
     })
   })(({resetFieldsContext, ...props}) => {
-    const getFieldNames = makeGetFieldNames(resetFieldsContext.name);
     const fields = traverseDepthFirst(<>{props.children}</>, getFieldNames);
     const resetFields = () => {
       fields.forEach(name => {
