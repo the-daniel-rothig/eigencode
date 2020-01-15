@@ -61,7 +61,8 @@ export const asConditional = (Component) => {
       
       const shouldShow = isConditionalShowing(when, is, includes, fieldContext && fieldContext.name, key => whenValues[key])
       return { shouldShow };
-    }
+    },
+    isUnchanged: (before, after) => before.shouldShow === after.shouldShow
   }))(Component);
 
   Hoc[$isConditional] = true;
