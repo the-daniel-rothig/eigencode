@@ -1,5 +1,5 @@
 import React from 'react';
-import { withFilteredContext } from 'context-filter';
+import { withFilteredContext } from 'react-context-filter';
 
 import FieldContext from './FieldContext';
 import FormContext from './FormContext';

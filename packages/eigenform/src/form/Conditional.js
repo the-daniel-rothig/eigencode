@@ -3,7 +3,7 @@ import React from 'react';
 import FieldContext from './FieldContext';
 import FormContext from './FormContext';
 import { usePrevious } from 'eigencode-shared-utils';
-import { withFilteredContext } from 'context-filter';
+import { withFilteredContext } from 'react-context-filter';
 import { withResetFields } from './withResetFields';
 
 export const isConditionalShowing = (when = '', is, includes, outerName, getValue)  => {

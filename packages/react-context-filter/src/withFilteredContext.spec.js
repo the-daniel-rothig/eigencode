@@ -19,8 +19,8 @@ const Hoc = withFilteredContext({
 
 let setProviderState = null;
 
-const Provider = ({children}) => {
-  const [state, setState] = useState('success');
+const Provider = ({initialValue, children}) => {
+  const [state, setState] = useState(initialValue || 'success');
   setProviderState = setState;
   return <Context.Provider value={state}>{children}</Context.Provider>
 }
@@ -163,18 +163,51 @@ it('uses a throwaway context type when no `to` option is given', () => {
   expect(getByText('huge success')).toBeTruthy();
 })
 
+const DirectHoc = withFilteredContext({
+  of: Context,
+  map: x => x
+})((props) => <pre>{JSON.stringify(props)}</pre>)
 
-it('gives a context prop if the map return value is plain', () => {
-  const PlainHoc = withFilteredContext({
-    of: Context,
-    map: x => x
-  })(({context}) => <span>{context}</span>)
-
-  const { getByText } = render(
-    <Context.Provider value='success'>
-      <PlainHoc />
+it('throws an exception if the return value is plain', () => {
+  expect(() => render(
+    <Context.Provider value='just-a-string'>
+      <DirectHoc />
     </Context.Provider>
+  )).toThrow();
+})
+
+it('works if the return value is null', () => {
+  const { getByText } = render(
+    <Context.Provider value={null}>
+      <DirectHoc />
+    </Context.Provider>
+  );
+
+  expect(getByText("{}")).toBeTruthy();
+})
+
+it('does a shallowCompare by default', () => {
+  let renderCount = 0;
+
+  const Hoc = withFilteredContext({
+    of: Context,
+    map: context => context
+  })(() => {
+    renderCount++;
+    return null;
+  });
+
+  render (
+    <Provider initialValue={{}}>
+      <Hoc />
+    </Provider>
   )
 
-  expect(getByText('success')).toBeTruthy();
+  const message = "success";
+
+  expect(renderCount).toBe(1);
+  setProviderState({message});
+  expect(renderCount).toBe(2);
+  setProviderState({message});
+  expect(renderCount).toBe(2); // reference equality hence no re-eval.
 })

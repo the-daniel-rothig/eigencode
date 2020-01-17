@@ -1,7 +1,7 @@
 import React from 'react'
 import { combineObjectPaths } from 'eigencode-shared-utils';
 import FieldContext from './FieldContext'
-import { withFilteredContext } from 'context-filter';
+import { withFilteredContext } from 'react-context-filter';
 import FormContext from './FormContext';
 
 export const sanitiseOuterName = (outerName, embedded) => {

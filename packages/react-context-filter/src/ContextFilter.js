@@ -55,7 +55,7 @@ const ContextFilterLayer = ({type, inner, values = []}) => {
   return React.cloneElement(inner, {values: [...values, context]});
 }
 
-const ContextFilterProbe = ({of: ofContext, to: toContext, map, isUnchanged, children,}) => {
+const ContextFilterProbe = ({of: ofContext, to: toContext, map, isUnchanged, children}) => {
   if (!ofContext) {
     throw new Error('ContextFilter requires "of" property');
   }

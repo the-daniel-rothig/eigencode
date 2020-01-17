@@ -1,7 +1,7 @@
 /* eslint-disable no-template-curly-in-string */
-import { setLocale } from 'yup'
+import { setLocale as yupSetLocale } from 'yup'
 
-export const localeValues = {
+const defaultLocaleValues = {
   mixed: {
     default: 'please correct ${label}',
     required: 'please enter ${label}',
@@ -15,4 +15,21 @@ export const localeValues = {
   }
 }
 
-export default () => setLocale(localeValues)
+let localeValues;
+
+export const setLocale = (values = defaultLocaleValues) => {
+  localeValues = values;
+  yupSetLocale(values);
+}
+
+setLocale(defaultLocaleValues);
+
+export const getLocale = (schemaName, methodName) => {
+  if (localeValues[schemaName] && localeValues[schemaName][methodName]) {
+    return localeValues[schemaName][methodName];
+  } else if (localeValues.mixed && localeValues.mixed[methodName]) {
+    return localeValues.mixed[methodName];
+  } else {
+    return null;
+  }
+}

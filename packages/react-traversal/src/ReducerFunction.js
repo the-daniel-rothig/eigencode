@@ -47,7 +47,6 @@ export default class ReducerFunction {
 
   getContents(options) {
     const { element } = options;
-    console.log('getContents', options, this);
     
     for (let i = this._getContentsFragments.length - 1; i >= 0; i--) {
       const { predicate, callback } = this._getContentsFragments[i];

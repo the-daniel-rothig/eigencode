@@ -1,6 +1,6 @@
 import { string, mixed, array, object } from 'yup';
 import './additionalMethods';
-import setDefaultLocale from './setDefaultLocale';
+import { setLocale } from './yupLocale';
 
 describe('doesNotContain', () => {
   it('works with a string', () => {
@@ -18,7 +18,7 @@ describe('doesNotContain', () => {
   })
 
   it('respects default locale', () => {
-    setDefaultLocale();
+    setLocale();
     const schema = string().mustNotContain(/[0-9]/)
     return expect(schema.validate('hello 123 bye')).rejects.toThrow("this must not contain '1'")
   })

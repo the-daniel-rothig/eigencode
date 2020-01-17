@@ -1,5 +1,5 @@
 import { string, mixed, addMethod } from 'yup'
-import { localeValues } from './setDefaultLocale';
+import { getLocale } from './yupLocale';
 import { deepGet } from 'eigencode-shared-utils/src/objectTraversal';
 
 addMethod(string, 'mustNotContain', function(stringOrRegex, message) {
@@ -14,7 +14,7 @@ addMethod(string, 'mustNotContain', function(stringOrRegex, message) {
   return this.test({
     name: 'mustNotContain',
     params,
-    message: message || localeValues.string.mustNotContain,
+    message: message || getLocale('string', 'mustNotContain'),
     test: function(value) {
       const match = getMatch(value)
       return match ? this.createError({ params: { match: match[0] } }) : true;
@@ -27,7 +27,7 @@ const notJustWhitespaceTestRegex = /[^\s]+/m;
 addMethod(mixed, 'requiredStrict', function(message) {
   return this.test({
     name: 'requiredStrict',
-    message: message || localeValues.mixed.requiredStrict || localeValues.mixed.required,
+    message: message || getLocale('mixed', 'requiredStrict') || getLocale('mixed', 'required'),
     exclusive: true,
     test: function(value) {
       return value !== null && value !== undefined && (Array.isArray(value) || notJustWhitespaceTestRegex.test(`${value}`))
@@ -41,7 +41,7 @@ const lastNumberIndexRegex = /\[([0-9]+)\](?!.*\[[0-9]+\])/;
 addMethod(mixed, 'unique', function(selector = x=>x, message) {
   return this.test({
     name: 'unique',
-    message: message || localeValues.mixed.unique,
+    message: message || getLocale('mixed', 'unique'),
     test: function(value) {
       const match = this.path.match(lastNumberIndexRegex);
       if (!match) {

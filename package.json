@@ -1,8 +1,7 @@
 {
   "private": true,
   "workspaces": [
-    "packages/context-filter",
-    "packages/destructure-probe",
+    "packages/react-context-filter",
     "packages/eigencode-shared-utils",
     "packages/eigenform",
     "packages/eigenform-demo",

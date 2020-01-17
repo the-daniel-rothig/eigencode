@@ -1,2 +1,2 @@
 import './additionalMethods';
-export { default as setDefaultLocale } from './setDefaultLocale';
+export { setLocale } from './yupLocale';
