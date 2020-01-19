@@ -1,5 +1,5 @@
 import React from 'react';
-import Substituting from './Substituting';
+import Replacer from 'react-replacer';
 
 const makeValueMap = () => {
   const map = new Map()
@@ -30,21 +30,21 @@ const makeValueMap = () => {
   };
 }
 
-const mapElement = (initialReducerFunction, onFinish) => ({element, memo, getContext, siblingIndex}) => {
+const mapElement = (initialCustomRenderFunction, onFinish) => ({element, memo, getContext, siblingIndex}) => {
   const idx = siblingIndex || 0;
   const root = memo ? memo.root : element;
-  const reducerFunction = (memo && memo.reducerFunction) || initialReducerFunction;  
+  const customRenderFunction = (memo && memo.customRenderFunction) || initialCustomRenderFunction;  
     
   if (!element || typeof element !== "object" || (Array.isArray(element) && element.length === 0)) {  
     const unbox = () => unbox;
-    let res = reducerFunction.reduce({unbox, element, getContext, isRoot: root === element, isLeaf: true})
+    let res = customRenderFunction.reduce({unbox, element, getContext, isRoot: root === element, isLeaf: true})
     
     if (res === unbox) res = [];
 
     if (memo) {
       memo.returnValue(res, idx)
     } else {
-      onFinish(reducerFunction.finalTransform([res]))
+      onFinish(customRenderFunction.finalTransform([res]))
     }
     return [element, {root}];
   }
@@ -60,7 +60,7 @@ const mapElement = (initialReducerFunction, onFinish) => ({element, memo, getCon
 
   const childrenValues = childMap.values;
 
-  let newReducerFunction = reducerFunction;
+  let newCustomRenderFunction = customRenderFunction;
   let newElement = element;
   let resolveCb = null;
   const unbox = (...args) => {
@@ -69,7 +69,7 @@ const mapElement = (initialReducerFunction, onFinish) => ({element, memo, getCon
         resolveCb = args[0]
         break;
       case 2:
-        newReducerFunction = args[0];
+        newCustomRenderFunction = args[0];
         resolveCb = args[1];
         break;
       default: //do nothing
@@ -78,7 +78,7 @@ const mapElement = (initialReducerFunction, onFinish) => ({element, memo, getCon
     return unbox;
   }
   
-  const reduceResult = reducerFunction.reduce({unbox, element, getContext, isRoot: element === root, isLeaf: false});
+  const reduceResult = customRenderFunction.reduce({unbox, element, getContext, isRoot: element === root, isLeaf: false});
   
   const returnValue = (val, indexOrElement) => {
     const oldValue = childrenValues.get(indexOrElement);
@@ -88,8 +88,8 @@ const mapElement = (initialReducerFunction, onFinish) => ({element, memo, getCon
     
     if (
       !hasOldValue || 
-      typeof reducerFunction.shouldUpdate !== "function" || 
-      reducerFunction.shouldUpdate(oldValue, val)
+      typeof customRenderFunction.shouldUpdate !== "function" || 
+      customRenderFunction.shouldUpdate(oldValue, val)
     ) {
       resolveIfComplete();
     }
@@ -132,23 +132,23 @@ const mapElement = (initialReducerFunction, onFinish) => ({element, memo, getCon
     if (memo) {
       memo.returnValue(rtnValue, element);
     } else {
-      onFinish(reducerFunction.finalTransform([rtnValue]))
+      onFinish(customRenderFunction.finalTransform([rtnValue]))
     }
   }
 
   const childrenMaps = childMap.children;
 
-  return [newElement, {returnValue, reducerFunction: newReducerFunction, root, childrenMaps}, {onChildrenArrayResolved}];
+  return [newElement, {returnValue, customRenderFunction: newCustomRenderFunction, root, childrenMaps}, {onChildrenArrayResolved}];
 }
 
-const Reducer = ({children, reducerFunction, onFinish}) => {
-  const map = React.useMemo(() => mapElement(reducerFunction, onFinish), [reducerFunction, onFinish]);
+const CustomRenderer = ({children, customRenderFunction, onFinish}) => {
+  const map = React.useMemo(() => mapElement(customRenderFunction, onFinish), [customRenderFunction, onFinish]);
 
   return (
-    <Substituting mapElement={map}>
+    <Replacer mapElement={map}>
       <>{children}</>
-    </Substituting>
+    </Replacer>
   )
 }
 
-export default Reducer;
+export default CustomRenderer;

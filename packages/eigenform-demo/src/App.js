@@ -76,7 +76,6 @@ const ExampleForm = () => (
           <Checkbox value='strawberry'>Strawberry</Checkbox>
           <FieldFeedback />
         </Field>
-
         <Field label='whether you like animals'>
           <Label>Do you like animals?</Label>
           <YesNo />

@@ -5,7 +5,7 @@ import FieldContext from './FieldContext';
 import FormContext from './FormContext';
 import { sanitiseOuterName, getSaneName, $isField } from './Field';
 import { $isMultiple } from './Multiple';
-import { ReducerFunction, traverseDepthFirst } from 'react-traversal';
+import { CustomRenderFunction } from 'react-custom-renderer';
 import { combineObjectPaths } from 'eigencode-shared-utils';
 import isEqual from 'lodash/isEqual';
 import flatten from 'lodash/flattenDeep';
@@ -21,7 +21,7 @@ const determineName = ({element, getContext}) => {
   return [name];
 }
 
-export const getFieldNames = new ReducerFunction({
+export const getFieldNames = new CustomRenderFunction({
   reduce: ({unbox}) => unbox(),
   shouldUpdate: (a,b) => !isEqual(a,b),
   // todo: Reducer needs to implement unbox correctly to use resultset.
@@ -29,7 +29,6 @@ export const getFieldNames = new ReducerFunction({
 });
 
 getFieldNames.addReducerRule($isField, determineName);
-
 getFieldNames.addReducerRule($isMultiple, determineName);
 
 export const withResetFields = (Component) => {
@@ -39,11 +38,11 @@ export const withResetFields = (Component) => {
     map: (form, field) => ({
       resetFieldsContext: {
         name: field && field.name,
-        deleteValue: form.deleteValue
+        deleteValue: form ? form.deleteValue : () => {}
       }
     })
   })(({resetFieldsContext, ...props}) => {
-    const fields = traverseDepthFirst(<>{props.children}</>, getFieldNames);
+    const fields = getFieldNames.render(<>{props.children}</>);
     const resetFields = () => {
       fields.forEach(name => {
         resetFieldsContext.deleteValue(name)

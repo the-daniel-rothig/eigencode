@@ -1,5 +1,5 @@
 import React, { useState, useContext, useCallback } from 'react';
-import { Reducer, traverseDepthFirst }  from 'react-traversal';
+import { CustomRenderer }  from 'react-custom-renderer';
 import extractValidationSchema, { shemasAreEqual } from '../reducers/extractValidationSchema';
 import ValidationScopeContext from './ValidationScopeContext';
 import FieldContext from './FieldContext';
@@ -47,17 +47,16 @@ const ValidationScopeInner = ({children, dynamicUpdate}) => {
   const ctx = ValidationScopeContext._currentValue;
   
   if (!dynamicUpdate) {
-    const validationSchema = traverseDepthFirst(
-      <>{children}</>, 
-      extractValidationSchema);
+    const validationSchema = extractValidationSchema.render(
+      <>{children}</>);
     ctx.setSchema(validationSchema);
 
     return children;
   } else {
     return (
-      <Reducer reducerFunction={extractValidationSchema} onFinish={ctx.setSchema}>
+      <CustomRenderer customRenderFunction={extractValidationSchema} onFinish={ctx.setSchema}>
         {children}
-      </Reducer> 
+      </CustomRenderer> 
     )
   }
 }

@@ -1,9 +1,9 @@
 import React from 'react';
 import makeClassInstance from './reactTraversal.makeClassInstance';
-import { logOnce } from 'eigencode-shared-utils';
+import logOnce from './logOnce';
 import ReduceResult from './ReduceResult';
 import usingFakeDispatcher, { getContextFromStack } from './usingFakeDispatcher';
-import ReducerFunction from './ReducerFunction';
+import CustomRenderFunction from './CustomRenderFunction';
 import flattenDeep from 'lodash/flattenDeep';
 
 const notSupported = (name) => {
@@ -143,7 +143,7 @@ const makeTraverseFunction = (reduce, isRoot) => {
         const saneChild = <>{element}</>;
       
         const newIsRoot = e => e === element;
-        const saneOverride = ReducerFunction.cast(reduceOverride)
+        const saneOverride = CustomRenderFunction.cast(reduceOverride)
         const newTraverse = makeTraverseFunction(saneOverride, newIsRoot);
         const array = processChild({child: saneChild, traverse: newTraverse, getContents: (...args) => saneOverride.getContents(...args), contextStack, suppressWarnings: saneOverride.suppressWarnings});
         
@@ -176,7 +176,7 @@ export const traverseDepthFirst = (
   child, 
   reduceChildrenArray
 ) => {
-  const saneReduceChildrenArray = ReducerFunction.cast(reduceChildrenArray || (({array}) => array));
+  const saneReduceChildrenArray = CustomRenderFunction.cast(reduceChildrenArray || (({array}) => array));
   const traverse = makeTraverseFunction(saneReduceChildrenArray, e => e === child);
   const res = traverse(child, []);
   return res && typeof res.then === "function"

@@ -1,7 +1,7 @@
 import React, { useContext, useState, useReducer } from 'react';
 import ReactDOM from 'react-dom';
 import { traverseDepthFirst } from './reactTraversal';
-import { ReducerFunction } from '.';
+import { CustomRenderFunction } from '.';
 
 const Ctx = React.createContext();
   
@@ -373,7 +373,7 @@ it('supports custom eval of children', () => {
   )
 
   const res = traverseDepthFirst(element, 
-    new ReducerFunction({
+    new CustomRenderFunction({
       reduce: ({element, unbox}) => {
         if (!element || !element.type) {
           return element;

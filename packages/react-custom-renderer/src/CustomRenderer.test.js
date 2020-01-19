@@ -1,14 +1,14 @@
 import React, { useState, useContext } from 'react'
-import { render, wait } from '@testing-library/react'
-import Reducer from './Reducer'
-import extractText from './reducers/extractText'
 import { act } from 'react-dom/test-utils'
-import ReducerFunction from './ReducerFunction'
+import { render, wait } from '@testing-library/react'
+import CustomRenderer from './CustomRenderer'
+import CustomRenderFunction from './CustomRenderFunction'
+import textRenderer from './reducers/textRenderer'
 
 
 it('doesnt explode', () => {
   render(
-  <Reducer reducerFunction={extractText} onFinish={() => {}}>
+  <CustomRenderer customRenderFunction={textRenderer} onFinish={() => {}}>
     <div>
         One
       <div>
@@ -23,14 +23,14 @@ it('doesnt explode', () => {
           </div>
         </div>
       </div>
-    </Reducer>)
+    </CustomRenderer>)
 })
 
 it('simple case', done => {
   render(
-    <Reducer reducerFunction={extractText} onFinish={assertResult}>
+    <CustomRenderer customRenderFunction={textRenderer} onFinish={assertResult}>
       <div><span>One</span></div>
-    </Reducer>
+    </CustomRenderer>
   )
 
   function assertResult(res) {
@@ -49,7 +49,7 @@ Eight
 .`;
 
   render(
-    <Reducer reducerFunction={extractText} onFinish={assertResult}>
+    <CustomRenderer customRenderFunction={textRenderer} onFinish={assertResult}>
       <div>
         One <span>two</span>.
         Three
@@ -64,7 +64,7 @@ Eight
         <div>Eight</div>
         .
       </div>
-    </Reducer>
+    </CustomRenderer>
   )
 
 
@@ -76,13 +76,13 @@ Eight
 
 it('resolves with empty tags', (done) => {
   render(
-    <Reducer reducerFunction={extractText} onFinish={assertResult}>
+    <CustomRenderer customRenderFunction={textRenderer} onFinish={assertResult}>
       <div>
         <span>Hello</span>
         <br />
         <span>World.</span>
       </div>
-    </Reducer>
+    </CustomRenderer>
   )
   function assertResult(res) {
     expect(res).toBe(
@@ -94,7 +94,7 @@ World.`);
 
 it('passes though getContext', done => {
   const Ctx = React.createContext();
-  const contextIntoSpan = new ReducerFunction({
+  const contextIntoSpan = new CustomRenderFunction({
     reduce: ({element, getContext, unbox}) => {
       if (element.type === 'span') {
         return {
@@ -102,19 +102,19 @@ it('passes though getContext', done => {
           value: getContext(Ctx)
         }
       }
-      else return extractText.reduce({element, unbox})
+      else return textRenderer.reduce({element, unbox})
     },
-    finalTransform: extractText.finalTransform
+    finalTransform: textRenderer.finalTransform
   })
   
   render(
     <Ctx.Provider value={'success!'}>
-      <Reducer reducerFunction={contextIntoSpan} onFinish={assertResult}>
+      <CustomRenderer customRenderFunction={contextIntoSpan} onFinish={assertResult}>
         <div>
           <div>Hello</div>
           <span>World.</span>
         </div>
-      </Reducer>
+      </CustomRenderer>
     </Ctx.Provider>
   )
   function assertResult(res) {
@@ -147,7 +147,7 @@ it('manages provider children correctly', async () => {
   }
   const WithReducer = ({children}) => {
     const ctx = Ctx._currentValue;//useContext(Ctx);
-    return <Reducer reducerFunction={extractText} onFinish={() => {ctx.setValue('after')}}>{children}</Reducer>
+    return <CustomRenderer customRenderFunction={textRenderer} onFinish={() => {ctx.setValue('after')}}>{children}</CustomRenderer>
   }
   
   const {getByTestId} = render (
@@ -185,9 +185,9 @@ it('updates correctly when arrays change', async () => {
 
   let result = "";
   const { getByText } = render(
-    <Reducer reducerFunction={extractText} onFinish={x => result = x}>
+    <CustomRenderer customRenderFunction={textRenderer} onFinish={x => result = x}>
       <Component />
-    </Reducer>
+    </CustomRenderer>
   )
 
   expect(result).toBe('one\ntwo\nclick me');

@@ -2,10 +2,11 @@
   "private": true,
   "workspaces": [
     "packages/react-context-filter",
+    "packages/react-replacer",
+    "packages/react-custom-renderer",
     "packages/eigencode-shared-utils",
     "packages/eigenform",
     "packages/eigenform-demo",
-    "packages/react-traversal",
     "packages/yup-extensions"
   ],
   "scripts": {

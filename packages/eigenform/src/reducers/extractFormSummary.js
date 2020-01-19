@@ -1,5 +1,5 @@
 import { deepGet } from "eigencode-shared-utils";
-import { extractText, ReducerFunction } from "react-traversal";
+import { textRenderer, CustomRenderFunction } from "react-custom-renderer";
 
 import Conditional, { isConditionalShowing } from "../form/Conditional";
 import Field, { getSaneName } from "../form/Field";
@@ -80,7 +80,7 @@ const makeReduce = (values, identifySection = () => false) => ({element, getCont
   }
 
   if (element.type === Label) {
-    return unbox(extractText, textContent => {
+    return unbox(textRenderer, textContent => {
       return {
         type: 'label',
         val: textContent
@@ -89,7 +89,7 @@ const makeReduce = (values, identifySection = () => false) => ({element, getCont
   }
   
   if (element.type === Radio) {
-    return unbox(extractText, label => ({
+    return unbox(textRenderer, label => ({
       type: 'option',
       label,
       value: element.props.value
@@ -122,7 +122,7 @@ const getContents = ({element, defaultReturn}) => {
   return [Conditional, Multiple].includes(element.type) ? element.props.children : defaultReturn;
 };
 
-export default (...args) => new ReducerFunction({
+export default (...args) => new CustomRenderFunction({
   reduce: makeReduce(...args),
   getContents
 });

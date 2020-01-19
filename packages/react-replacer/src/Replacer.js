@@ -209,7 +209,7 @@ const doMapElement = (mapElement, element, memo, siblingIndex, siblingCount) => 
 
 const makeElementMapper = mapElement => {
   const elementMapper = (childElement, memo, siblingIndex, siblingCount) => {
-    if (childElement && childElement.type === Substituting) {
+    if (childElement && childElement.type === Replacer) {
       const mapElementOne = mapElement;
       const memoOne = memo;
             
@@ -428,7 +428,7 @@ const Recursor = ({children, elementMapper, memo, siblingIndex, siblingCount}) =
   } else if (childrenCount === 1) {
     let c = saneToArray(children)[0];
     if (!c.key) {
-      // this happens when Substituting itself only has a single child element
+      // this happens when Replaer itself only has a single child element
       // todo: refactor to handle this edge case more nicely.
       c = React.Children.toArray(children)[0];
     }
@@ -448,9 +448,9 @@ const Recursor = ({children, elementMapper, memo, siblingIndex, siblingCount}) =
   return newChildren; 
 }
 
-const Substituting = ({children, mapElement}) => {
+const Replacer = ({children, mapElement}) => {
   if (!mapElement) {
-    throw new Error('Substituting has no mapElement function specified')
+    throw new Error('Replacer has no mapElement function specified')
   }
   
   const elementMapper = makeElementMapper(mapElement);
@@ -460,9 +460,9 @@ const Substituting = ({children, mapElement}) => {
   });
 } 
 
-Substituting.propTypes = {
+Replacer.propTypes = {
   children: PropTypes.node,
   mapElement: PropTypes.func.isRequired,
 }
 
-export default Substituting;
+export default Replacer;

@@ -1,7 +1,9 @@
+import { traverseDepthFirst } from "./reactTraversal";
+
 const defaultShouldUpdate = (one, two) => one !== two;
 const defaultFinalTransform = x => x;
 
-export default class ReducerFunction {
+export default class CustomRenderFunction {
   constructor(options) {
     const saneOptions = typeof options === "function" ? {reduce: options} : options;
 
@@ -15,16 +17,16 @@ export default class ReducerFunction {
     this.suppressWarnings = !!saneOptions.suppressWarnings;
 
     if (typeof this._reduce !== 'function') {
-      throw new Error('ReducerFunction error: reduce is not a function')
+      throw new Error('CustomRenderFunction error: reduce is not a function')
     }
     if (typeof this.finalTransform !== 'function') {
-      throw new Error('ReducerFunction error: finalTransform is not a function')
+      throw new Error('CustomRenderFunction error: finalTransform is not a function')
     }
     if (typeof this.shouldUpdate !== 'function') {
-      throw new Error('ReducerFunction error: shouldUpdate is not a function')
+      throw new Error('CustomRenderFunction error: shouldUpdate is not a function')
     }
     if (!!this._getContents && typeof this._getContents !== 'function') {
-      throw new Error('ReducerFunction error: getContents is not a function')
+      throw new Error('CustomRenderFunction error: getContents is not a function')
     }
   }
 
@@ -57,7 +59,7 @@ export default class ReducerFunction {
     if (this._getContents) {
       return this._getContents(options);
     } else {
-      return options.defaultValue;
+      return options.defaultReturn;
     }
   }
 
@@ -67,10 +69,17 @@ export default class ReducerFunction {
     this._getContentsFragments.push({predicate, callback});
   }
 
+  render(element) {
+    return traverseDepthFirst(
+      element,
+      this
+    );
+  }
+
   static cast = obj => {
-    if (obj instanceof ReducerFunction) {
+    if (obj instanceof CustomRenderFunction) {
       return obj;
     }
-    return new ReducerFunction(obj);
+    return new CustomRenderFunction(obj);
   }
 } 

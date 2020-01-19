@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import { Reducer, extractText as extractTextHacked } from "react-traversal";
+import { CustomRenderer, textRenderer as textRendererHacked } from "react-custom-renderer";
 import { render, wait } from "@testing-library/react";
 import { act } from "react-dom/test-utils";
 
@@ -37,11 +37,11 @@ it('updates correctly when memos are present', async () => {
   let result = "";
   const { getByText } = render(
     <Ctx.Provider value={'ctxValue'}>
-      <Reducer reducerFunction={extractTextHacked} onFinish={x => result = x}>
+      <CustomRenderer customRenderFunction={textRendererHacked} onFinish={x => result = x}>
         <div>
           <Component />
         </div>
-      </Reducer>
+      </CustomRenderer>
     </Ctx.Provider>
   )
 

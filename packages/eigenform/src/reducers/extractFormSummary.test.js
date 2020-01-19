@@ -1,5 +1,5 @@
 import React from 'react'; 
-import { traverseDepthFirst, extractText, ReducerFunction } from 'react-traversal';
+import { textRenderer, CustomRenderFunction } from 'react-custom-renderer';
 
 import extractFormSummary from "./extractFormSummary";
 
@@ -14,7 +14,7 @@ import Multiple from '../form/Multiple';
 const findWithin = (
   selector, 
   andThenReduce = ({element}) => element
-) => new ReducerFunction({
+) => new CustomRenderFunction({
     reduce: ({element, isLeaf, unbox}) => {
       if (!isLeaf && selector(element)) {
         return unbox(andThenReduce, r => r);
@@ -24,10 +24,10 @@ const findWithin = (
     finalTransform: x => x[0]
   });
 
-const getSectionHeading = ({isSection, isHeading}) => new ReducerFunction({
+const getSectionHeading = ({isSection, isHeading}) => new CustomRenderFunction({
   reduce: ({element, isRoot, unbox}) => {
     if (isRoot && isSection(element)) {
-      return unbox(findWithin(isHeading, extractText), h1 => {
+      return unbox(findWithin(isHeading, textRenderer), h1 => {
         return h1 || "";
       })
     }
@@ -38,7 +38,7 @@ const getSectionHeading = ({isSection, isHeading}) => new ReducerFunction({
 
 
 const getFormSummary = async (element, values, identifySection) => {
-  return await traverseDepthFirst(element, extractFormSummary(values, identifySection))
+  return await extractFormSummary(values, identifySection).render(element)
 }
 
 describe('extractFormSummary', () => {

@@ -1,7 +1,7 @@
 import { mergeYupFragments, toSchema } from './yupHelpers';
 import * as yup from 'yup';
 import 'yup-extensions';
-import { ReducerFunction } from 'react-traversal';
+import { CustomRenderFunction } from 'react-custom-renderer';
 
 import isEqual from 'lodash/isEqual';
 
@@ -24,11 +24,11 @@ const getSaneLabel = (name, label) => {
     return `${label}`;
   }
 
-  if (typeof name !== "string") {
-    throw new Error('either "label" or "name" property is required on Field');
+  if (typeof name === "string") {
+    return name.replace(/(a-z)(A-Z0-9)/g, match => `${match[1]} ${match[2].toLowerCase()}`);
   }
 
-  return name.replace(/(a-z)(A-Z0-9)/g, match => `${match[1]} ${match[2].toLowerCase()}`);
+  return "this field";
 }
 
 const toNamedFieldSchema = (schemaOrFragment, nameOrNull) => {
@@ -108,7 +108,7 @@ const reduce = ({unbox, isLeaf}) => {
 
 const finalTransform = x => toSchema(x[0]);
 
-const extractValidationSchema = new ReducerFunction({reduce, shouldUpdate, finalTransform, suppressWarnings: true});
+const extractValidationSchema = new CustomRenderFunction({reduce, shouldUpdate, finalTransform, suppressWarnings: true});
 
 extractValidationSchema.addReducerRule($isMultiple, ({element, unbox}) => {
   const { props } = element;

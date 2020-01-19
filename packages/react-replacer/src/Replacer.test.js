@@ -1,20 +1,21 @@
 import React, { useRef, useState, useContext } from 'react';
 import ReactDOM from 'react-dom';
 import ReactDOMServer from 'react-dom/server';
-import Substituting from './Substituting';
+
 import { render, waitForElement } from '@testing-library/react'
 
+import Replacer from './Replacer';
+
 const divToSpan = ({element, type, props}) => type === 'div' ? <span {...props} /> : element;
-const DivToSpan = ({children}) => <Substituting mapElement={divToSpan}>{children}</Substituting>;
+const DivToSpan = ({children}) => <Replacer mapElement={divToSpan}>{children}</Replacer>;
 
 const spanToStrong = ({element, type, props}) => type === 'span' ? <strong {...props} /> : element;
-const SpanToStrong = ({children}) => <Substituting mapElement={spanToStrong}>{children}</Substituting>;
+const SpanToStrong = ({children}) => <Replacer mapElement={spanToStrong}>{children}</Replacer>;
 const FancyDiv = (props) => {
-  const [className] = React.useState("fancy")
   return <div className="fancy" {...props} />
 };
 const fancyDivToSummary = ({element, type, props}) => type === FancyDiv ? <summary {...props} /> : element;
-const FancyDivToSummary = ({children}) => <Substituting mapElement={fancyDivToSummary}>{children}</Substituting>
+const FancyDivToSummary = ({children}) => <Replacer mapElement={fancyDivToSummary}>{children}</Replacer>
 
 it('works on root with one child', () => {
   const string = ReactDOMServer.renderToStaticMarkup(<DivToSpan><div>Hello</div></DivToSpan>);
@@ -181,9 +182,9 @@ it('doesnt obfuscate types', () => {
 
 it('works with basic types', () => {
   const string = ReactDOMServer.renderToStaticMarkup(
-    <Substituting mapElement={({element, type}) => type === "string" ? "after" : element}>
+    <Replacer mapElement={({element, type}) => type === "string" ? "after" : element}>
       before
-    </Substituting>
+    </Replacer>
   )
   expect(string).toBe("after");
 })
@@ -214,8 +215,8 @@ it('works without children', () => {
 
 it('throws without mapping function', () => {
   expect(() => ReactDOMServer.renderToStaticMarkup(
-    <Substituting>foo</Substituting>
-  )).toThrow(/Substituting has no mapElement/)
+    <Replacer>foo</Replacer>
+  )).toThrow(/Replacer has no mapElement/)
 })
 
 it('passes refs', () => {
@@ -229,9 +230,9 @@ it('passes refs', () => {
     )
   }
   const {getByDisplayValue, getByText} = render(
-    <Substituting mapElement={({element, type, props}) => type === "input" ? <textarea {...props} /> : element}>
+    <Replacer mapElement={({element, type, props}) => type === "input" ? <textarea {...props} /> : element}>
       <Comp />
-    </Substituting>
+    </Replacer>
   )
 
   expect(getByDisplayValue('before').tagName).toBe('TEXTAREA')
@@ -303,7 +304,7 @@ const contextIntoSpan = ({element, getContext}) => {
   }
   return element;
 }
-const ContextIntoSpan = ({children}) => <Substituting mapElement={contextIntoSpan}>{children}</Substituting>;
+const ContextIntoSpan = ({children}) => <Replacer mapElement={contextIntoSpan}>{children}</Replacer>;
 
 it('provides context getter', () => {
   const { getByText } = render(
@@ -346,14 +347,14 @@ it('manages provider children correctly', () => {
   }
   
   const {getByTestId} = render (
-    <Substituting mapElement={({element}) => element}>
+    <Replacer mapElement={({element}) => element}>
       <Provider>
         <Probe>
           <Probe />
         </Probe>
         <Consumer />
       </Provider>
-    </Substituting>
+    </Replacer>
   )
 
   expect(hitCount).toBe(2);

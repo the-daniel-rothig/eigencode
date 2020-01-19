@@ -1,4 +1,4 @@
-import ReducerFunction from "../ReducerFunction";
+import CustomRenderFunction from "../CustomRenderFunction";
 
 const combinePartialResults = (array) => {
   if (array.length === 0) {
@@ -53,7 +53,7 @@ const reduce = ({unbox, element}) => {
   }))
 }
 
-export default new ReducerFunction({
+export default new CustomRenderFunction({
   reduce, 
   finalTransform: combinePartialResults
 });
