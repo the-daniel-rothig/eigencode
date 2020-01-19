@@ -2,7 +2,7 @@ import React from 'react';
 import makeClassInstance from './reactTraversal.makeClassInstance';
 import logOnce from './logOnce';
 import ReduceResult from './ReduceResult';
-import usingFakeDispatcher, { getContextFromStack } from './usingFakeDispatcher';
+import usingFakeDispatcher, { getContextFromStack, inheritContextStack } from './usingFakeDispatcher';
 import CustomRenderFunction from './CustomRenderFunction';
 import flattenDeep from 'lodash/flattenDeep';
 
@@ -178,7 +178,8 @@ export const traverseDepthFirst = (
 ) => {
   const saneReduceChildrenArray = CustomRenderFunction.cast(reduceChildrenArray || (({array}) => array));
   const traverse = makeTraverseFunction(saneReduceChildrenArray, e => e === child);
-  const res = traverse(child, []);
+  const contextStack = inheritContextStack();
+  const res = traverse(child, contextStack);
   return res && typeof res.then === "function"
     ? res.then(arr => saneReduceChildrenArray.finalTransform(ReduceResult.flatten(arr)))
     : saneReduceChildrenArray.finalTransform(ReduceResult.flatten(res));

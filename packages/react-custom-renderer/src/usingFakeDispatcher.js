@@ -4,6 +4,8 @@ import logOnce from './logOnce';
 // cooking with gas!
 const { ReactCurrentDispatcher } = React.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
 
+const $isEigencodeDispatcher = Symbol();
+
 const notImplemented = (suppressWarnings, name) => {
   if(!suppressWarnings) {
     logOnce(`WARNING: use of ${name} is not supported for static traversal, and its effects will be ignored.`)
@@ -89,8 +91,18 @@ const makeFakeDispatcher = (contextStack, suppressWarnings) => {
     useDeferredValue: () => notImplemented(suppressWarnings, 'useDeferredValue'),
     useTransition: () => notImplemented(suppressWarnings, 'useTransition'),
     _rebuild,
-    _rewind
+    _rewind,
+    [$isEigencodeDispatcher]: true,
+    _getContextStack: () => contextStack
   };
+}
+
+export const inheritContextStack = () => {
+  const dispatcher = ReactCurrentDispatcher.current;
+  if (dispatcher && dispatcher[$isEigencodeDispatcher]) {
+    return [...dispatcher._getContextStack()]
+  }
+  return [];
 }
 
 // SYNC ONLY!
