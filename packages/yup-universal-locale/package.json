@@ -1,11 +1,10 @@
 {
-  "name": "yup-extensions",
+  "name": "yup-universal-locale",
   "version": "0.1.0",
   "private": true,
   "main": "src/index.js",
   "main:src": "src/index.js",
   "dependencies": {
-    "yup": "^0.27.0",
-    "yup-universal-locale": "^0.1.0"
+    "yup": "^0.27.0"
   }
 }

@@ -1,10 +1,9 @@
-import { string, mixed, array, object } from 'yup';
+import { string, mixed, array, object, setLocale } from 'yup';
 import './additionalMethods';
-import { setLocale } from './yupLocale';
 
-describe('doesNotContain', () => {
+describe('mustNotContain', () => {
   it('works with a string', () => {
-    const schema = string().mustNotContain('boom', "${path} must not contain '${mustNotContain}'")
+    const schema = string().mustNotContain('boom', "${path} must not contain '${match}'")
     return expect(schema.validate('hello boom bye')).rejects.toThrow("this must not contain 'boom'")
   })
   it('works with a regex', () => {
@@ -18,7 +17,11 @@ describe('doesNotContain', () => {
   })
 
   it('respects default locale', () => {
-    setLocale();
+    setLocale({
+      string: {
+        mustNotContain: "${path} must not contain '${match}'",
+      }
+    });
     const schema = string().mustNotContain(/[0-9]/)
     return expect(schema.validate('hello 123 bye')).rejects.toThrow("this must not contain '1'")
   })
@@ -53,7 +56,7 @@ describe('requiredStrict', () => {
   })
 
   it('falls back to required message', () => {
-    expect(() => mixed().requiredStrict().validateSync('   ')).toThrow('please enter undefined');
+    expect(() => mixed().requiredStrict().validateSync('   ')).toThrow('please enter this');
   })
 })
 
@@ -65,12 +68,12 @@ describe('unique', () => {
 
     const value = [{name: 'Daniel'}, {name: 'Daniel'}];
 
-    expect(() => schema.validateSync(value, {context: value})).toThrow("you cannot use the same answer for undefined twice")
+    expect(() => schema.validateSync(value, {context: value})).toThrow("you cannot use the same answer for [1].name twice")
   })
 
   it('works with plain strings', () => {
     const value = ['Daniel', 'Daniel'];
-    expect(() => array(string().unique()).validateSync(value, {context: value})).toThrow("you cannot use the same answer for undefined twice")
+    expect(() => array(string().unique()).validateSync(value, {context: value})).toThrow("you cannot use the same answer for [1] twice")
   })
 
   it('passes plain strings', () => {

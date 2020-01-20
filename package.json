@@ -7,7 +7,8 @@
     "packages/eigencode-shared-utils",
     "packages/eigenform",
     "packages/eigenform-demo",
-    "packages/yup-extensions"
+    "packages/yup-extensions",
+    "packages/yup-universal-locale"
   ],
   "scripts": {
     "test": "jest --watch",

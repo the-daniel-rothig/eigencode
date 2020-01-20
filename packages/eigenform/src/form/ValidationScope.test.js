@@ -1,10 +1,17 @@
 import React, { useContext } from 'react';
+import { setLocale } from 'yup';
+import 'yup-extensions';
+
 import ValidationScopeContext from './ValidationScopeContext';
 import ValidationScope from './ValidationScope';
 import Field from './Field';
 import { render, cleanup, wait } from '@testing-library/react';
-import { act } from 'react-dom/test-utils';
 
+setLocale({
+  string: {
+    requiredStrict: "please enter ${label}",
+  }
+})
 const ErrorOutput = ({name='errors', values={}}) => {
   const { errors, runValidation } = useContext(ValidationScopeContext);
   runValidation(values);
