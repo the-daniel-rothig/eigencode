@@ -15,7 +15,7 @@ export const getSaneName = (name, label) => {
 export const $isField = Symbol('eigenform/isField');
 
 export const asField = Component => {
-  const Hoc = withFilteredContext(({name, label, embedded}) => ({
+  const Hoc = withFilteredContext(({name, label}) => ({
     of: [FormContext, GroupContext],
     to: FieldContext,
     map: (formContext, groupContext) => {

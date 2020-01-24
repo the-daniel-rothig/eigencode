@@ -54,12 +54,12 @@ const substitute = (c, Hoc, id, idNeeded, placeholderToValue) => {
     if (c.props.marker !== undefined && c.props.marker !== id) {
       return c;
     }
-    const map = c.props.map;
-    const val = placeholderToValue.get(c.type);
     if (idNeeded && id !== c.props.marker) {
       return c;
     }
     
+    const map = c.props.map;
+    const val = placeholderToValue.get(c.type);
     return map ? map(val) : val;
   }
 

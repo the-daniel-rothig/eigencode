@@ -10,6 +10,17 @@ import Select from '../form/Select';
 import Radio from '../form/Radio';
 import EmailInput from '../form/EmailInput';
 import NumberInput from '../form/NumberInput';
+import Group from '../form/Group';
+
+// TODO tests:
+// [ ] fields in groups
+// [x] fields within fields
+// [ ] stuff to be omitted: inField stuff for Group
+// [ ] multiple in Reducer
+// 
+// Other stuff
+// [ ] Radio has to fail on REQUIRED when value = ''
+// [ ] Conditional should reset inputs, specifically Radio and Checkbox
 
 const getValidationSchema = async elem => {
   const res = extractValidationSchema.render(elem);
@@ -198,42 +209,42 @@ it('doesnt require an optional Multiple instance even if min is set', async () =
   expectPasses(schema, {})
 })
 
-it('works with nested fields', async () => {
-  const OptField = (props) => <Field optional {...props} />
-  const req = yup.mixed().required();
+// it('works with nested fields', async () => {
+//   const OptField = (props) => <Field optional {...props} />
+//   const req = yup.mixed().required();
 
-  const one = await getValidationSchema(<OptField name="a"><OptField name="b" validator={req} /></OptField>)
-  expectPasses(one, {a: {b: "foo"}})
-  expectFails(one, {a: {}})
+//   const one = await getValidationSchema(<OptField name="a"><OptField name="b" validator={req} /></OptField>)
+//   expectPasses(one, {a: {b: "foo"}})
+//   expectFails(one, {a: {}})
 
-  const two = await getValidationSchema(<OptField><OptField name="b" validator={req} /></OptField>)
-  expectPasses(two, {b: "foo"})
-  expectFails(two, {})
+//   const two = await getValidationSchema(<OptField><OptField name="b" validator={req} /></OptField>)
+//   expectPasses(two, {b: "foo"})
+//   expectFails(two, {})
 
-  const three = await getValidationSchema(<OptField name="a"><OptField validator={req} /></OptField>)
-  expectPasses(three, {a: "foo"})
-  expectFails(three, {})
+//   const three = await getValidationSchema(<OptField name="a"><OptField validator={req} /></OptField>)
+//   expectPasses(three, {a: "foo"})
+//   expectFails(three, {})
 
-  const four = await getValidationSchema(<OptField><OptField validator={req} /></OptField>)
-  expectPasses(four, "foo")
-  expectFails(four, null)
+//   const four = await getValidationSchema(<OptField><OptField validator={req} /></OptField>)
+//   expectPasses(four, "foo")
+//   expectFails(four, null)
 
-  const five = await getValidationSchema(<OptField validator={req} name="a"><OptField name="b" /></OptField>)
-  expectPasses(five, {a: {b: "foo"}})
-  expectFails(five, {})
+//   const five = await getValidationSchema(<OptField validator={req} name="a"><OptField name="b" /></OptField>)
+//   expectPasses(five, {a: {b: "foo"}})
+//   expectFails(five, {})
 
-  const six = await getValidationSchema(<OptField validator={req}><OptField name="b" /></OptField>)
-  expectPasses(six, {})
-  expectFails(six, null)
+//   const six = await getValidationSchema(<OptField validator={req}><OptField name="b" /></OptField>)
+//   expectPasses(six, {})
+//   expectFails(six, null)
 
-  const seven = await getValidationSchema(<OptField validator={req} name="a"><OptField /></OptField>)
-  expectPasses(seven, {a: "foo"})
-  expectFails(seven, {})
+//   const seven = await getValidationSchema(<OptField validator={req} name="a"><OptField /></OptField>)
+//   expectPasses(seven, {a: "foo"})
+//   expectFails(seven, {})
 
-  const eight = await getValidationSchema(<OptField validator={req}><OptField /></OptField>)
-  expectPasses(eight, "foo")
-  expectFails(eight, null)
-})
+//   const eight = await getValidationSchema(<OptField validator={req}><OptField /></OptField>)
+//   expectPasses(eight, "foo")
+//   expectFails(eight, null)
+// })
 
 it('uses Select values to filter allowed values', async () => {
   const schema = await getValidationSchema(
@@ -296,10 +307,10 @@ it('doesnt tolerate unknown fields: root', async () => {
 
 it('doesnt tolerate unknown fields: nested', async () => {
   const schema = await getValidationSchema(
-    <Field name="root">
+    <Group name="root">
       <Field name="one" validator={myValidator}/>
       <Field name="two" />
-    </Field>
+    </Group>
   )
 
   expectPasses(schema, {root: {one: 'foo', two: 'bar'}})
@@ -324,9 +335,9 @@ it('enforces requiredStrict by default: named Field', async () => {
 it('it extracts the schema of fields that are structurally "embedded"', async () => {
   const schema = await getValidationSchema(
     <Field name='one'>
-      <Field embedded name='two' />
+      <Field name='two' />
       <div>
-        <Field embedded name='three' />
+        <Field name='three' />
       </div>
     </Field>
   );
@@ -336,8 +347,8 @@ it('it extracts the schema of fields that are structurally "embedded"', async ()
 it('it works with "embedded" fields within conditionals', async () => {
   const schema = await getValidationSchema(
     <Field name='one'>
-      <Conditional is='foo'>
-        <Field embedded name='two' />
+      <Conditional when='one' is='foo'>
+        <Field name='two' />
       </Conditional>
     </Field>
   );
@@ -349,27 +360,11 @@ it('it works with "embedded" fields within conditionals', async () => {
 it('works with "embedded" fields within "embedded" fields', async () => {
   const schema = await getValidationSchema(
     <Field name='one'>
-      <Field embedded name='two'>
-        <Field embedded name='three' />
+      <Field name='two'>
+        <Field name='three' />
       </Field>
     </Field>
   )
 
   expectPasses(schema, {one: 'foo', two: 'bar', three: 'baz'});
 });
-
-it('throws when there\'s "embedded" on top-level fields', async () => {
-  await expect(getValidationSchema(
-    <Field embedded name='one' />
-  )).rejects.toThrow(/embedded must be nested/);
-});
-
-it('throws on "embedded" fields that are direct children of Multiple', async () => {
-  await expect(getValidationSchema(
-    <Field name='outer'>
-      <Multiple name='multi'>
-        <Field embedded name='one' />
-      </Multiple>
-    </Field>
-  )).rejects.toThrow(/embedded must be nested/);
-})

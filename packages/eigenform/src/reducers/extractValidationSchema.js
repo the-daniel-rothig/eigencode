@@ -14,10 +14,9 @@ import Select from '../form/Select';
 import Radio from '../form/Radio';
 import TextInput from '../form/TextInput';
 import { $isConditional } from '../form/Conditional';
+import Group from '../form/Group';
 
 const dottify = str => typeof str === "string" && str[0] === "$" ? str : `.${str}`
-
-const embeddedFieldsKey = '___EIGENCODE_EMBEDDED_FIELDS';
 
 const getSaneLabel = (name, label) => {
   if (!!label) {
@@ -37,24 +36,13 @@ const toNamedFieldSchema = (schemaOrFragment, nameOrNull) => {
   }
 
   let fieldSchema = toSchema(schemaOrFragment) || yup.mixed();
-  const embeddedFields = fieldSchema._meta && fieldSchema._meta[embeddedFieldsKey];
-  fieldSchema = fieldSchema.meta({[embeddedFieldsKey]: undefined});
 
   let objectSchema = yup.object().shape({
     [nameOrNull]: fieldSchema
   }).noUnknown().strict().default(undefined); // bug https://github.com/jquense/yup/issues/678
 
-  if (embeddedFields) {
-    objectSchema = objectSchema.concat(embeddedFields(nameOrNull));
-  }
-
   return objectSchema;
 }
-
-const appendToEmbeddedFields = resultSchema => s => {
-  const prior = (s._meta && s._meta[embeddedFieldsKey]) || (() => yup.object());
-  return s.meta({[embeddedFieldsKey]: name => prior(name).concat(resultSchema(name))});
-};
 
 const describeSchema = schemaOrFragment => {
   const schema = toSchema(schemaOrFragment);
@@ -96,26 +84,32 @@ const shouldUpdate = (previous, next) => {
   );
 }
 
+const merge = res => ({
+  outField: mergeYupFragments(res.map(x => x && x.outField)),
+  inField: mergeYupFragments(res.map(x => x && x.inField))
+})
+
 const reduce = ({unbox, isLeaf}) => {
   if (isLeaf) {
     return undefined;
   }
   
   return unbox(res => {
-    return mergeYupFragments(res);
+    return merge(res);
   })
 };
 
-const finalTransform = x => toSchema(x[0]);
+const finalTransform = x => toSchema(x[0].outField || x[0].inField);
 
 const extractValidationSchema = new CustomRenderFunction({reduce, shouldUpdate, finalTransform, suppressWarnings: true});
 
 extractValidationSchema.addReducerRule($isMultiple, ({element, unbox}) => {
   const { props } = element;
   return unbox(res => {
-    const combined = mergeYupFragments(res);
+    const combinedFull = merge(res);
+    const combined = combinedFull.outField || combinedFull.inField;
     if (!combined) {
-      return undefined;
+      return {};
     }
     let multiSchemaFragments = [
       !props.optional && (s => s.requiredStrict()),
@@ -125,18 +119,13 @@ extractValidationSchema.addReducerRule($isMultiple, ({element, unbox}) => {
       props.validator,
       yup.array(toSchema(combined) || undefined),
     ];
-
-    if (toSchema(combined)._meta && toSchema(combined)._meta[embeddedFieldsKey]) {
-      // note: this is a bit of a feature gap. It may sometimes make sense to include
-      // a top-level field into the Multiple structure - not within a single item but
-      // e.g. between the item list and the AddAnother button.
-      throw new Error('Fields marked embedded must be nested within another Field');
-    }
     
     const multiSchema = toSchema(mergeYupFragments(multiSchemaFragments));
     const name = getSaneName(props.name, props.label);    
 
-    return toNamedFieldSchema(multiSchema, name);
+    return {
+      outField: toNamedFieldSchema(multiSchema, name)
+    };
   })
 })
 
@@ -144,8 +133,9 @@ extractValidationSchema.addReducerRule($isConditional, ({element, unbox}) => {
   const { props } = element;
   const saneIs = getSaneIs(props.is, props.includes, props.when);
   return unbox(res => {
-    let combined = mergeYupFragments(res);
-    if (!combined) {
+    let combinedFull = merge(res);
+
+    if (!combinedFull.inField && !combinedFull.outField) {
       return undefined;
     }
 
@@ -153,66 +143,88 @@ extractValidationSchema.addReducerRule($isConditional, ({element, unbox}) => {
       ? props.when.map(dottify) 
       : dottify(props.when || '');
       
-    let resultSchema = s => s.when(whenWithDots, {
+    let resultSchemaIn = combinedFull.inField ? s => s.when(whenWithDots, {
       is: saneIs,
-      then: s => toSchema(mergeYupFragments([s, combined]))
-    });
+      then: s => toSchema(mergeYupFragments([s, combinedFull.inField]))
+    }) : undefined;
+      
+    let resultSchemaOut = combinedFull.outField ? s => s.when(whenWithDots, {
+      is: saneIs,
+      then: s => toSchema(mergeYupFragments([s, combinedFull.outField]))
+    }) : undefined;
 
-    const combinedSchema = toSchema(combined);
-
-    if (combinedSchema._meta && combinedSchema._meta[embeddedFieldsKey]) {
-      const conditionalEmbedded = name => yup.object().when(dottify(name), {
-        is: saneIs,
-        then: combinedSchema._meta[embeddedFieldsKey](name)
-      });
-      const oldResultSchema = resultSchema;
-      resultSchema = s => oldResultSchema(s).meta({ [embeddedFieldsKey]: conditionalEmbedded });
-    }
-    return resultSchema;
-
+    return {
+      inField: resultSchemaIn,
+      outField: resultSchemaOut
+    };
   })
 })
 
 extractValidationSchema.addReducerRule($isField, ({element, unbox}) => {
   const { props } = element; 
   return unbox(res => {
-    const combined = mergeYupFragments(res);
+    const combinedFull = merge(res);
+
     const fragmentWithThis = mergeYupFragments([
       !props.optional && (s => s.requiredStrict()),
       (s => s.label(getSaneLabel(props.name, props.label))),
       props.validator, 
-      combined])
+      combinedFull.inField])
+
     const name = getSaneName(props.name, props.label);
-    const resultSchema = toNamedFieldSchema(fragmentWithThis, name)
-    return props.embedded
-      ? appendToEmbeddedFields(() => resultSchema)
-      : resultSchema;
+
+    const outField = mergeYupFragments([
+      combinedFull.outField,
+      toNamedFieldSchema(fragmentWithThis, name)
+    ])
+
+    return { outField }
+  })
+})
+
+extractValidationSchema.addReducerRule(Group, ({element, unbox}) => {
+  return unbox(res => {
+    const combined = merge(res); 
+    
+    const outField = toNamedFieldSchema(
+      combined.outField,
+      element.props.name
+    );
+
+    // throw out remaining inField fragments
+    return { outField };
   })
 })
 
 extractValidationSchema.addReducerRule(TextInput, () => {
-  return yup.string().meta({simpleDescriptor: 'yup_string'});
+  return {
+    inField: yup.string().meta({simpleDescriptor: 'yup_string'})
+  }
 })
 
 extractValidationSchema.addReducerRule(EmailInput, () => {
-  return yup.string().email().meta({simpleDescriptor: 'yup_string_email'});
+  return {
+    inField: yup.string().email().meta({simpleDescriptor: 'yup_string_email'})
+  };
 })
 
 extractValidationSchema.addReducerRule(NumberInput, () => {
-  return yup.string().matches(/^[0-9]*$/).meta({simpleDescriptor: 'yup_string_numberlike'});
+  return {
+    inField: yup.string().matches(/^[0-9]*$/).meta({simpleDescriptor: 'yup_string_numberlike'})
+  };
 })
 
 extractValidationSchema.addReducerRule(Select, ({element}) => {
   const { props } = element;
   const allowedValues = (props.options || []).map(opt => 
     typeof opt.value === "string" ? opt.value : typeof opt.label === "string" ? opt.label : opt);
-  return s => s.oneOf(allowedValues)
+  return { inField: s => s.oneOf(allowedValues) };
 })
 
 extractValidationSchema.addReducerRule(Radio, ({element}) => {
   const { props } = element;
   const allowedValues = [(props.value || props.children || "").toString()]
-  return s => s.oneOf(allowedValues);
+  return { inField: s => s.oneOf(allowedValues) };
 });
 
 extractValidationSchema.addGetContentsRule($isConditional, ({element}) => element.props.children)

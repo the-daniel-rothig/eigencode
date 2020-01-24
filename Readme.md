@@ -4,6 +4,8 @@ A collection of useful React packages:
 
 **[react-context-filter](./packages/react-context-filter)**: Allows components to subscribe to just **parts** of a context, for high-performance user interfaces
 
+**[react-inline-props](./packages/react-inline-props)**: Provides a nice syntax for inline property injection, offering an alternative to render-props and render functions.
+
 **[react-replacer](./packages/react-replacer)**: Allows you to modify, or completely replace, React elements when they are rendered, thus using aspect-oriented programming patterns in rect
 
 **[react-custom-renderer](./packages/react-custom-renderer)**: Write custom React renderers to re-interpret your components in different contexts

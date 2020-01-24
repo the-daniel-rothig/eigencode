@@ -23,6 +23,7 @@ import {
   TextInput,
   YesNo,
  } from 'eigenform/styled'
+import Group from 'eigenform/src/form/Group';
 /* eslint-enable */
 
 const Debug = () => {
@@ -32,48 +33,52 @@ const Debug = () => {
 
 const ExampleForm = () => (
       <Form>
-        <Field label='your first name'>
-          <Label>First name</Label>
-          <TextInput />
-          <FieldFeedback />
-        </Field>
-        <Field label='your last name'>
-          <Label>Last name</Label>
-          <TextInput />
-          <FieldFeedback />
-        </Field>
-        <Field label='whether you have a middle name'>
-          <Label>Do you have a middle name?</Label>
-          <YesNo />
-          <FieldFeedback />
-        </Field>
-        <Conditional
-          when='whetherYouHaveAMiddleName'
-          is='yes'
-        >
-          <Field label='your middle name'>
-            <Label>Please tell us your middle name</Label>
+        <Group name="fullName">
+          <Field label='your first name'>
+            <Label>First name</Label>
             <TextInput />
             <FieldFeedback />
           </Field>
-        </Conditional> 
+          <Field label='your last name'>
+            <Label>Last name</Label>
+            <TextInput />
+            <FieldFeedback />
+          </Field>
+          <Field label='whether you have a middle name'>
+            <Label>Do you have a middle name?</Label>
+            <YesNo />
+            <FieldFeedback />
+          </Field>
+          <Conditional
+            when='whetherYouHaveAMiddleName'
+            is='yes'
+          >
+            <Field label='your middle name'>
+              <Label>Please tell us your middle name</Label>
+              <TextInput />
+              <FieldFeedback />
+            </Field>
+          </Conditional> 
+        </Group>
         <Field label='your age'>
           <Label>How old are you?</Label>
           <NumberInput />
           <FieldFeedback />
         </Field>
-        <Field label='the ice cream flavours'>
+        <Field label='the ice cream flavours' name="flavours">
           <Label>What are your favourite ice cream flavours?</Label>
           <Checkbox value='vanilla'>Vanilla</Checkbox>
-          <Conditional includes='vanilla'>
-            <Field embedded label='if you like it with chocolate chips'>
+          <Conditional when="flavours" includes='vanilla'>
+            <Field label='if you like it with chocolate chips'>
               <Label>Oooh, with chocolate chips?</Label>
               <YesNo />
               <FieldFeedback />
             </Field>
           </Conditional>
           <Checkbox value='chocolate'>Chocolate</Checkbox>
-          <Checkbox value='strawberry'>Strawberry</Checkbox>
+          <Conditional flat when="flavours" includes="chocolate">
+            <Checkbox value='strawberry'>Strawberry</Checkbox>
+          </Conditional>
           <FieldFeedback />
         </Field>
         <Field label='whether you like animals'>

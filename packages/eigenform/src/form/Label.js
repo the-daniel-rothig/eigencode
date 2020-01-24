@@ -2,7 +2,9 @@ import React, { useContext } from 'react'
 import FieldContext from './FieldContext'
 
 const Label = ({children}) => {
-  const { name, uid } = useContext(FieldContext);
+  const fieldContext = useContext(FieldContext);
+  const name = fieldContext ? fieldContext.name : '';
+  const uid = fieldContext ? fieldContext.uid : '';
   
   const hasSetTypeFields = false; //todo
 

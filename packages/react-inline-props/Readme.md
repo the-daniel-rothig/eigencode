@@ -1,10 +1,10 @@
 # react-inline-props
 
-This [React](https://github.com/facebook/react/) library provides a nice syntax for inline property injection, offering an alternative to render props and render functions.
+This [React](https://github.com/facebook/react/) library provides a nice syntax for inline property injection, offering an alternative to render-props and render functions.
 
 ## Background
 
-Render props, or render functions, are a pattern in React to pass callbacks and values down the component tree. For example, a `<Submit />` component could provide a form submission callback and delegate the display logic to its children:
+Render-props, or render functions, are a pattern in React to pass callbacks and values down the component tree. For example, a `<Submit />` component could provide a form submission callback and delegate the display logic to its children:
 
 ```javascript
 <Submit>
@@ -30,7 +30,7 @@ This is powerful, but a bit verbose: some of the lines in this example don't pro
 
 ## Usage
 
-To define a component that supports inline props:
+To define a component that supports inline-props:
 
 ```javascript
 // Starting from a conventional render-prop component:
@@ -41,7 +41,7 @@ const Submit = ({children}) => {
 }
 
 // ...we pass it to the withInlineProps function,
-// specifying the intended names of the inline props
+// specifying the intended names of the inline-props
 // we want to create. 
 const [SumbmitInline, props] = withInlineProps('submit')(Submit);
 
@@ -49,9 +49,9 @@ const [SumbmitInline, props] = withInlineProps('submit')(Submit);
 // component:
 export default SubmitInline;
 
-// The second entry is an object containing the inline props.
+// The second entry is an object containing the inline-props.
 // We specified that the first argument of Submit's render-prop
-// callback should be associated with am inline prop called 'submit',
+// callback should be associated with am inline-prop called 'submit',
 // and we export it explicitly for convenience.
 export const { submit } = props;
 ```
@@ -78,15 +78,15 @@ You can use the `submit` prop anywhere within `<Submit />`'s children tree:
 ```javascript
 <Submit>
   <FancyWidget>
-    This button is not a direct child of Submit, but the inline prop works nevertheless.
+    This button is not a direct child of Submit, but the inline-prop works nevertheless.
     <button onClick={submit}>Continue</button>
   </FancyWidget>
 </Submit>
 ```
 
-## Derived inline props
+## Derived inline-props
 
-You can also transform the inline props: the following adds some console logging to the button click event
+You can also transform the inline-props: the following adds some console logging to the button click event
 
 ```javascript
 <Submit>
@@ -122,7 +122,7 @@ const logAndSubmit = submit.map(cb =>
 </Submit>
 ```
 
-Mappings can be useful for making the structure of object-type render arguments more easily accessible. If a `<UserData />` component passes an object argument with the fields `{ firstName, lastName }`, it's a good idea to export some derived inline props for convenience:
+Mappings can be useful for making the structure of object-type render arguments more easily accessible. If a `<UserData />` component passes an object argument with the fields `{ firstName, lastName }`, it's a good idea to export some derived inline-props for convenience:
 
 ```javascript
 import UserDataBase from './UserData'
@@ -149,9 +149,9 @@ import UserData, { firstName, lastName, fullName } from './UserDataInline';
 
 ## Converting props other than `children`
 
-By default `withInlineProps` assumes that the render prop to be converted is `children`. You can convert any number of other props by using the full signature of `withInlineProps`. 
+By default `withInlineProps` assumes that the render-prop to be converted is `children`. You can convert any number of other props by using the full signature of `withInlineProps`. 
 
-Imagine a `<Page />` layout with a `footer` render prop that passes in `index` and `totalPageCount` arguments: 
+Imagine a `<Page />` layout with a `footer` render-prop that passes in `index` and `totalPageCount` arguments: 
 
 ```javascript
 <Page 
@@ -163,7 +163,7 @@ Imagine a `<Page />` layout with a `footer` render prop that passes in `index` a
 </Page>
 ```
 
-To start using inline props:
+To start using inline-props:
 
 ```javascript
 import PageBase from './Page'
@@ -178,9 +178,9 @@ export const index = props.footer.index;
 export const totalPageCount = props.footer.totalPageCount;
 ```
 
-As you can see, instead of an arguments list of names for the `children` callback, an options object is passed whose keys are the names of the render props, and the values the corresponding inline prop names (a string or array of strings).
+As you can see, instead of an arguments list of names for the `children` callback, an options object is passed whose keys are the names of the render-props, and the values the corresponding inline-prop names (a string or array of strings).
 
-Note also that the strucure of the returned `props` object is diffent: rather than an object containing the inline props associated with the `children` callback, it's now has one entry per specified component prop, whose values are the objects containing the inline props for each component prop. 
+Note also that the strucure of the returned `props` object is diffent: rather than an object containing the inline-props associated with the `children` callback, it's now has one entry per specified component prop, whose values are the objects containing the inline-props for each component prop. 
 
 <details>
   <summary>More on the props object strucutre</summary>
@@ -205,7 +205,7 @@ Note also that the strucure of the returned `props` object is diffent: rather th
   ```
 </details>
 
-Use the inline prop enabled `<Page />` as follows:
+Use the inline-prop enabled `<Page />` as follows:
 
 ```javascript
 import Page, { index, totalPageCount } from './PageInline'
@@ -236,7 +236,7 @@ import Page, { index, totalPageCount } from './PageInline'
 
 ## Component nesting
 
-When inline prop enabled components are nested, inline props get linked to the closest ancestor:
+When inline-prop enabled components are nested, inline-props get linked to the closest ancestor:
 
 ```javascript
 const { Provider, Consumer } = React.createContext();
@@ -256,7 +256,7 @@ const [ Ctx, {ctx} ] = withInlineProps('ctx')(Consumer);
 </Provider>
 ```
 
-To access the values from a component other than the closest ancestor, you can set a `propId` prop on the inline prop component and use the `.from(propId)` method on the inline prop:
+To access the values from a component other than the closest ancestor, you can set a `propId` prop on the inline-prop component and use the `.from(propId)` method on the inline-prop:
 
 ```javascript
 <Provider value="outer">
@@ -271,13 +271,11 @@ To access the values from a component other than the closest ancestor, you can s
 </Provider>
 ```
 
-(Hint: the `.from()` and `.map()` methods on the inline prop can be chained!) 
+(Hint: the `.from()` and `.map()` methods on the inline-prop can be chained!) 
 
-Don't over-rely on this inline props any more than on render props though - it is intended for inlining simple stuff. For more advanced scenarios, use Higher-Order Components and Hooks.
+## Combining inline-props
 
-## Combining inline props
-
-Sometimes, you want to combine multiple props. For example, when a `<User />` component passes the number of articles read, and a `<Blog />` component provides the total number of articles, you may want to substract one from the other to indicate how many unread articles there are. With render props, you would write:
+Sometimes, you want to combine multiple props. For example, when a `<User />` component passes the number of articles read, and a `<Blog />` component provides the total number of articles, you may want to substract one from the other to indicate how many unread articles there are. With render-props, you would write:
 
 ```javascript
 <User>
@@ -291,7 +289,7 @@ Sometimes, you want to combine multiple props. For example, when a `<User />` co
 </User>
 ```
 
-With inline props, you use the `combine` method:
+With inline-props, you use the `combine` method:
 
 ```javascript
 <User>
@@ -303,7 +301,7 @@ With inline props, you use the `combine` method:
 </User>
 ```
 
-The first argument of the `combine` method can also be an array of inline props, for when you want to combine three props or more.
+The first argument of the `combine` method can also be an array of inline-props, for when you want to combine three props or more.
 
 As with mappings, you can define combinations statically, to keep your code tidy - and you can chain map functions onto `combine`:
 
@@ -340,13 +338,15 @@ const [ WordProvider, { word } ] = withInlineProps('word')(
 </WordProvider>
 ```
 
+Don't over-rely on inline-props any more than on render-props though - it is intended for inlining simple stuff. For more advanced scenarios, use Higher-Order Components and Hooks.
+
 ## Gotchas
 
-But beware: inline props cannot be used in expressions and function bodies. Inline props are just placeholders that will only get swapped out with their real values if they are a direct prop, or referenced by a React element prop value. The following won't work:
+Beware: inline-props cannot be used in expressions and function bodies. Inline-props are just placeholders that will only get swapped out with their real values if they are a direct prop, or referenced by a React element prop value. The following won't work:
 
 ```javascript
 <Submit>
-  The following doesn't work {submit.name.toUpperCase()}.
+  The following will not work: {submit.name.toUpperCase()}.
 
   <button onClick={() => {
     console.log("This also doesn't work")
@@ -370,7 +370,7 @@ This, however, does work:
 </Submit>
 ```
 
-Another consideration is that inline props do not work when they are encapsulated by a component. For example:
+Another consideration is that inline-props do not work when they are encapsulated by a component. For example:
 
 ```javascript
 import Submit, { submit } from './Submit';
@@ -402,38 +402,38 @@ const buttonElement = (
 
 ## API
 
-### withInlineProps(opts)(Component)
+### `withInlineProps(opts)(Component)`
 
-Converts a React `Component` that uses render props into one that uses inline props.
+Converts a React `Component` that uses render-props into one that uses inline-props.
 
-**opts** is an object whose keys are the names of `Component`'s render props; the values are the names of the inline props to be assiociated with the render function arguments. They can be an array of strings, or a single string (for single argument functions).
+**`opts`** is an object whose keys are the names of `Component`'s render-props; the values are the names of the inline-props to be assiociated with the render function arguments. They can be an array of strings, or a single string (for single argument functions).
 
-**Component** is any React component that uses render props.
+**`Component`** is any React component that uses render-props.
 
-The **return value** is an array with two entries. The first is the inline prop enabled component, the second one is a `props` object. `props` has the same keys as `opts`, the values are objects who have an InlineProp against each key string provided in `opts`. For example, if `opts = { myProp: ['a', 'b'] }`, then `props = { myProp: { a: (InlineProp), b: (InlineProp) } }`.
+The **return value** is an array with two entries. The first is the inline-prop enabled component, the second one is a `props` object. `props` has the same keys as `opts`, the values are objects who have an InlineProp against each key string provided in `opts`. For example, if `opts = { myProp: ['a', 'b'] }`, then `props = { myProp: { a: (InlineProp), b: (InlineProp) } }`.
 
-### withInlineProps(args...)(Component)
+### `withInlineProps(args...)(Component)`
 
 Shorthand for `withInlineProps({ children: args })(Component)`. 
 
-The **return value** is an array with two entries. The first is the inline prop enabled component as before, the second one is an object containing InlineProp entries for each of the `args`. For example, if `args = ['a', 'b']` then `props = { a: (InlineProp), b: (InlineProp) }`.
+The **return value** is an array with two entries. The first is the inline-prop enabled component as before, the second one is an object containing InlineProp entries for each of the `args`. For example, if `args = ['a', 'b']` then `props = { a: (InlineProp), b: (InlineProp) }`.
 
-### InlineProp
+### `InlineProp`
 
-These can be placed anywhere inside their inline prop enabled components, or set to any prop of elements contained by the component. They will be set to the value passed by the inline prop enabled component when it renders.
+These can be placed anywhere inside their inline-prop enabled components, or set to any prop of elements contained by the component. They will be set to the value passed by the inline-prop enabled component when it renders.
 
-Moreover, inline props have the following methods against them:
+Moreover, inline-props have the following methods against them:
 
-**inlineProp.map(callback)** returns a new InlineProp that behaves like `inlineProp`, but before it is rendered, passes its value to callback and renders callback's return value instead.
+**`inlineProp.map(callback)`** returns a new InlineProp that behaves like `inlineProp`, but before it is rendered, passes its value to callback and renders callback's return value instead.
 
-**inlineProp.from(propId)** returns a new InlineProp that behaves like `inlineProp`, but retrieves its value from a specific render prop component (not the closest ancestor, which is the default). The `propId` value is compared to the `propId` prop of any enclosing component that supplies the `inlineProp`. Calls to `from()` can be chained together, with the last one overwriting the previous `propId` choice. If called without an argument, `.from()` reconnects the inline prop to the closest ancestor.
+**`inlineProp.from(propId)`** returns a new InlineProp that behaves like `inlineProp`, but retrieves its value from a specific render-prop component (not the closest ancestor, which is the default). The `propId` value is compared to the `propId` prop of any enclosing component that supplies the `inlineProp`. Calls to `from()` can be chained together, with the last one overwriting the previous `propId` choice. If called without an argument, `.from()` reconnects the inline-prop to the closest ancestor.
 
-**inlineProp.combine(otherProps, mappingFunction)** returns a CombinedInlineProp that collects the values of all specified inline props, and passes them as arguments to `mappingFunction`. It resolves to the return value of mapping function. `otherProps` can either be an array of InlineProps, or just a single InlineProp.
+**`inlineProp.combine(otherProps, mappingFunction)`** returns a `CombinedInlineProp` that collects the values of all specified inline-props, and passes them as arguments to `mappingFunction`. It resolves to the return value of mapping function. `otherProps` can either be an array of InlineProps, or just a single InlineProp.
 
-### CombinedInlineProp
+### `CombinedInlineProp`
 
-These can be placed anywhere inside their inline prop enabled components, or set to any prop of elements contained by the component. They will be set to the value returned by their `mappingFunction`(see `inlineProp.combine`), which is passed the values of all InlinePros this depends on. 
+These can be placed anywhere inside their inline-prop enabled components, or set to any prop of elements contained by the component. They will be set to the value returned by their `mappingFunction`(see `inlineProp.combine`), which is passed the values of all InlinePros this depends on. 
 
 Moreover, CombinedInlineProp has the following method:
 
-**combinedInlineProp.map(callback)** returns a new CombinedInlineProp that behaves like `combinedInlineProp` but further transforms the result of `mappingFunction` by passing it to `callback`, and using `callback`'s return value instead.
+**`combinedInlineProp.map(callback)`** returns a new CombinedInlineProp that behaves like `combinedInlineProp` but further transforms the result of `mappingFunction` by passing it to `callback`, and using `callback`'s return value instead.
