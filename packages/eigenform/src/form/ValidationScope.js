@@ -2,13 +2,13 @@ import React, { useState, useContext, useCallback } from 'react';
 import { CustomRenderer }  from 'react-custom-renderer';
 import extractValidationSchema, { shemasAreEqual } from '../reducers/extractValidationSchema';
 import ValidationScopeContext from './ValidationScopeContext';
-import FieldContext from './FieldContext';
+import GroupContext from './GroupContext';
 import { deepGet } from 'eigencode-shared-utils';
 import isEqual from 'lodash/isEqual';
 
 const ValidationScopeOuter = ({children, isComplete}) => {
   const [errors, setErrors] = useState([]);
-  const fieldContext = useContext(FieldContext);
+  const groupContext = useContext(GroupContext);
   const [schemaState, setSchemaState] = useState(undefined);
 
   const runValidation = useCallback(value => {
@@ -16,8 +16,8 @@ const ValidationScopeOuter = ({children, isComplete}) => {
       return
     }
     const relaxedSchema = !isComplete && schemaState._type === "object" ? schemaState.unknown() : schemaState;
-    const reachValue = fieldContext && fieldContext.name
-      ? deepGet(value, fieldContext.name)
+    const reachValue = groupContext && groupContext.name
+      ? deepGet(value, groupContext.name)
       : value;
 
     return relaxedSchema.validate(reachValue, {context: reachValue, abortEarly: false, stripUnknown: !isComplete})
@@ -29,7 +29,7 @@ const ValidationScopeOuter = ({children, isComplete}) => {
         const errors = e.inner.map(({path, message}) => ({path, message}));
         setErrors(e => isEqual(e,errors) ? e : errors);
       });
-  }, [schemaState, isComplete, fieldContext]);
+  }, [schemaState, isComplete, groupContext]);
 
   const setSchema = newSchema => setSchemaState(oldSchema => 
     shemasAreEqual(oldSchema, newSchema) ? oldSchema : newSchema  

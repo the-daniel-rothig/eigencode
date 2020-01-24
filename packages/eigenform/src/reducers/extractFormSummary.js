@@ -3,7 +3,7 @@ import { textRenderer, CustomRenderFunction } from "react-custom-renderer";
 
 import Conditional, { isConditionalShowing } from "../form/Conditional";
 import Field, { getSaneName } from "../form/Field";
-import FieldContext from "../form/FieldContext";
+import GroupContext from "../form/GroupContext";
 import Label from "../form/Label";
 import Multiple from "../form/Multiple";
 import Radio from "../form/Radio";
@@ -15,8 +15,8 @@ const allOfType = (array, ...type) =>
 
 const makeReduce = (values, identifySection = () => false) => ({element, getContext, isLeaf, unbox}) => {
   const fullyQualifiedName = (rawName, rawLabel) => {
-    const fieldContext = getContext(FieldContext);
-    return `${fieldContext && fieldContext.name ? fieldContext.name + "." : ""}${getSaneName(rawName, rawLabel)}`;
+    const groupContext = getContext(GroupContext);
+    return `${groupContext && groupContext.name ? groupContext.name + "." : ""}${getSaneName(rawName, rawLabel)}`;
   } 
 
   if (isLeaf) {
@@ -49,8 +49,8 @@ const makeReduce = (values, identifySection = () => false) => ({element, getCont
   }
 
   if (element.type === Conditional) {
-    const outerFieldContext = getContext(FieldContext);
-    const shouldShow = isConditionalShowing(element.props.when, element.props.is, element.props.includes, outerFieldContext && outerFieldContext.name, x => deepGet(values, x));
+    const group = getContext(GroupContext);
+    const shouldShow = isConditionalShowing(element.props.when, element.props.is, element.props.includes, group && group.name, x => deepGet(values, x));
     return unbox(c2 => {
       return c2.map(x => !shouldShow && ['field', 'group'].includes(x.type) ? {...x, concealed: true} : x);
     })

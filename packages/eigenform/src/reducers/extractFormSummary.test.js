@@ -10,6 +10,7 @@ import Radio from '../form/Radio';
 import Select from '../form/Select';
 import Conditional from '../form/Conditional';
 import Multiple from '../form/Multiple';
+import Group from '../form/Group';
 
 const findWithin = (
   selector, 
@@ -118,9 +119,9 @@ describe('extractFormSummary', () => {
     }])
   })
 
-  it('understands nested fields', async () => {
+  it('understands fields in groups', async () => {
     const res = await getFormSummary(
-      <Field label='your full name'>
+      <Group label='your full name'>
         <Label>Please state your name as it appears on your passport</Label>
         <Field label='your first name'>
           <Label>Tell us your first name</Label>
@@ -130,7 +131,7 @@ describe('extractFormSummary', () => {
           <Label>Tell us your last name</Label>
           <TextInput />
         </Field>
-      </Field>,
+      </Group>,
       {yourFullName: {yourFirstName: 'Daniel', yourLastName: 'Rothig'}}
     )
 

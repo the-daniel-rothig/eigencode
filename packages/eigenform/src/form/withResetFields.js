@@ -1,9 +1,9 @@
 import React from 'react';
 import { withFilteredContext } from 'react-context-filter';
 
-import FieldContext from './FieldContext';
+import GroupContext from './GroupContext';
 import FormContext from './FormContext';
-import { sanitiseOuterName, getSaneName, $isField } from './Field';
+import { getSaneName, $isField } from './Field';
 import { $isMultiple } from './Multiple';
 import { CustomRenderFunction } from 'react-custom-renderer';
 import { combineObjectPaths } from 'eigencode-shared-utils';
@@ -13,9 +13,9 @@ import flatten from 'lodash/flattenDeep';
 const determineName = ({element, getContext}) => {
   // we can just capture the top level field names here - removing them
   // will implicitly remove their descendants. no need to unbox.
-  const outer = getContext(FieldContext);
+  const outer = getContext(GroupContext);
   const name = combineObjectPaths(
-    sanitiseOuterName(outer && outer.name, element.props.embedded),
+    outer && outer.name,
     getSaneName(element.props.name, element.props.label)
   );
   return [name];
@@ -33,11 +33,11 @@ getFieldNames.addReducerRule($isMultiple, determineName);
 
 export const withResetFields = (Component) => {
   return withFilteredContext({
-    of: [FormContext, FieldContext],
+    of: [FormContext, GroupContext],
     isUnchanged: (prev, next) => prev.resetFieldsContext.name === next.resetFieldsContext.name,
-    map: (form, field) => ({
+    map: (form, group) => ({
       resetFieldsContext: {
-        name: field && field.name,
+        name: group && group.name,
         deleteValue: form ? form.deleteValue : () => {}
       }
     })

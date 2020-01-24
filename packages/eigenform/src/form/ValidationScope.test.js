@@ -6,6 +6,7 @@ import ValidationScopeContext from './ValidationScopeContext';
 import ValidationScope from './ValidationScope';
 import Field from './Field';
 import { render, cleanup, wait } from '@testing-library/react';
+import Group from './Group';
 
 setLocale({
   string: {
@@ -56,15 +57,14 @@ it('makes validation available 2', async () => {
   })
 })
 
-it('works wihin a field context', async () => {
-  const FieldBar = ({children}) => <Field name='bar'>{children}</Field>
+it('works wihin a group context', async () => {
   const { getByTestId } = render(
-    <Field name='bar'>
+    <Group name='bar'>
       <ValidationScope>
         <Field name='foo' />
         <ErrorOutput values={{bar: {foo: 'Daniel'}}}/>
       </ValidationScope>
-    </Field>
+    </Group>
   )
   await new Promise(ok => setTimeout(ok, 10));
   

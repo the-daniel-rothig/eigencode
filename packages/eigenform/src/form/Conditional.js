@@ -1,6 +1,6 @@
 import React from 'react';
 
-import FieldContext from './FieldContext';
+import GroupContext from './GroupContext';
 import FormContext from './FormContext';
 import { usePrevious } from 'eigencode-shared-utils';
 import { withFilteredContext } from 'react-context-filter';
@@ -49,17 +49,17 @@ export const $isConditional = Symbol('eigenform/isConditional');
 
 export const asConditional = (Component) => {
   const Hoc = withFilteredContext(({when, is, includes}) => ({
-    of: [FieldContext, FormContext],
-    map: (fieldContext, formContext) => {
+    of: [GroupContext, FormContext],
+    map: (groupContext, formContext) => {
       const saneWhen = Array.isArray(when) ? when : when ? [when] : [""];
-      const saneOuterName = fieldContext ? fieldContext.name + "." : "";
+      const saneOuterName = groupContext ? groupContext.name + "." : "";
       
       const whenValues = Object.assign({}, ...saneWhen.map(x => {
         const key = x.startsWith("$") ? x.substring(1) : saneOuterName + x;
         return  {[key]: formContext ? formContext.getValue(key) : undefined}
       }));
       
-      const shouldShow = isConditionalShowing(when, is, includes, fieldContext && fieldContext.name, key => whenValues[key])
+      const shouldShow = isConditionalShowing(when, is, includes, groupContext && groupContext.name, key => whenValues[key])
       return { shouldShow };
     },
     isUnchanged: (before, after) => before.shouldShow === after.shouldShow

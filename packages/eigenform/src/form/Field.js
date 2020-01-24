@@ -3,18 +3,7 @@ import { combineObjectPaths } from 'eigencode-shared-utils';
 import FieldContext from './FieldContext'
 import { withFilteredContext } from 'react-context-filter';
 import FormContext from './FormContext';
-
-export const sanitiseOuterName = (outerName, embedded) => {
-  if (!outerName && embedded) {
-    throw new Error("Fields marked embedded must be nested within another Field");
-  }
-  if (outerName && embedded) {
-    const saneOuterName = outerName || '';
-    const endIdx = Math.max(0, saneOuterName.lastIndexOf("."));
-    return saneOuterName.substring(0, endIdx);
-  }
-  return outerName || '';
-}
+import GroupContext from './GroupContext';
 
 export const getSaneName = (name, label) => {
   if (name !== undefined) {
@@ -27,11 +16,11 @@ export const $isField = Symbol('eigenform/isField');
 
 export const asField = Component => {
   const Hoc = withFilteredContext(({name, label, embedded}) => ({
-    of: [FormContext, FieldContext],
+    of: [FormContext, GroupContext],
     to: FieldContext,
-    map: (formContext, outer) => {
+    map: (formContext, groupContext) => {
       const saneName = getSaneName(name, label);
-      const fullyQualifiedName = combineObjectPaths(sanitiseOuterName(outer && outer.name, embedded), saneName);
+      const fullyQualifiedName = combineObjectPaths(groupContext && groupContext.name, saneName);
       
       return {
         name: fullyQualifiedName,
