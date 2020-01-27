@@ -237,3 +237,19 @@ it('can wrap context consumers', () => {
   expect(getByText("This also reads outer: outer")).toBeTruthy();
   expect(getByText("This reads inner: inner")).toBeTruthy();
 })
+
+it('works with Object.assign()', () => {
+  const [Word, props] = withInlineProps('word')(
+    ({word, children}) => children(word)
+  );
+
+  Object.assign(Word, props);
+
+  const { getByText } = render(
+    <Word word="hello world">
+      <span>{Word.word}</span>
+    </Word>
+  )
+
+  expect(getByText("hello world")).toBeTruthy();
+})

@@ -14,7 +14,7 @@ import Select from '../form/Select';
 import Radio from '../form/Radio';
 import TextInput from '../form/TextInput';
 import { $isConditional } from '../form/Conditional';
-import Group from '../form/Group';
+import Group, { getFullName } from '../form/Group';
 
 const dottify = str => typeof str === "string" && str[0] === "$" ? str : `.${str}`
 
@@ -166,10 +166,11 @@ extractValidationSchema.addReducerRule($isField, ({element, unbox}) => {
     const combinedFull = merge(res);
 
     const fragmentWithThis = mergeYupFragments([
-      !props.optional && (s => s.requiredStrict()),
       (s => s.label(getSaneLabel(props.name, props.label))),
       props.validator, 
-      combinedFull.inField])
+      combinedFull.inField,
+      !props.optional && (s => s.requiredStrict()),
+    ])
 
     const name = getSaneName(props.name, props.label);
 
@@ -185,6 +186,20 @@ extractValidationSchema.addReducerRule($isField, ({element, unbox}) => {
 extractValidationSchema.addReducerRule(Group, ({element, unbox}) => {
   return unbox(res => {
     const combined = merge(res); 
+
+    if (element.props.prefix) {
+      const fields = Object.keys(combined.outField.fields);
+      const newFields = fields.map(key => {
+        const newKey = getFullName({name: element.props.name, prefix: element.props.prefix}, key);
+
+        return toNamedFieldSchema(
+          combined.outField.fields[key],
+          newKey
+        );
+      })
+      const outField = mergeYupFragments(newFields)
+      return { outField };
+    }
     
     const outField = toNamedFieldSchema(
       combined.outField,
@@ -218,13 +233,13 @@ extractValidationSchema.addReducerRule(Select, ({element}) => {
   const { props } = element;
   const allowedValues = (props.options || []).map(opt => 
     typeof opt.value === "string" ? opt.value : typeof opt.label === "string" ? opt.label : opt);
-  return { inField: s => s.oneOf(allowedValues) };
+  return { inField: s => s.oneOf(['', ...allowedValues]) };
 })
 
 extractValidationSchema.addReducerRule(Radio, ({element}) => {
   const { props } = element;
   const allowedValues = [(props.value || props.children || "").toString()]
-  return { inField: s => s.oneOf(allowedValues) };
+  return { inField: s => s.oneOf(['', ...allowedValues]) };
 });
 
 extractValidationSchema.addGetContentsRule($isConditional, ({element}) => element.props.children)

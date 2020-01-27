@@ -83,7 +83,7 @@ export const deepDelete = (object, name) => {
 export const deepGet = (object, name) => {
   let val = object;
   parse(name).forEach(key => 
-    val = val === null || val === undefined ? null : val[key]
+    val = val === null || val === undefined ? undefined : val[key]
   )
   return val;
 }

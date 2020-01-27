@@ -6,16 +6,16 @@ import FormContext from './FormContext';
 import { getSaneName, $isField } from './Field';
 import { $isMultiple } from './Multiple';
 import { CustomRenderFunction } from 'react-custom-renderer';
-import { combineObjectPaths } from 'eigencode-shared-utils';
 import isEqual from 'lodash/isEqual';
 import flatten from 'lodash/flattenDeep';
+import { getFullName } from './Group';
 
 const determineName = ({element, getContext}) => {
   // we can just capture the top level field names here - removing them
   // will implicitly remove their descendants. no need to unbox.
   const outer = getContext(GroupContext);
-  const name = combineObjectPaths(
-    outer && outer.name,
+  const name = getFullName(
+    outer,
     getSaneName(element.props.name, element.props.label)
   );
   return [name];

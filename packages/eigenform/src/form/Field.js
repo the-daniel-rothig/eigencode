@@ -1,9 +1,9 @@
 import React from 'react'
-import { combineObjectPaths } from 'eigencode-shared-utils';
 import FieldContext from './FieldContext'
 import { withFilteredContext } from 'react-context-filter';
 import FormContext from './FormContext';
 import GroupContext from './GroupContext';
+import { getFullName } from './Group';
 
 export const getSaneName = (name, label) => {
   if (name !== undefined) {
@@ -20,7 +20,7 @@ export const asField = Component => {
     to: FieldContext,
     map: (formContext, groupContext) => {
       const saneName = getSaneName(name, label);
-      const fullyQualifiedName = combineObjectPaths(groupContext && groupContext.name, saneName);
+      const fullyQualifiedName = getFullName(groupContext, saneName);
       
       return {
         name: fullyQualifiedName,

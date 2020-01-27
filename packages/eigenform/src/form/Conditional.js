@@ -5,18 +5,19 @@ import FormContext from './FormContext';
 import { usePrevious } from 'eigencode-shared-utils';
 import { withFilteredContext } from 'react-context-filter';
 import { withResetFields } from './withResetFields';
+import { getFullName } from './Group';
 
-export const isConditionalShowing = (when = '', is, includes, outerName, getValue)  => {
+export const isConditionalShowing = (when = '', is, includes, groupContext, getValue)  => {
   is = getSaneIs(is, includes, when);
   const saneWhen = Array.isArray(when) ? when : [when]
-  const saneOuterName = outerName ? outerName + "." : "";
     
   const saneIs = 
       typeof is === 'function' ? is 
     : Array.isArray(is)        ? (...vals) => is.filter((expected, i) => expected !== vals[i]).length > 0
     :                            (...vals) => vals[0] === is;
 
-  const vals = saneWhen.map(x => getValue(x.startsWith("$") ? x.substring(1) : saneOuterName + x))
+  const vals = saneWhen.map(x => getValue(x.startsWith("$") ? x.substring(1) : getFullName(groupContext, x)));
+
   const shouldShow = saneIs(...vals);
 
   return shouldShow;
@@ -52,14 +53,13 @@ export const asConditional = (Component) => {
     of: [GroupContext, FormContext],
     map: (groupContext, formContext) => {
       const saneWhen = Array.isArray(when) ? when : when ? [when] : [""];
-      const saneOuterName = groupContext ? groupContext.name + "." : "";
       
       const whenValues = Object.assign({}, ...saneWhen.map(x => {
-        const key = x.startsWith("$") ? x.substring(1) : saneOuterName + x;
+        const key = x.startsWith("$") ? x.substring(1) : getFullName(groupContext, x);
         return  {[key]: formContext ? formContext.getValue(key) : undefined}
       }));
       
-      const shouldShow = isConditionalShowing(when, is, includes, groupContext && groupContext.name, key => whenValues[key])
+      const shouldShow = isConditionalShowing(when, is, includes, groupContext, key => whenValues[key])
       return { shouldShow };
     },
     isUnchanged: (before, after) => before.shouldShow === after.shouldShow

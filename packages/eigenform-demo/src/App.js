@@ -33,7 +33,7 @@ const Debug = () => {
 
 const ExampleForm = () => (
       <Form>
-        <Group name="fullName">
+        <Group name="identity" prefix>
           <Field label='your first name'>
             <Label>First name</Label>
             <TextInput />

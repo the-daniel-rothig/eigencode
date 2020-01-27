@@ -14,11 +14,13 @@ import Group from '../form/Group';
 
 // TODO tests:
 // [ ] fields in groups
+// [ ] prefix mode for groups
 // [x] fields within fields
 // [ ] stuff to be omitted: inField stuff for Group
 // [ ] multiple in Reducer
 // 
 // Other stuff
+// [ ] Label mapping in groups
 // [ ] Radio has to fail on REQUIRED when value = ''
 // [ ] Conditional should reset inputs, specifically Radio and Checkbox
 

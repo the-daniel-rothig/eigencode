@@ -26,7 +26,7 @@ This is powerful, but a bit verbose: some of the lines in this example don't pro
 </Submit>
 ```
 
-**react-inline-props** allows you to modify your render function components to enable this cleaner syntax.
+**react-inline-props** allows you to modify your render-prop components to enable this cleaner syntax.
 
 ## Usage
 
@@ -43,15 +43,15 @@ const Submit = ({children}) => {
 // ...we pass it to the withInlineProps function,
 // specifying the intended names of the inline-props
 // we want to create. 
-const [SumbmitInline, props] = withInlineProps('submit')(Submit);
+const [SubmitInline, props] = withInlineProps('submit')(Submit);
 
 // The first entry of the returned array is the inline-props enabled
 // component:
 export default SubmitInline;
 
 // The second entry is an object containing the inline-props.
-// We specified that the first argument of Submit's render-prop
-// callback should be associated with am inline-prop called 'submit',
+// We specified that the first (and only) argument of Submit's render-prop
+// callback should be associated with an inline-prop called 'submit',
 // and we export it explicitly for convenience.
 export const { submit } = props;
 ```
@@ -147,93 +147,6 @@ import UserData, { firstName, lastName, fullName } from './UserDataInline';
 </UserData>
 ```
 
-## Converting props other than `children`
-
-By default `withInlineProps` assumes that the render-prop to be converted is `children`. You can convert any number of other props by using the full signature of `withInlineProps`. 
-
-Imagine a `<Page />` layout with a `footer` render-prop that passes in `index` and `totalPageCount` arguments: 
-
-```javascript
-<Page 
-  footer={(index, totalPageCount) => (
-    <span className="hint">Page {index + 1} of {totalPageCount}</span>
-  )}
->
-  {/* ... page contents ... */}
-</Page>
-```
-
-To start using inline-props:
-
-```javascript
-import PageBase from './Page'
-
-const [Page, props] = withInlineProps({
-  footer: ['index', 'totalPageCount']
-})(PageBase)
-
-export default Page;
-
-export const index = props.footer.index;
-export const totalPageCount = props.footer.totalPageCount;
-```
-
-As you can see, instead of an arguments list of names for the `children` callback, an options object is passed whose keys are the names of the render-props, and the values the corresponding inline-prop names (a string or array of strings).
-
-Note also that the strucure of the returned `props` object is diffent: rather than an object containing the inline-props associated with the `children` callback, it's now has one entry per specified component prop, whose values are the objects containing the inline-props for each component prop. 
-
-<details>
-  <summary>More on the props object strucutre</summary>
-  
-  In the above example, we only instrumented one component prop - `footer` - but if we had instrumented others, like a `header` or the `children` prop, theirentries would be in the `props` object as well. E.g.
-
-  ```javascript
-  props = {
-    header: {
-      title: (InlineProp)
-      // ... and other props ...
-    },
-    children: {
-      defaultFont: (InlineProp)
-      // ... and other props ...
-    },
-    footer: {
-      index: (InlineProp),
-      totalPageCount: (InlineProp)
-    }
-  }
-  ```
-</details>
-
-Use the inline-prop enabled `<Page />` as follows:
-
-```javascript
-import Page, { index, totalPageCount } from './PageInline'
-
-<Page
-  footer={
-    <span className="hint">Page {index.map(i => i+1)} of {totalPageCount}</span>
-  }
->
-  {/* ... page contents ... */}
-</Page>
-```
-
-<details>
-  <summary>Defining the footer at the bottom of the page</summary>
-
-  Since footers appear at the bottom of a page, it is a bit counter-intuitive to have to declare the footer prop above the main content of the `<Page />` component. To further improve readability, you could convert `<Page />` to use the slot pattern:
-
-  ```javascript
-  <Page>
-    {/* ... page contents ... */}
-    <Page.Footer>
-      <span className="hint">Page {index.map(i => i+1)} of {totalPageCount}</span>
-    </Page.Footer>
-  </Page>
-  ```
-</details>
-
 ## Component nesting
 
 When inline-prop enabled components are nested, inline-props get linked to the closest ancestor:
@@ -256,7 +169,7 @@ const [ Ctx, {ctx} ] = withInlineProps('ctx')(Consumer);
 </Provider>
 ```
 
-To access the values from a component other than the closest ancestor, you can set a `propId` prop on the inline-prop component and use the `.from(propId)` method on the inline-prop:
+To access the values from a component other than the closest ancestor, you can set a `propId` prop on the inline-prop enabled component and use the `.from(propId)` method on the inline-prop:
 
 ```javascript
 <Provider value="outer">
@@ -340,13 +253,130 @@ const [ WordProvider, { word } ] = withInlineProps('word')(
 
 Don't over-rely on inline-props any more than on render-props though - it is intended for inlining simple stuff. For more advanced scenarios, use Higher-Order Components and Hooks.
 
+## Expressing inline-prop ownership
+
+When working with multiple inline-prop enabled components, it can get difficult for the reader to recognise which inline-props come from which component. An often successful solution to this is to attach the inline-props to the component types themselves:
+
+```javascript
+const [Blog, blogProps] = withInlineProps('totalArticles')(BaseBlog);
+const [User, userProps] = withInlineProps('articlesRead')(BaseUser);
+
+Object.assign(Blog, blogProps);
+Object.assign(User, userProps);
+
+// later:
+
+<Blog>
+  <User>
+    You have read {User.articlesRead} of {Blog.totalArticles} articles.
+  </User>
+</Blog>
+```
+
+## Converting props other than `children`
+
+By default, `withInlineProps` assumes that the render-prop to be converted is `children`. You can convert any number of other props by using the full signature of `withInlineProps`. 
+
+Imagine a `<Page />` layout with a `footer` render-prop that passes in `index` and `totalPageCount` arguments: 
+
+```javascript
+<Page 
+  footer={(index, totalPageCount) => (
+    <span className="hint">Page {index + 1} of {totalPageCount}</span>
+  )}
+>
+  {/* ... page contents ... */}
+</Page>
+```
+
+To start using inline-props:
+
+```javascript
+import BasePage from './Page'
+
+const [Page, props] = withInlineProps({
+  footer: ['index', 'totalPageCount']
+})(BasePage)
+
+export default Page;
+
+export const index = props.footer.index;
+export const totalPageCount = props.footer.totalPageCount;
+```
+
+As you can see, instead of an arguments list of names for the `children` callback, an options object is passed whose keys are the names of the render-props, and the values the corresponding inline-prop names (a string or array of strings).
+
+Note also that the structure of the returned `props` object is diffent: rather than an object containing the inline-props associated with the `children` callback, it's now an object with one entry per specified component prop, whose values are the objects containing the inline-props for each component prop. 
+
+<details>
+  <summary>More on the props object strucutre</summary>
+  
+  In the above example, we only instrumented one component prop - `footer` - but if we had instrumented others, like a `header` or the `children` prop, their entries would be in the `props` object as well. E.g. if we write:
+
+  ```javascript
+  const [ Page, props ] = withInlineProps({
+    header: ["title", ...],
+    children: ["default Font", ...],
+    footer: ["index", "totalPageCount"],
+  })(BasePage);
+  ```
+
+  The resulting `props` object has the following structure:
+
+  ```javascript
+  props = {
+    header: {
+      title: (InlineProp),
+      // ... and other props ...
+    },
+    children: {
+      defaultFont: (InlineProp),
+      // ... and other props ...
+    },
+    footer: {
+      index: (InlineProp),
+      totalPageCount: (InlineProp)
+    }
+  }
+  ```
+</details>
+
+Use the inline-prop enabled `<Page />` as follows:
+
+```javascript
+import Page, { index, totalPageCount } from './PageInline'
+
+<Page
+  footer={
+    <span className="hint">Page {index.map(i => i+1)} of {totalPageCount}</span>
+  }
+>
+  {/* ... page contents ... */}
+</Page>
+```
+
+<details>
+  <summary>Defining the footer at the bottom of the page</summary>
+
+  Since footers appear at the bottom of a page, it is a bit counter-intuitive to have to declare the footer prop above the main content of the `<Page />` component. To further improve readability, you could convert `<Page />` to use the slot pattern:
+
+  ```javascript
+  <Page>
+    {/* ... page contents ... */}
+    <Page.Footer>
+      <span className="hint">Page {index.map(i => i+1)} of {totalPageCount}</span>
+    </Page.Footer>
+  </Page>
+  ```
+</details>
+
 ## Gotchas
 
-Beware: inline-props cannot be used in expressions and function bodies. Inline-props are just placeholders that will only get swapped out with their real values if they are a direct prop, or referenced by a React element prop value. The following won't work:
+Beware: inline-props cannot be used in expressions and function bodies. Inline-props are just placeholders that will get swapped out with their real values only if they are an element in the tree, or a direct prop of an element in the tree. The following won't work:
 
 ```javascript
 <Submit>
-  The following will not work: {submit.name.toUpperCase()}.
+  This doesn't work: {submit.name.toUpperCase()}.
 
   <button onClick={() => {
     console.log("This also doesn't work")
@@ -363,7 +393,7 @@ This, however, does work:
 <Submit>
   This is the name of the submit function: {submit.map(cb => cb.name.toUpperCase())}
 
-  <button onClick={submit.map(cb => {
+  <button onClick={submit.map(cb => () => {
     console.log("This works!");
     cb();
   })}>
@@ -384,9 +414,9 @@ const ButtonThatUsesSubmit = () => (
 </Submit>
 ```
 
-The button in the example above does not work because the `submit` prop isn't used in-line with the `<Submit />` component. We say the prop is "shielded" - it's inside the implementation of another component, and as such, invisible to the `<Submit />`.
+The button in the example above does not work because the `submit` prop isn't used in-line with the `<Submit />` component. We say the prop is "shadowed" - it's inside the implementation of another component, and as such, invisible to the `<Submit />`.
 
-On the other hand, element variables passed into the `<Submit />` don't "shield" the prop, so that the following works:
+On the other hand, element variables passed into the `<Submit />` don't "shadow" the prop, so that the following **does** work:
 
 ```javascript
 import Submit, { submit } from './Submit';
@@ -432,7 +462,7 @@ Moreover, inline-props have the following methods against them:
 
 ### `CombinedInlineProp`
 
-These can be placed anywhere inside their inline-prop enabled components, or set to any prop of elements contained by the component. They will be set to the value returned by their `mappingFunction`(see `inlineProp.combine`), which is passed the values of all InlinePros this depends on. 
+These can be placed anywhere inside their inline-prop enabled components, or set to any prop of elements contained by the component. They will be set to the value returned by their `mappingFunction`(see `inlineProp.combine`), which is passed the values of all InlineProps this depends on. 
 
 Moreover, CombinedInlineProp has the following method:
 
