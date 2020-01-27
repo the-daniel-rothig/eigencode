@@ -1,10 +1,23 @@
 {
   "name": "yup-universal-locale",
-  "version": "0.1.0",
-  "private": true,
+  "version": "1.0.0",
+  "description": "extends yup's means of setting default message strings to cover custom tests",
   "main": "src/index.js",
   "main:src": "src/index.js",
-  "dependencies": {
-    "yup": "^0.27.0"
+  "peerDependencies": {
+    "yup": "^0.25.0"
+  },
+  "devDependencies": {
+    "yup": "^0.25.0"
+  },
+  "keywords": [
+    "yup",
+    "validation",
+    "internationalisation",
+    "i18n"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/the-daniel-rothig/eigencode.git"
   }
 }

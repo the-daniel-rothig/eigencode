@@ -1,12 +1,12 @@
 # yup-universal-locale
 
-Build perfectly integrated extensions to [yup](https://github.com/jquense/yup) by registering custom validation methods to the locale.
+Build perfectly integrated extensions to [yup](https://github.com/jquense/yup) by registering custom validation method messages to the locale.
 
 ## Improved localisation
 
 Yup offers a `setLocale` method, allowing users to set custom default messages for validations. Unfortunately this only works for the built-in validations that `yup` ships with - custom tests cannot access this locale, which means that if you supply new validations, users of your extension can not set a default message for them.
 
-**yup-universal-locale** adds this functionality. Users of your validations don't have to do anything special or import anything - it's sufficient for your to import `yup-universal-locale` in your extension.
+**yup-universal-locale** adds this functionality. Users of your validations don't have to do anything special or import anything - it's sufficient for you to import `yup-universal-locale` in your extension.
 
 ```javascript
 import { string, addMethod, setLocale } from 'yup';
@@ -15,7 +15,7 @@ import 'yup-universal-locale';
 // create a custom validation
 addMethod(string, 'mustNotContain', function(stringToExlude, message) {
   return this.test({
-    // the name is crucial: it determines the lookup in the locale
+    // the `name` is crucial: it determines the lookup in the locale
     name: 'mustNotContain', 
     message: message,
     test: val => val.indexOf(stringToExlude) === -1),
@@ -36,7 +36,7 @@ import 'your-yup-extension-library';
 setLocale({
   mixed: {
     required: "please enter ${path}",
-    mustNotContain: "your answer must not contain '${mustNotContain}"
+    mustNotContain: "your answer must not contain '${mustNotContain}'"
   }
 });
 
@@ -72,5 +72,5 @@ string()
 
 1. The message supplied directly to the test method
 2. The message matching the schema type and the test name in the locale
-3. The message matching the `mixed` schema in the locale
+3. The message matching the test name in the `mixed` schema in the locale
 4. The message set in the locale for `mixed.default`

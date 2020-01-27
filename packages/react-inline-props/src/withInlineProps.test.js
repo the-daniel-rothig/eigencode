@@ -58,15 +58,18 @@ it('works on non-children props', () => {
 })
 
 it('works on non-children elements', () => {
-  const Childless = ({nephews}) => <div>{nephews}</div>;
+  const [ Childless, { nephews: { value } } ] = withInlineProps({
+    nephews: 'value',
+  })(
+    ({nephews}) => <div>{nephews('hello world')}</div>
+  );
+
   const { getByText } = render(
-    <Inline args="hello world">
-      <Childless nephews={(
-        <span>
-          {value}
-        </span>
-      )} />
-    </Inline>
+    <Childless nephews={(
+      <span>
+        {value}
+      </span>
+    )} />
   );
 
   expect(getByText('hello world')).toBeTruthy();
