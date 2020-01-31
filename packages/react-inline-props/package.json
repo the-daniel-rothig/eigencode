@@ -26,7 +26,8 @@
   "keywords": [
     "react",
     "util",
-    "render-props"
+    "render-props",
+    "inline-props"
   ],
   "repository": {
     "type": "git",
