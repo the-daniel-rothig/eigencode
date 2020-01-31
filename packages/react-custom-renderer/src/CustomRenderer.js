@@ -1,5 +1,5 @@
 import React from 'react';
-import Replacer from 'react-replacer';
+import Substitute from 'react-substitute';
 
 const makeValueMap = () => {
   const map = new Map()
@@ -145,9 +145,9 @@ const CustomRenderer = ({children, customRenderFunction, onFinish}) => {
   const map = React.useMemo(() => mapElement(customRenderFunction, onFinish), [customRenderFunction, onFinish]);
 
   return (
-    <Replacer mapElement={map}>
+    <Substitute mapElement={map}>
       <>{children}</>
-    </Replacer>
+    </Substitute>
   )
 }
 

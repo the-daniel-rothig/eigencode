@@ -3,7 +3,7 @@
   "workspaces": [
     "packages/react-context-filter",
     "packages/react-inline-props",
-    "packages/react-replacer",
+    "packages/react-substitute",
     "packages/react-custom-renderer",
     "packages/eigencode-shared-utils",
     "packages/eigenform",

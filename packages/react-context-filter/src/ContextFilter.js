@@ -1,21 +1,23 @@
-import React, { useContext   } from 'react'
-import PropTypes from 'prop-types'
+import React, { useContext } from 'react'
 
-const providerPropType = PropTypes.shape({
-  Provider: PropTypes.object.isRequired,
-  Consumer: PropTypes.object.isRequired,
-});
+// TODO: Add production build config so that dev config can safely include
+// proptypes
 
-const propTypes = {
-  of: PropTypes.oneOfType([
-    PropTypes.arrayOf(providerPropType),
-    providerPropType
-  ]).isRequired,
-  to: providerPropType,
-  map: PropTypes.func.isRequired,
-  isUnchanged: PropTypes.func,
-  children: PropTypes.node.isRequired
-}
+// const providerPropType = PropTypes.shape({
+//   Provider: PropTypes.object.isRequired,
+//   Consumer: PropTypes.object.isRequired,
+// });
+
+// const propTypes = {
+//   of: PropTypes.oneOfType([
+//     PropTypes.arrayOf(providerPropType),
+//     providerPropType
+//   ]).isRequired,
+//   to: providerPropType,
+//   map: PropTypes.func.isRequired,
+//   isUnchanged: PropTypes.func,
+//   children: PropTypes.node.isRequired
+// }
 
 class ContextFilterInner extends React.Component {
   shouldComponentUpdate(nextProps) {
@@ -82,6 +84,6 @@ const ContextFilter = (props) => {
   return <ContextFilterProbe {...props} />;
 }
 
-ContextFilter.propTypes = propTypes;
+//ContextFilter.propTypes = propTypes;
 
 export default ContextFilter;

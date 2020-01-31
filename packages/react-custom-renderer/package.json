@@ -1,15 +1,41 @@
 {
   "name": "react-custom-renderer",
   "version": "0.1.0",
-  "private": true,
-  "main": "src/index.js",
+  "description": "Write custom renderers to (re-)use your React components in a wider range of situations",
+  "author": {
+    "name": "Daniel Rothig",
+    "url": "https://www.github.com/the-daniel-rothig/"
+  },
+  "license": "MIT",
+  "main": "dist/bundle.js",
   "main:src": "src/index.js",
+  "scripts": {
+    "build": "rollup --config"
+  },
   "dependencies": {
-    "react": "^16.11.0",
-    "react-replacer": "^0.1.0"
+    "react-substitute": "^0.1.0"
+  },
+  "peerDependencies": {
+    "react": "^16.11.0"
   },
   "devDependencies": {
+    "@rollup/plugin-node-resolve": "^7.0.0",
     "@testing-library/react": "^9.3.1",
-    "react-dom": "^16.11.0"
+    "react": "^16.11.0",
+    "react-dom": "^16.11.0",
+    "rollup": "^1.30.1",
+    "rollup-plugin-babel": "^4.3.3",
+    "rollup-plugin-commonjs": "^10.1.0"
+  },
+  "keywords": [
+    "react",
+    "rendering",
+    "renderer",
+    "react-component"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/the-daniel-rothig/eigencode.git",
+    "directory": "packages/react-custom-renderer"
   }
 }

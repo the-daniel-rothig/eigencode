@@ -1,6 +1,5 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import PropTypes from 'prop-types';
 
 const childArrayMap = new WeakMap();
 const getArray = (children) => {
@@ -209,7 +208,7 @@ const doMapElement = (mapElement, element, memo, siblingIndex, siblingCount) => 
 
 const makeElementMapper = mapElement => {
   const elementMapper = (childElement, memo, siblingIndex, siblingCount) => {
-    if (childElement && childElement.type === Replacer) {
+    if (childElement && childElement.type === Substitute) {
       const mapElementOne = mapElement;
       const memoOne = memo;
             
@@ -448,9 +447,9 @@ const Recursor = ({children, elementMapper, memo, siblingIndex, siblingCount}) =
   return newChildren; 
 }
 
-const Replacer = ({children, mapElement}) => {
+const Substitute = ({children, mapElement}) => {
   if (!mapElement) {
-    throw new Error('Replacer has no mapElement function specified')
+    throw new Error('Substitute has no mapElement function specified')
   }
   
   const elementMapper = makeElementMapper(mapElement);
@@ -458,11 +457,6 @@ const Replacer = ({children, mapElement}) => {
     elementMapper,
     children
   });
-} 
-
-Replacer.propTypes = {
-  children: PropTypes.node,
-  mapElement: PropTypes.func.isRequired,
 }
 
-export default Replacer;
+export default Substitute;

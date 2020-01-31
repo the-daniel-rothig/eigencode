@@ -6,6 +6,6 @@
   "main:src": "src/index.js",
   "dependencies": {
     "yup": "^0.27.0",
-    "yup-universal-locale": "^0.1.0"
+    "yup-universal-locale": "^0.1.1"
   }
 }

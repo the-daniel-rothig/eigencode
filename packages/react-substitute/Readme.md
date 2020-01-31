@@ -1,4 +1,4 @@
-# react-replacer
+# react-substitute
 
 Allows you to modify, or completely replace, React elements when they are rendered
 
@@ -9,11 +9,11 @@ Examples for when this might be useful include:
 * add additional functionality, such as internationalisation, to legacy components or shared components that you can not directly modify.
 * adding admin buttons into an UI normally used by non-admin users
 
-For example, the following implementation replaces `<input>` HTML elements with `<FancyInput>` components:
+For example, the following implementation substitutes `<input>` HTML elements with `<FancyInput>` components:
 
 ```javascript
   import React from 'react';
-  import Replacer from 'react-replacer'
+  import Substitute from 'react-substitute'
   import { FancyInput } from './myComponents'
 
   const mapInputToFancy = ({element}) => {
@@ -36,9 +36,9 @@ For example, the following implementation replaces `<input>` HTML elements with 
   )
 
   const FancyForm = () => (
-    <Replacer mapElement={mapInputToFancy}>
+    <Substitute mapElement={mapInputToFancy}>
       <MyForm />
-    </Replacer>
+    </Substitute>
   )
 ```
 
@@ -99,9 +99,9 @@ the `mapElement` prop accepts a function that gets invoked just before an elemen
 
 ### Don't overuse
 
-**react-replacer** essentially adds aspect-oriented programming to React: You can decorate your components by wrapping them in a `<Replacer>` which can alter component behaviour; and like aspect-oriented programming, it can lead to "magical" code that behaves differently to how it reads. It's important to use replacers in a way that supplement, rather than contradict, the behaviour described by the component code.
+**react-substitute** essentially adds aspect-oriented programming to React: You can decorate your components by wrapping them in a `<Substitute>` which can alter component behaviour; and like aspect-oriented programming, it can lead to "magical" code that behaves differently to how it reads. It's important to use substitutes in a way that supplement, rather than contradict, the behaviour described by the component code.
 
-A good rule of thumb is no avoid using **react-replacer** to implement the primary purpose of your component - it's best used for things the component would consider "side effects", such as:
+A good rule of thumb is no avoid using **react-substitute** to implement the primary purpose of your component - it's best used for things the component would consider "side effects", such as:
 
 - logging
 - analytics
@@ -109,12 +109,12 @@ A good rule of thumb is no avoid using **react-replacer** to implement the prima
 - theming
 - translation and internationalisation
 
-But you usually want to avoid using **react-replacer** for:
+But you usually want to avoid using **react-substitute** for:
 
 - state binding
 - modifying internal component logic
 
-That said, **react-replacer** is capable of altering component behaviour in a wide variety of ways. For example, [react-custom-renderer](../react-custom-renderer) uses `<Replacer>`s to build fully custom render engines on top of React.
+That said, **react-substitute** is capable of altering component behaviour in a wide variety of ways. For example, [react-custom-renderer](../react-custom-renderer) uses `<Substitute>`s to build fully custom render engines on top of React.
 
 ### Use `mapElement` as a hook
 
@@ -154,6 +154,6 @@ function mapElement({element}) {
 
 But beware: `mapElement` will be run every time a new element is rendered, and should only contain trivial mapping operations or side effects that run quickly.
 
-### Use multiple, simple `<Replacer>`s to compose behaviour
+### Use multiple, simple `<Substitute>`s to compose behaviour
 
-The `<Replacer>` component can be used anywhere in the component tree, and can even be nested. This allows you to use multiple `<Replacer>`s in your app, without issues or performance penalties. Doing so will let you write one `mapElement` per aspect, increasing reusability and improving code quality.
+The `<Substitute>` component can be used anywhere in the component tree, and can even be nested. This allows you to use multiple `<Substitute>`s in your app, without issues or performance penalties. Doing so will let you write one `mapElement` per aspect, increasing reusability and improving code quality.

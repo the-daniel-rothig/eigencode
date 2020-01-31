@@ -1,14 +1,40 @@
 {
   "name": "react-context-filter",
   "version": "0.1.0",
-  "private": true,
-  "main": "src/index.js",
+  "author": {},
+  "license": "MIT",
+
+  "description": "Subscribe to just part of a context for high-performance user interfaces",
+  "main": "dist/bundle.js",
   "main:src": "src/index.js",
+  "scripts": {
+    "build": "rollup --config"
+  },
   "dependencies": {
     "lodash": "^4.17.15",
+    "prop-types": "^15.7.2"
+  },
+  "peerDependencies": {
     "react": "^16.11.0"
   },
   "devDependencies": {
-    "@testing-library/react": "^9.3.1"
+    "@rollup/plugin-node-resolve": "^7.0.0",
+    "@testing-library/react": "^9.3.1",
+    "react": "^16.11.0",
+    "rollup": "^1.30.1",
+    "rollup-plugin-babel": "^4.3.3",
+    "rollup-plugin-commonjs": "^10.1.0"
+  },
+  "keywords": [
+    "react",
+    "react-component",
+    "context",
+    "state",
+    "performance"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/the-daniel-rothig/eigencode.git",
+    "directory": "packages/react-context-filter"
   }
 }
