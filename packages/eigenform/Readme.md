@@ -2,6 +2,12 @@
 
 An advanced, high-performance form system built for exensibility and seamless integration into your design systems.
 
+Part of the [eigencode](../..) project.
+
+```bash
+npm install eigenform
+```
+
 Features:
 
 - Nested objects

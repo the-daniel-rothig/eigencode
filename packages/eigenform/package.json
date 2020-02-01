@@ -1,16 +1,50 @@
 {
   "name": "eigenform",
   "version": "0.1.0",
-  "private": true,
-  "main": "base.js",  
+  "author": {
+    "name": "Daniel Rothig",
+    "url": "https://www.github.com/the-daniel-rothig/"
+  },
+  "license": "MIT",
+  "description": "An advanced, high-performance form system built for exensibility and seamless integration",
+  "keywords": [
+    "react",
+    "react-component",
+    "form",
+    "forms",
+    "state",
+    "performance"
+  ],
+  "main": "dist/bundle.js",
   "main:src": "base.js",
+  "scripts": {
+    "build": "rollup --config"
+  },
   "dependencies": {
-    "react-context-filter": "^0.1.0",
     "lodash": "^4.17.15",
-    "react": "^16.11.0",
     "react-animate-height": "^2.0.16",
+    "react-context-filter": "^0.1.0",
     "react-custom-renderer": "^0.1.0",
-    "yup": "^0.27.0",
+    "yup": "^0.28.1",
     "yup-extensions": "^0.1.0"
+  },
+  "bundledDependencies": [
+    "eigencode-shared-utils"
+  ],
+  "peerDependencies": {
+    "react": "^16.11.0"
+  },
+  "devDependencies": {
+    "@rollup/plugin-node-resolve": "^7.0.0",
+    "@testing-library/react": "^9.3.1",
+    "react": "^16.11.0",
+    "rollup": "^1.30.1",
+    "rollup-plugin-babel": "^4.3.3",
+    "rollup-plugin-commonjs": "^10.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/the-daniel-rothig/eigencode.git",
+    "directory": "packages/eigenform"
   }
 }
