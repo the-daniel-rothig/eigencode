@@ -6,7 +6,7 @@ Build perfectly integrated extensions to [yup](https://github.com/jquense/yup) b
 npm install yup-universal-locale
 ```
 
-Part of the [eigencode](../..) project.
+Part of the [eigencode](https://github.com/the-daniel-rothig/eigencode) project.
 
 ## Improved localisation
 

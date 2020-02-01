@@ -6,7 +6,7 @@ This [React](https://github.com/facebook/react/) library provides a nice syntax 
 npm install react-inline-props
 ```
 
-Part of the [eigencode](../..) project.
+Part of the [eigencode](https://github.com/the-daniel-rothig/eigencode) project.
 
 ## Background
 

@@ -6,7 +6,7 @@ Allows your React components to subscribe to just part of a context, allowing yo
 npm install react-context-filter
 ```
 
-Part of the [eigencode](../..) project.
+Part of the [eigencode](https://github.com/the-daniel-rothig/eigencode) project.
 
 ## Background
 
