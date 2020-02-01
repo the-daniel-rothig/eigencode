@@ -2,7 +2,7 @@
 
 An advanced, high-performance form system built for exensibility and seamless integration into your design systems.
 
-Part of the [eigencode](https://github.com/the-daniel-rothig/eigencode) project.
+Part of the [eigencode](https://github.com/the-daniel-rothig/eigencode#readme) project.
 
 ```bash
 npm install eigenform

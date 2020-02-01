@@ -6,7 +6,7 @@ Allows you to modify, or completely replace, React elements when they are render
 npm install react-substitute
 ```
 
-Part of the [eigencode](https://github.com/the-daniel-rothig/eigencode) project.
+Part of the [eigencode](https://github.com/the-daniel-rothig/eigencode#readme) project.
 
 ## Element substitution
 

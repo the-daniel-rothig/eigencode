@@ -2,7 +2,7 @@
 
 Write custom renderers for React components to reuse them in a wider range of situations.
 
-Part of the [eigencode](https://github.com/the-daniel-rothig/eigencode) project.
+Part of the [eigencode](https://github.com/the-daniel-rothig/eigencode#readme) project.
 
 ## Example
 

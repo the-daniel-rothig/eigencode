@@ -6,7 +6,7 @@ Some additional validation methods for [yup](https://github.com/jquense/yup)
 npm install yup-extensions
 ```
 
-Part of the [eigencode](https://github.com/the-daniel-rothig/eigencode) project.
+Part of the [eigencode](https://github.com/the-daniel-rothig/eigencode#readme) project.
 
 ## Example
 
