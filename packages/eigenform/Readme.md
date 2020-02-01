@@ -1,4 +1,4 @@
-# eigenform
+# eigenform (WIP)
 
 An advanced, high-performance form system built for exensibility and seamless integration into your design systems.
 

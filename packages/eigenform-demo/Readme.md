@@ -1,4 +1,4 @@
-# eigenform-demo
+# eigenform-demo (WIP)
 
 Demo app to showcase [eigenform](../eigenform), an advanced, high-performance form system built for exensibility and seamless integration into your design systems.
 
