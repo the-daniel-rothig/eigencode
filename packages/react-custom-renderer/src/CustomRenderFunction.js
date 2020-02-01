@@ -1,9 +1,7 @@
-import { traverseDepthFirst } from "./reactTraversal";
-
 const defaultShouldUpdate = (one, two) => one !== two;
 const defaultFinalTransform = x => x;
 
-export default class CustomRenderFunction {
+class CustomRenderFunction {
   constructor(options) {
     const saneOptions = typeof options === "function" ? {reduce: options} : options;
 
@@ -68,18 +66,13 @@ export default class CustomRenderFunction {
     
     this._getContentsFragments.push({predicate, callback});
   }
+};
 
-  render(element) {
-    return traverseDepthFirst(
-      element,
-      this
-    );
+CustomRenderFunction.cast = obj => {
+  if (obj instanceof CustomRenderFunction) {
+    return obj;
   }
-
-  static cast = obj => {
-    if (obj instanceof CustomRenderFunction) {
-      return obj;
-    }
-    return new CustomRenderFunction(obj);
-  }
-} 
+  return new CustomRenderFunction(obj);
+}
+ 
+export default CustomRenderFunction

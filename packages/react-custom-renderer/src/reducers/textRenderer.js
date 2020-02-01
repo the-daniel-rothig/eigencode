@@ -1,4 +1,4 @@
-import CustomRenderFunction from "../CustomRenderFunction";
+import CustomRenderFunction from "../CustomRenderFunction.withRender";
 
 const combinePartialResults = (array) => {
   if (array.length === 0) {

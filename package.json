@@ -12,6 +12,7 @@
     "packages/yup-universal-locale"
   ],
   "scripts": {
+    "build": "node scripts/buildall.js",
     "test": "jest --watch",
     "demo": "cd packages/eigenform-demo && yarn start"
   },

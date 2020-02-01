@@ -1,9 +1,11 @@
 {
   "name": "react-context-filter",
   "version": "0.1.0",
-  "author": {},
+  "author": {
+    "name": "Daniel Rothig",
+    "url": "https://www.github.com/the-daniel-rothig/"
+  },
   "license": "MIT",
-
   "description": "Subscribe to just part of a context for high-performance user interfaces",
   "main": "dist/bundle.js",
   "main:src": "src/index.js",

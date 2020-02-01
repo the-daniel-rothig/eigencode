@@ -9,7 +9,7 @@ node_modules
 /coverage
 
 # production
-/build
+/packages/eigenform-demo/build
 /packages/*/dist
 
 # misc

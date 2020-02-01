@@ -2,7 +2,7 @@ import React, { useState, useContext } from 'react'
 import { act } from 'react-dom/test-utils'
 import { render, wait } from '@testing-library/react'
 import CustomRenderer from './CustomRenderer'
-import CustomRenderFunction from './CustomRenderFunction'
+import CustomRenderFunction from './CustomRenderFunction.withRender'
 import textRenderer from './reducers/textRenderer'
 
 
