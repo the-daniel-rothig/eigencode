@@ -2,9 +2,17 @@
 
 Write custom renderers for React components to reuse them in a wider range of situations.
 
+Part of the [eigencode](../..) project.
+
 ## Example
 
-react-custom-renderer ships with a simple example renderer `textRenderer`, which renders a component in plain text:
+Add `react-custom-renderer` to your app:
+
+```bash
+npm install react-custom-renderer
+```
+
+`react-custom-renderer` ships with a simple example renderer `textRenderer`, which renders a component in plain text:
 
 ```javascript
 import React from 'react';

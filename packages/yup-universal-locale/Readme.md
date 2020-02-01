@@ -2,6 +2,12 @@
 
 Build perfectly integrated extensions to [yup](https://github.com/jquense/yup) by registering custom validation method messages to the locale.
 
+```bash
+npm install yup-universal-locale
+```
+
+Part of the [eigencode](../..) project.
+
 ## Improved localisation
 
 Yup offers a `setLocale` method, allowing users to set custom default messages for validations. Unfortunately this only works for the built-in validations that Yup ships with - custom tests cannot access this locale, which means that if you supply new validations, users have no means of customising or translating the default message for them.

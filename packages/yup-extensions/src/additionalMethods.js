@@ -1,7 +1,8 @@
 /* eslint-disable no-template-curly-in-string */
 import { string, mixed, addMethod, setLocale } from 'yup'
 import 'yup-universal-locale';
-import { deepGet } from 'eigencode-shared-utils';
+// hack!
+import { deepGet } from '../../eigencode-shared-utils/src/objectTraversal';
 
 addMethod(string, 'mustNotContain', function(stringOrRegex, message) {
   const getMatch = stringOrRegex instanceof RegExp ? v => stringOrRegex.exec(v)

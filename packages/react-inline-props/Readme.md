@@ -2,6 +2,12 @@
 
 This [React](https://github.com/facebook/react/) library provides a nice syntax for inline property injection, offering an alternative to render-props and render functions.
 
+```bash
+npm install react-inline-props
+```
+
+Part of the [eigencode](../..) project.
+
 ## Background
 
 Render-props, or render functions, are a pattern in React to pass callbacks and values down the component tree. For example, a `<Submit />` component could provide a form submission callback and delegate the display logic to its children:

@@ -2,6 +2,12 @@
 
 Allows your React components to subscribe to just part of a context, allowing you to eliminate unnecessary re-renders and build high-performance user interfaces.
 
+```bash
+npm install react-context-filter
+```
+
+Part of the [eigencode](../..) project.
+
 ## Background
 
 The React context API allows components to subscribe to the state of their surroundings. In theory, this leads to greater decoupling between providers and consumers of state, improving reusability; however, context providers need to decide how much their consumers want to know: every time any aspect of a context changes, all subscribers must update. If the context entity is composed of many changing parts, it can cause a large number of frequent re-renders.

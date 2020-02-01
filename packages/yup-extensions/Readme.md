@@ -2,6 +2,14 @@
 
 Some additional validation methods for [yup](https://github.com/jquense/yup)
 
+```bash
+npm install yup-extensions
+```
+
+Part of the [eigencode](../..) project.
+
+## Example
+
 ```javascript
 import { array, object, string } from 'yup';
 import 'yup-extensions';

@@ -1,8 +1,16 @@
 # react-substitute
 
-Allows you to modify, or completely replace, React elements when they are rendered
+Allows you to modify, or completely replace, React elements when they are rendered.
 
-Examples for when this might be useful include:
+```bash
+npm install react-substitute
+```
+
+Part of the [eigencode](../..) project.
+
+## Element substitution
+
+There are many situations where element substitution comes in handy:
 
 * replacing `<input>` elements with read-only `<span>`s
 * adding logging and analytics to interactive elements
