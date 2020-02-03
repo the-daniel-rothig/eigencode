@@ -1,6 +1,6 @@
 {
   "name": "react-inline-props",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Provides a nice syntax for inline property injection, offering an alternative to render-props and render functions",
   "author": {
     "name": "Daniel Rothig",
@@ -12,6 +12,7 @@
   },
   "main": "dist/bundle.js",
   "main:src": "src/index.js",
+  "types": "types.d.ts",
   "peerDependencies": {
     "react": "^16.11.0"
   },
