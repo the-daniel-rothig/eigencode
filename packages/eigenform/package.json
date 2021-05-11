@@ -21,7 +21,7 @@
     "build": "rollup --config"
   },
   "dependencies": {
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.21",
     "react-animate-height": "^2.0.16",
     "react-context-filter": "^0.1.0",
     "react-custom-renderer": "^0.1.0",
